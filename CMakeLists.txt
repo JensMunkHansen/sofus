@@ -1,137 +1,189 @@
-cmake_minimum_required(VERSION 2.8.9)
+include(CheckIncludeFile)
+include(CheckFunctionExists)
+include(GenerateExportHeader)
 
-# Add path for custom modules
 set(CMAKE_MODULE_PATH
   ${CMAKE_MODULE_PATH}
   "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
   )
 
-project(Fnm C CXX)
+# On POSIX compliant systems, we would like to support asynchronous execution
+check_include_file(pthread.h HAVE_PTHREAD_H)
+check_include_file(signal.h HAVE_SIGNAL_H)
+check_function_exists(round HAVE_ROUND)
 
-set(FNM_MAJOR_VERSION 0)
-set(FNM_MINOR_VERSION 7)
-set(FNM_PATCH_VERSION 0)
-set(FNM_VERSION
-  ${FNM_MAJOR_VERSION}.${FNM_MINOR_VERSION}.${FNM_PATCH_VERSION})
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+find_package(Threads REQUIRED)
 
-# Offer the user the choice of overriding the installation directories
-set(INSTALL_LIB_DIR lib CACHE PATH "Installation directory for libraries")
-set(INSTALL_BIN_DIR bin CACHE PATH "Installation directory for executables")
-set(INSTALL_INCLUDE_DIR include CACHE PATH
-  "Installation directory for header files")
-if(WIN32 AND NOT CYGWIN)
-  set(DEF_INSTALL_CMAKE_DIR CMake)
+if (Threads_FOUND)
+  set(HAVE_THREAD 1)
+endif()
+
+add_definitions(-DDEBUG)
+
+#include(cmake/simd.cmake)
+if (MSVC OR CYGWIN)
+  add_definitions(-DHAVE_CONFIG_H)
+endif()
+
+find_package(FFTW REQUIRED)
+include_directories(${FFTW_INCLUDES})
+
+set (ACCURATE_TRIGONOMETRICS 0)
+option (USE_Accurate_trigonometrics "Use scalar versions" OFF)
+if (USE_Accurate_trigonometrics)
+  set(ACCURATE_TRIGONOMETRICS 1)
 else()
-  set(DEF_INSTALL_CMAKE_DIR lib/CMake/Fnm)
+  set(ACCURATE_TRIGONOMETRICS 0)
 endif()
-set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH
-  "Installation directory for CMake files")
 
-# JEM: Allow the developer to select if Dynamic or Static libraries are built
-option (BUILD_SHARED_LIBS "Build Shared Libraries" OFF)
-set(LIB_TYPE STATIC)
+# Verify (SPS_EXPORT -> FNM_EXPORT)
+
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
+
 if (BUILD_SHARED_LIBS)
-  set(LIB_TYPE SHARED)
+  add_definitions(-D_FNM_DYNAMIC_LINKING)
 endif()
 
-option (BUILD_TEST "Build tests" OFF)
+add_definitions(-DINLINE_VERTICES_CALCULATOR)
 
-# Make relative paths absolute (needed later on)
-foreach(p LIB BIN INCLUDE CMAKE)
-  set(var INSTALL_${p}_DIR)
-  if(NOT IS_ABSOLUTE "${${var}}")
-    set(${var} "${CMAKE_INSTALL_PREFIX}/${${var}}")
+if(CMAKE_COMPILER_IS_GNUCXX)
+  set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS} -fPIC -msse2 -msse3 -msse4 -mavx -pedantic -Wall")
+elseif(MSVC)
+  set(CMAKE_CXX_FLAGS "/Ox ${CMAKE_CXX_FLAGS}")
+endif()
+
+# Hack for Cygwin using FMA
+if (CYGWIN)
+  set(CMAKE_CXX_FLAGS "-mfma ${CMAKE_CXX_FLAGS}")
+endif()
+
+set(fnm_HEADERS
+  FnmSIMD.hpp
+  FnmMath.hpp
+  fnm.hpp
+  fnm_data.hpp
+  fnm_export.h
+  fastgl.hpp
+#  gauss_legendre.h
+  "${CMAKE_CURRENT_BINARY_DIR}/config.h"
+)
+set(fnm_SOURCES
+  ../sps/smath.cpp
+  fnm.cpp
+  fnm_data.cpp
+  fastgl.cpp
+#  gauss_legendre.cpp
+)
+
+#if (UNIX AND NOT WIN32)
+#  set(fnm_SOURCES "${fnm_SOURCES}" "../sps/strace.cpp")
+#endif()
+
+add_library(fnm ${LIB_TYPE} ${fnm_SOURCES} ${fnm_HEADERS} config.h.in)
+
+if (WIN32)
+  link_directories(${FFTW_INCLUDES})
+  if (BUILD_SHARED_LIBS)
+    target_link_libraries(fnm ${FFTW_LIBRARIES})
+  else()
+    link_libraries(fnm ${FFTW_LIBRARIES})
   endif()
-endforeach()
-
-#include(cmake/gtest.cmake)
-
-#include(cmake/gmock.cmake)
-
-#include(cmake/nanomsg.cmake)
-
-# set up include-directories
-include_directories(
-  "${PROJECT_SOURCE_DIR}"   # to find fnm/exports_fnm.h
-  "${PROJECT_BINARY_DIR}")  # to find fnm/config.h
-
-enable_testing()
-
-# Add sub-directories
-add_subdirectory(sps)
-
-add_subdirectory(fnm)
-
-#add_subdirectory(fftw_test)
-
-#add_subdirectory(irq)
-
-#add_subdirectory(msq)
-
-#add_subdirectory(doc)
-
-# add_subdirectory(sps)
-
-# The interesting stuff goes here
-# ===============================
-
-# Add all targets to the build-tree export set
-export(TARGETS fnm
-  FILE "${PROJECT_BINARY_DIR}/FnmTargets.cmake")
-
-# Export the package for use from the build-tree
-# (this registers the build-tree with a global CMake-registry)
-export(PACKAGE Fnm)
-
-# Create the FnmConfig.cmake and FnmConfigVersion files
-file(RELATIVE_PATH REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}"
-   "${INSTALL_INCLUDE_DIR}")
-
-# JEM: Generation of FnmConfig.cmake needs to know if dynamic linking is used
-if (BUILD_SHARED_LIBS)
-  set(FNM_DYNAMIC_LINKING TRUE)
 else()
-  set(FNM_DYNAMIC_LINKING FALSE)
+  message(${FFTW_LIBRARIES})
+  link_libraries(fnm ${FFTW_LIBRARIES})
 endif()
 
-# JEM: This is used for installations - no hard coding of directories,
-file(RELATIVE_PATH REL_BIN_DIR "${INSTALL_CMAKE_DIR}"
-   "${INSTALL_BIN_DIR}")
+generate_export_header(fnm)
 
-# ... for the build tree
-set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
-set(CONF_LIBRARY_DIRS "") # For build tree, multiple configurations are used
-configure_file(FnmConfig.cmake.in
-  "${PROJECT_BINARY_DIR}/FnmConfig.cmake" @ONLY)
+set_target_properties(fnm PROPERTIES
+  PUBLIC_HEADER "${fnm_HEADERS};${CMAKE_CURRENT_BINARY_DIR}/config.h;${CMAKE_CURRENT_BINARY_DIR}/fnm_export.h")
 
-# FNM_CMAKE_DIR is just a variable name, used in FnmConfig.cmake.in
 
-# ... for the install tree
-set(CONF_INCLUDE_DIRS "\${FNM_CMAKE_DIR}/${REL_INCLUDE_DIR}")
-set(CONF_LIBRARY_DIRS "\${FNM_CMAKE_DIR}/${REL_BIN_DIR}")
-configure_file(FnmConfig.cmake.in
-  "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/FnmConfig.cmake" @ONLY)
+# SWIG Target
 
-# ... for both
-configure_file(FnmConfigVersion.cmake.in
-  "${PROJECT_BINARY_DIR}/FnmConfigVersion.cmake" @ONLY)
+if (MSVC)
+  add_definitions(-DSWIG_PYTHON_INTERPRETER_NO_DEBUG)
+endif()
 
-# Install the FnmConfig.cmake and FnmConfigVersion.cmake
-install(FILES
-  "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/FnmConfig.cmake"
-  "${PROJECT_BINARY_DIR}/FnmConfigVersion.cmake"
-  DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
+find_package(SWIG REQUIRED) #set(SWIG_EXECUTABLE /usr/bin/swig3.0)
+include(${SWIG_USE_FILE})
 
-# Install the export set for use with the install-tree
-install(EXPORT FnmTargets DESTINATION
-  "${INSTALL_CMAKE_DIR}" COMPONENT dev)
+find_package(PythonLibs REQUIRED)
 
-# Add uninstall target, in linux simply issue xargs rm < install_manifest.txt
-configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake_uninstall.cmake"
-    IMMEDIATE @ONLY)
+include_directories(${PYTHON_INCLUDE_PATH})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_BINARY_DIR}) # config.h
 
-add_custom_target(UNINSTALL
-    COMMAND ${CMAKE_COMMAND} -P
-    ${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake_uninstall.cmake)
+if (CYGWIN)
+  include_directories("/usr/include/numpy")
+endif()
+
+if (MSVC)
+  set(CMAKE_SWIG_FLAGS "-D_SWIG_WIN32")
+endif()
+
+set_source_files_properties(fnm.i PROPERTIES CPLUSPLUS ON)
+
+set(swig_fnm_HEADERS
+)
+
+set(swig_fnm_SOURCES
+)
+
+swig_add_module(swig_fnm python fnm.i ${swig_fnm_HEADERS} ${swig_fnm_SOURCES})
+
+if (WIN32)
+  string(REPLACE "_d" "" PYTHON_LIBRARIES "${PYTHON_LIBRARIES}")
+endif()
+
+swig_link_libraries(swig_fnm fnm ${PYTHON_LIBRARIES})
+
+if (WIN32)
+  # pyconfig.h is not autogenerated on Winblows. To avoid warnings, we
+  # add a compiler directive
+  get_directory_property(DirDefs COMPILE_DEFINITIONS )
+  set_target_properties(_swig_fnm PROPERTIES
+    COMPILE_DEFINITIONS "${DirDefs};HAVE_ROUND")
+endif()
+
+find_package(OpenMP REQUIRED)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+
+include_directories(${GTEST_INCLUDE_DIR})
+
+# Enable the test
+find_package(PythonInterp)
+         
+install(TARGETS fnm
+  # IMPORTANT: Add the fnm library to the "export-set"
+  EXPORT FnmTargets
+  RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
+  ARCHIVE DESTINATION "${INSTALL_LIB_DIR}" COMPONENT lib
+  LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT shlib
+  PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}/fnm"
+  COMPONENT dev)
+
+# Copy dependencies
+if (WIN32)
+  if (USE_SHARED_LIBS)
+    # Library is installed, but we don't use shared libraries
+    add_custom_command(TARGET fnm POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      "${FFTW_INCLUDES}/${FFTW_LIBRARIES}"
+      "$<TARGET_FILE_DIR:fnm>")
+  endif()
+
+  if (1)
+    set(SwigFnmOutputFiles
+      swig_fnm.py
+    )
+    foreach(SwigFnmOutputFile ${SwigFnmOutputFiles})
+      add_custom_command(TARGET _swig_fnm POST_BUILD
+    	COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    	"${CMAKE_CURRENT_BINARY_DIR}/${SwigFnmOutputFile}"
+    	"${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION:fnm>")
+    endforeach()
+  endif()
+endif()
