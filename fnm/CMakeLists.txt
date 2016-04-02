@@ -21,10 +21,7 @@ endif()
 
 add_definitions(-DDEBUG)
 
-#include(cmake/simd.cmake)
-if (MSVC OR CYGWIN)
-  add_definitions(-DHAVE_CONFIG_H)
-endif()
+set(HAVE_CONFIG_H 1)
 
 find_package(FFTW REQUIRED)
 include_directories(${FFTW_INCLUDES})
