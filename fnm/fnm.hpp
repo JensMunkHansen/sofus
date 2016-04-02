@@ -236,37 +236,6 @@ STATIC_INLINE_BEGIN std::complex<T> CalcSingle(const T& s1,
                                                const T* uweights,
                                                const size_t nUs) STATIC_INLINE_END;
 
-int blockMatch4x4(const unsigned char* refFrame,
-                  int stepBytesRF /*stride*/,
-                  const unsigned char* curBlock,
-                  int stepBytesCB /*stride*/,
-                  int* matchBlock /*results*/,
-                  int frameWidth,
-                  int frameHeight);
-
-int blockMatch4x4SSE2(const unsigned char* refFrame,
-                      int stepBytesRF,
-                      const unsigned char* curBlock,
-                      int stepBytesCB,
-                      int* matchBlock,
-                      int frameWidth,
-                      int frameHeight);
-
-int blockMatch4x4SSE4(const unsigned char* refFrame, int stepBytesRF, const unsigned
-                      char* curBlock, int stepBytesCB, int* matchBlock, int frameWidth, int frameHeight);
-
-int blockMatch8x8SSE2(const unsigned char* refFrame, int stepBytesRF, const unsigned
-                      char* curBlock, int stepBytesCB, int* matchBlock, int frameWidth, int frameHeight);
-  
-int blockMatch8x8SSE4(const unsigned char* refFrame, int stepBytesRF, const unsigned
-                      char* curBlock, int stepBytesCB, int* matchBlock, int frameWidth, int frameHeight);
-
-int blockMatch16x16SSE2(const unsigned char* refFrame, int stepBytesRF, const unsigned
-                        char* curBlock, int stepBytesCB, int* matchBlock, int frameWidth, int frameHeight);
-
-int blockMatch16x16SSE4(const unsigned char* refFrame, int stepBytesRF, const unsigned
-                        char* curBlock, int stepBytesCB, int* matchBlock, int frameWidth, int frameHeight);
-
 /* Local variables: */
 /* indent-tabs-mode: nil */
 /* tab-width: 2 */
