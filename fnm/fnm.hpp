@@ -7,30 +7,7 @@
 #include <complex>
 #include <vector>
 
-int FNM_EXPORT hello();
-
 #define N_MAX_THREADS 8
-
-
-// FIXME
-/*
-template <typename T>
-struct A
-{
-  template <typename T1>
-  struct B
-  {
-    static T1 b;
-  };
-
-  B<T> b;
-  typedef B<T> BT;
-  T val() { return b.b; }
-};
-
-template <typename T> template<typename T1>
-T1 A<T>::B<T1>::b;
-*/
 
 namespace fnm {
   /// Forward-declare ApertureData
@@ -46,22 +23,6 @@ namespace fnm {
 
 namespace fnm {
 
-  typedef struct fractionType {
-    int n;
-    int m;
-    double R;
-    fractionType() = default;
-    fractionType(int n, int m, double R) : n(n), m(m), R(R) {};
-  } fractionType;
-
-  fractionType approximate(double R, int n, int m);
-
-  fractionType calc_incr_int(double startDepth,
-                             double stopDepth,
-                             double startValue=0.0,
-                             double stopValue=-6.0);
-
-  
   template <class T>
   class FNM_EXPORT Aperture {
   private:

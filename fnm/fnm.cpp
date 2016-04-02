@@ -27,65 +27,8 @@
 # include "gauss_legendre.h"
 #endif
 
-int hello() {
-  return 1;
-}
-
-
 namespace fnm {
 
-  fractionType fractionize(double R, int n, int d) {
-    double error = fabs(double(n)/d - R);
-    fractionType retval(n,d,error);
-    return retval;
-  }
-
-  fractionType better(const fractionType a,
-                      const fractionType b) {
-    fractionType retval;
-    if (a.R < b.R) {
-      retval = a;
-    }
-    else {
-      retval = b;
-    }
-    return retval;
-  }
-
-  
-  fractionType approximate(double R, int n, int m) {
-    fractionType result = {0,1,R};
-    int n1, n2;
-    for (int d = 1 ; d < m+1 ; d++) {
-      n1 = std::min<int>(n, (int) floor(R*d));
-      n2 = std::min<int>(n,n1+1);
-      result = better(result, fractionize(R, n1, d));
-      result = better(result, fractionize(R,n2,d));
-    }
-    printf("n: %d, m: %d, R: %f\n",result.n, result.m, result.R);
-    return result;
-  }
-
-  fractionType calc_incr_int(double startDepth, double stopDepth,
-                             double startValue,
-                             double stopValue) {
-    double fs = 12.0e6;
-    double ds = 1540.0 / (2.0*fs);
-    double a = pow(10,(startValue / 20.0));
-    double b = pow(10,(stopValue / 20.0));
-    int u = int(startDepth / ds);
-    int v = int(stopDepth / ds);
-    int maxStep = 255;
-    double increment = 1.0e-6;
-    int maxIncr = (2 << 15) - 1;
-    double R = (round(fabs(a-b) / increment) -1) / (v-u);
-    fractionType retval = approximate(R, maxIncr, maxStep);
-    if (b > a)
-      retval.n = -retval.n;
-    return retval;
-  }
-
-  
 #if defined(C99) && !defined(__STRICT_ANSI__)
   template <class T>
   sysparm_t<T> Aperture<T>::_sysparm =
