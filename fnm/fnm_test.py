@@ -14,6 +14,7 @@ r = ref.rect(hh=0.5,hw=0.5,nAbcissa=[ndiv,ndiv])
 
 point = [0,0,5.0]
 k = 1.0
+d = 5.0
 
 dirt = r.H_ref(point,k)
 

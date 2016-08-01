@@ -23,9 +23,6 @@ add_definitions(-DDEBUG)
 
 set(HAVE_CONFIG_H 1)
 
-find_package(FFTW REQUIRED)
-include_directories(${FFTW_INCLUDES})
-
 set (ACCURATE_TRIGONOMETRICS 0)
 option (USE_Accurate_trigonometrics "Use scalar versions" OFF)
 if (USE_Accurate_trigonometrics)
@@ -78,18 +75,6 @@ set(fnm_SOURCES
 #endif()
 
 add_library(fnm ${LIB_TYPE} ${fnm_SOURCES} ${fnm_HEADERS} config.h.in)
-
-if (WIN32)
-  link_directories(${FFTW_INCLUDES})
-  if (BUILD_SHARED_LIBS)
-    target_link_libraries(fnm ${FFTW_LIBRARIES})
-  else()
-    link_libraries(fnm ${FFTW_LIBRARIES})
-  endif()
-else()
-  message(${FFTW_LIBRARIES})
-  link_libraries(fnm ${FFTW_LIBRARIES})
-endif()
 
 generate_export_header(fnm)
 
@@ -164,14 +149,6 @@ install(TARGETS fnm
 
 # Copy dependencies
 if (WIN32)
-  if (USE_SHARED_LIBS)
-    # Library is installed, but we don't use shared libraries
-    add_custom_command(TARGET fnm POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      "${FFTW_INCLUDES}/${FFTW_LIBRARIES}"
-      "$<TARGET_FILE_DIR:fnm>")
-  endif()
-
   if (1)
     set(SwigFnmOutputFiles
       swig_fnm.py
