@@ -504,11 +504,12 @@ namespace fnm {
   }
   
   template <class T>
-  void Aperture<T>::RectanglesGet(T** outRectangles, size_t* nElements,
-                                  size_t* nSubElements, size_t* nCornerCoordinates) const {
+  void Aperture<T>::RectanglesGet(T** out, size_t* nElements,
+                                  size_t* nSubElements, size_t* nParams) const
+  {
 
-    // Needed to avoid temporaries (if a view was returned). We
-    // allocate, so this can be a temporary
+    // Needed to avoid temporaries (if a view is returned). We
+    // allocate, so this is not a temporary
     static size_t _nCornerCoordinates = 12;
 
     const size_t _nElements       = m_data->m_nelements;
@@ -517,7 +518,6 @@ namespace fnm {
 
     // The function allocates
     T* arr = (T*) malloc(arrSize);
-
     memset(arr,0,arrSize);
 
     const sps::rect_t<T>* rectangles = m_data->m_rectangles;
@@ -527,19 +527,101 @@ namespace fnm {
         for (size_t iCorner = 0 ; iCorner < Aperture<T>::nVerticesPerElement ; iCorner++) {
           for (size_t iXYZ = 0 ; iXYZ < 3 ; iXYZ++) {
             arr[iElement * _nSubElements * Aperture<T>::nVerticesPerElement * 3 +
-                iSubElement * Aperture<T>::nVerticesPerElement * 3 + iCorner*3 + iXYZ] = 
-              rectangles[iElement*_nSubElements +
-                         iSubElement][iCorner][iXYZ];
+                iSubElement * Aperture<T>::nVerticesPerElement * 3 + iCorner*3 + iXYZ] =
+                  rectangles[iElement*_nSubElements +
+                             iSubElement][iCorner][iXYZ];
           }
         }
       }
     }
-    
-    *nElements          = m_data->m_nelements;
-    *nSubElements       = m_data->m_nsubelements;
-    *nCornerCoordinates = _nCornerCoordinates;
 
-    *outRectangles = arr;
+    *nElements    = m_data->m_nelements;
+    *nSubElements = m_data->m_nsubelements;
+    *nParams      = _nCornerCoordinates;
+
+    *out          = arr;
+  }
+
+  template <class T>
+  void Aperture<T>::ElementsGet(T** out, size_t* nElements,
+                                size_t* nParams) const
+  {
+
+    // TODO: Use common function for ElementsGet and SubElementsGet
+
+    const size_t nElePosParams = Aperture<T>::nElementPosParameters;
+
+    const size_t _nElements             = m_data->m_nelements;
+    const size_t nSubElementsPerElement = 1;
+    const size_t arrSize                = _nElements * nSubElementsPerElement * nElePosParams * sizeof(T);
+
+    // The function allocates
+    T* arr = (T*) malloc(arrSize);
+    memset(arr,0,arrSize);
+
+    std::vector<std::vector<element_t<T> > >& elements = *m_data->m_elements;
+
+    for (size_t iElement = 0 ; iElement < _nElements ; iElement++) {
+      arr[iElement * nSubElementsPerElement * nElePosParams] = elements[iElement][0].hw;
+
+      arr[iElement * nSubElementsPerElement * nElePosParams + 1] = elements[iElement][0].hh;
+
+      memcpy(&arr[iElement * nSubElementsPerElement * nElePosParams + 2],
+             &elements[iElement][0].center[0],
+             sizeof(sps::point_t<T>));
+      arr[iElement * nSubElementsPerElement * nElePosParams] = elements[iElement][0].euler.alpha;
+      arr[iElement * nSubElementsPerElement * nElePosParams] = elements[iElement][0].euler.beta;
+      arr[iElement * nSubElementsPerElement * nElePosParams] = elements[iElement][0].euler.gamma;
+    }
+
+    *nElements    = m_data->m_nelements;
+    *nParams      = Aperture<T>::nElementPosParameters; // No need to introduce static variable
+
+    *out          = arr;
+
+  }
+
+  template <class T>
+  void Aperture<T>::SubElementsGet(T** out, size_t* nElements,
+                                   size_t* nSubElements, size_t* nParams) const
+  {
+
+    const size_t nElePosParams = Aperture<T>::nElementPosParameters;
+
+    const size_t _nElements             = m_data->m_nelements;
+    const size_t nSubElementsPerElement = m_data->m_nsubelements;
+    const size_t arrSize                = _nElements * nSubElementsPerElement * nElePosParams * sizeof(T);
+
+    // The function allocates
+    T* arr = (T*) malloc(arrSize);
+    memset(arr,0,arrSize);
+
+    std::vector<std::vector<element_t<T> > >& elements = *m_data->m_elements;
+
+    for (size_t iElement = 0 ; iElement < _nElements ; iElement++) {
+      for (size_t jElement = 0 ; jElement < nSubElementsPerElement ; jElement++) {
+
+        arr[iElement * nSubElementsPerElement * nElePosParams +
+            jElement * nElePosParams + 0] = elements[iElement][jElement].hw;
+
+        arr[iElement * nSubElementsPerElement * nElePosParams +
+            jElement * nElePosParams + 1] = elements[iElement][jElement].hh;
+
+        memcpy(&arr[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams + 2],
+               &elements[iElement][jElement].center[0],
+               sizeof(sps::point_t<T>));
+        arr[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams+5] = elements[iElement][jElement].euler.alpha;
+        arr[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams+6] = elements[iElement][jElement].euler.beta;
+        arr[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams+7] = elements[iElement][jElement].euler.gamma;
+      }
+    }
+
+    *nElements    = m_data->m_nelements;
+    *nSubElements = m_data->m_nsubelements;
+    *nParams      = Aperture<T>::nElementPosParameters; // No need to introduce static variable
+
+    *out          = arr;
+
   }
   
   template <class T>
@@ -553,13 +635,13 @@ namespace fnm {
 
   template <class T>
   bool Aperture<T>::SubElementsSet(const T* pos, const size_t nElements,
-                                   const size_t nSubElementsPerElement, const size_t nDim) {
+                                   const size_t nSubElementsPerElement, const size_t nDim)
+  {
     bool retval = true;
 
     if (nDim != Aperture<T>::nElementPosParameters) {
       retval = false;
-    }
-    else {
+    } else {
       if ((nElements != m_data->m_nelements) || (m_data->m_nsubelements != nSubElementsPerElement)) {
 
         if (m_data->m_elements)
@@ -571,7 +653,7 @@ namespace fnm {
 
         m_data->m_elements     =
           new std::vector< std::vector<element_t<T> > >(nElements,
-                                                        std::vector<element_t<T> >(nSubElementsPerElement));
+              std::vector<element_t<T> >(nSubElementsPerElement));
 
         if (m_data->m_apodizations) {
           _mm_free(m_data->m_apodizations);
@@ -587,17 +669,20 @@ namespace fnm {
       std::vector<std::vector<element_t<T> > >& elements = *m_data->m_elements;
 
       const size_t nElePosParams = Aperture<T>::nElementPosParameters;
-      
+
       for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
         for (size_t jElement = 0 ; jElement < nSubElementsPerElement ; jElement++) {
 
           elements[iElement][jElement].hw = pos[iElement * nSubElementsPerElement * nElePosParams +
                                                 jElement * nElePosParams + 0];
-          elements[iElement][jElement].hh = pos[jElement*nElePosParams + 1];
+          // Error was here
+          elements[iElement][jElement].hh = pos[iElement * nSubElementsPerElement * nElePosParams +
+                                                jElement * nElePosParams + 1];
+
           memcpy(&elements[iElement][jElement].center[0],
                  &pos[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams + 2],
                  sizeof(sps::point_t<T>));
-          elements[iElement][jElement].euler.alpha = 
+          elements[iElement][jElement].euler.alpha =
             pos[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams+5];
           elements[iElement][jElement].euler.beta =
             pos[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams+6];

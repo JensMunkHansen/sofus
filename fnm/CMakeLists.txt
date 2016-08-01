@@ -105,7 +105,7 @@ if (MSVC)
   set(CMAKE_SWIG_FLAGS "-D_SWIG_WIN32")
 endif()
 
-set_source_files_properties(fnm.i PROPERTIES CPLUSPLUS ON)
+set_source_files_properties(swig_fnm.i PROPERTIES CPLUSPLUS ON)
 
 set(swig_fnm_HEADERS
 )
@@ -113,7 +113,7 @@ set(swig_fnm_HEADERS
 set(swig_fnm_SOURCES
 )
 
-swig_add_module(swig_fnm python fnm.i ${swig_fnm_HEADERS} ${swig_fnm_SOURCES})
+swig_add_module(swig_fnm python swig_fnm.i ${swig_fnm_HEADERS} ${swig_fnm_SOURCES})
 
 if (WIN32)
   string(REPLACE "_d" "" PYTHON_LIBRARIES "${PYTHON_LIBRARIES}")

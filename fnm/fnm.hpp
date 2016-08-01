@@ -66,6 +66,9 @@ namespace fnm {
 
     void PhasesGet(T** phases, size_t* nPhases);
 
+    void RectanglesGet(T** out, size_t* nElements,
+                       size_t* nSubElements, size_t* nParams) const;
+    
     /**
      * Get focus point or virtual source
      *
@@ -144,6 +147,12 @@ namespace fnm {
      * @return 
      */
     bool SubElementsSet(const T* pos, const size_t nElements, const size_t nSubElementsPerElement, const size_t nDim);
+
+    void ElementsGet(T** out, size_t* nElements,
+                     size_t* nParams) const;
+
+    void SubElementsGet(T** out, size_t* nElements,
+                        size_t* nSubElements, size_t* nParams) const;
     
     const size_t& NDivWGet() const;
 
@@ -153,8 +162,6 @@ namespace fnm {
 
     void NDivHSet(const size_t nDivH);
 
-    void RectanglesGet(T** outRectangles, size_t* nElements,
-                       size_t* nSubElements, size_t* nCornerCoordinates) const;
     
     void CalcCwField(const T* pos, const size_t nPositions, const size_t nDim,
                      std::complex<T>** odata, size_t* nOutPositions);
