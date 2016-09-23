@@ -1,31 +1,33 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.0)
+
+project(Fnm C CXX)
 
 # Add path for custom modules
 set(CMAKE_MODULE_PATH
   ${CMAKE_MODULE_PATH}
-  "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
-  )
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-project(Fnm C CXX)
+# Prefix used for dependencies
+set(CMAKE_PREFIX_PATH "${CMAKE_CURRENT_BINARY_DIR}/deps-prefix" CACHE STRING "Prefix path for dependencies")
 
+find_package(Doxygen)
+
+include(SetInstallDir)
+include(DoxygenTarget)
+include(SetWarningLevels)
+
+string(TIMESTAMP timestring %Y%m%d%H%M%S UTC)
 set(FNM_MAJOR_VERSION 0)
 set(FNM_MINOR_VERSION 7)
 set(FNM_PATCH_VERSION 0)
-set(FNM_VERSION
-  ${FNM_MAJOR_VERSION}.${FNM_MINOR_VERSION}.${FNM_PATCH_VERSION})
+set(FNM_TWEAK_VERSION ${timestring})
 
-# Offer the user the choice of overriding the installation directories
-set(INSTALL_LIB_DIR lib CACHE PATH "Installation directory for libraries")
-set(INSTALL_BIN_DIR bin CACHE PATH "Installation directory for executables")
-set(INSTALL_INCLUDE_DIR include CACHE PATH
-  "Installation directory for header files")
-if(WIN32 AND NOT CYGWIN)
-  set(DEF_INSTALL_CMAKE_DIR CMake)
-else()
-  set(DEF_INSTALL_CMAKE_DIR lib/CMake/Fnm)
-endif()
-set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH
-  "Installation directory for CMake files")
+set(FNM_VERSION
+  ${FNM_MAJOR_VERSION}.${FNM_MINOR_VERSION}.${FNM_PATCH_VERSION}.${FNM_TWEAK_VERSION})
+
+# Setup installation directories and make relative paths absolute 
+# ===============================================================
+setup_installation_directories()
 
 # JEM: Allow the developer to select if Dynamic or Static libraries are built
 option (BUILD_SHARED_LIBS "Build Shared Libraries" OFF)
@@ -36,62 +38,73 @@ endif()
 
 option (BUILD_TEST "Build tests" OFF)
 
-# Make relative paths absolute (needed later on)
-foreach(p LIB BIN INCLUDE CMAKE)
-  set(var INSTALL_${p}_DIR)
-  if(NOT IS_ABSOLUTE "${${var}}")
-    set(${var} "${CMAKE_INSTALL_PREFIX}/${${var}}")
-  endif()
-endforeach()
+option(USE_MQUEUE "Use message queues" OFF)
 
-#include(cmake/gtest.cmake)
+option(BUILD_DOCUMENTATION
+    "Create and install the HTML based API documentation (requires Doxygen)" ${DOXYGEN_FOUND})
 
-#include(cmake/gmock.cmake)
+if(MSVC)
+  set(CMAKE_CXX_FLAGS "/Ox ${CMAKE_CXX_FLAGS}")
+  # throws not supported
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4290")
+  # padding
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4324")
+  # strcpy_s _CRT_SECURE_NO_DEPRECATE, consider to use set_source_files_properties
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4996")
+endif()
 
-#include(cmake/nanomsg.cmake)
+if( CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64" )
+  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+endif()
 
 # set up include-directories
 include_directories(
   "${PROJECT_SOURCE_DIR}"   # to find fnm/exports_fnm.h
-  "${PROJECT_BINARY_DIR}")  # to find fnm/config.h
+  "${PROJECT_BINARY_DIR}"   # to find fnm/config.h
+  )
 
 enable_testing()
+
+if (BUILD_DOCUMENTATION)
+  add_doxygen_target(doc)
+endif()
+
+if(CMAKE_COMPILER_IS_GNUCXX)
+  set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS} -msse2 -msse3 -msse4 -mavx -pedantic -Wall")
+endif()
 
 # Add sub-directories
 add_subdirectory(sps)
 
+add_subdirectory(gl)
+
 add_subdirectory(fnm)
 
-#add_subdirectory(fftw_test)
+add_subdirectory(python)
 
-#add_subdirectory(irq)
-
-#add_subdirectory(msq)
-
-#add_subdirectory(doc)
-
-# add_subdirectory(sps)
+add_subdirectory(test)
 
 # The interesting stuff goes here
 # ===============================
 
 # Add all targets to the build-tree export set
-export(TARGETS fnm
+export(TARGETS fnm gl sps
   FILE "${PROJECT_BINARY_DIR}/FnmTargets.cmake")
 
 # Export the package for use from the build-tree
-# (this registers the build-tree with a global CMake-registry)
 export(PACKAGE Fnm)
 
 # Create the FnmConfig.cmake and FnmConfigVersion files
 file(RELATIVE_PATH REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}"
    "${INSTALL_INCLUDE_DIR}")
 
-# JEM: Generation of FnmConfig.cmake needs to know if dynamic linking is used
-if (BUILD_SHARED_LIBS)
-  set(FNM_DYNAMIC_LINKING TRUE)
-else()
-  set(FNM_DYNAMIC_LINKING FALSE)
+if (WIN32)
+  # Expose location generated DLL's (used on Windows)
+  if (BUILD_SHARED_LIBS)
+    set(FNM_DYNAMIC_LINKING TRUE)
+  else()
+    set(FNM_DYNAMIC_LINKING FALSE)
+  endif()
 endif()
 
 # JEM: This is used for installations - no hard coding of directories,

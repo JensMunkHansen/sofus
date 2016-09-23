@@ -1,0 +1,14 @@
+/**
+* @file   config.h
+* @author Jens Munk Hansen <jens.munk.hansen@gmai.com>
+* @date   Tue Apr 29 19:46:27 2014
+*
+* @brief  Auto-generated configuration file
+*
+*
+*/
+#cmakedefine _GL_LUT_TABLE_SIZE   @_GL_LUT_TABLE_SIZE@
+
+#cmakedefine _BESSELJZERO_LUT_TABLE_SIZE @_BESSELJZERO_LUT_TABLE_SIZE@
+
+#cmakedefine _BESSELJ_1_SQUARED_LUT_TABLE_SIZE @_BESSELJ_1_SQUARED_LUT_TABLE_SIZE@

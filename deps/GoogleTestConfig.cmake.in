@@ -1,0 +1,38 @@
+# TODO: Consider creating another GoogleTestConfig.cmake for an install tree (requires relative directories in CMakeLists.txt)
+
+cmake_minimum_required(VERSION 2.8.9)
+
+get_filename_component(GTEST_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+set(GTEST_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+set(GTEST_BINARY_DIR "@CONF_BINARY_DIR@")
+
+add_library(gtest UNKNOWN IMPORTED)
+add_library(gtest_main UNKNOWN IMPORTED)
+add_library(gmock UNKNOWN IMPORTED)
+add_library(gmock_main UNKNOWN IMPORTED)
+
+# ... for the build tree
+if (MSVC)
+  # Release with debug info
+  set_property(TARGET gtest PROPERTY IMPORTED_LOCATION_RELWITHDEBINFO "${GTEST_BINARY_DIR}/googlemock/gtest/RelWithDebInfo/@CMAKE_FIND_LIBRARY_PREFIXES@gtest@CMAKE_STATIC_LIBRARY_SUFFIX@")
+  set_property(TARGET gtest_main PROPERTY IMPORTED_LOCATION_RELWITHDEBINFO "${GTEST_BINARY_DIR}/googlemock/gtest/RelWithDebInfo/@CMAKE_FIND_LIBRARY_PREFIXES@gtest_main@CMAKE_STATIC_LIBRARY_SUFFIX@")
+  # Debug
+  set_property(TARGET gtest PROPERTY IMPORTED_LOCATION_DEBUG "${GTEST_BINARY_DIR}/googlemock/gtest/Debug/@CMAKE_FIND_LIBRARY_PREFIXES@gtest@CMAKE_STATIC_LIBRARY_SUFFIX@")
+  set_property(TARGET gtest_main PROPERTY IMPORTED_LOCATION_DEBUG "${GTEST_BINARY_DIR}/googlemock/gtest/Debug/@CMAKE_FIND_LIBRARY_PREFIXES@gtest_main@CMAKE_STATIC_LIBRARY_SUFFIX@")
+  # Release
+  set_property(TARGET gtest PROPERTY IMPORTED_LOCATION_RELEASE "${GTEST_BINARY_DIR}/googlemock/gtest/Release/@CMAKE_FIND_LIBRARY_PREFIXES@gtest@CMAKE_STATIC_LIBRARY_SUFFIX@")
+  set_property(TARGET gtest_main PROPERTY IMPORTED_LOCATION_RELEASE "${GTEST_BINARY_DIR}/googlemock/gtest/Release/@CMAKE_FIND_LIBRARY_PREFIXES@gtest_main@CMAKE_STATIC_LIBRARY_SUFFIX@")
+  # Min size Release
+  set_property(TARGET gtest PROPERTY IMPORTED_LOCATION_MINSIZEREL "${GTEST_BINARY_DIR}/googlemock/gtest/MinSizeRel/@CMAKE_FIND_LIBRARY_PREFIXES@gtest@CMAKE_STATIC_LIBRARY_SUFFIX@")
+  set_property(TARGET gtest_main PROPERTY IMPORTED_LOCATION_MINSIZEREL "${GTEST_BINARY_DIR}/googlemock/gtest/MinSizeRel/@CMAKE_FIND_LIBRARY_PREFIXES@gtest_main@CMAKE_STATIC_LIBRARY_SUFFIX@")
+else()
+  # Linux (much simpler)
+  set_property(TARGET gtest PROPERTY IMPORTED_LOCATION "${GTEST_BINARY_DIR}/googlemock/gtest/@CMAKE_FIND_LIBRARY_PREFIXES@gtest@CMAKE_STATIC_LIBRARY_SUFFIX@")
+  set_property(TARGET gtest_main PROPERTY IMPORTED_LOCATION "${GTEST_BINARY_DIR}/googlemock/gtest/@CMAKE_FIND_LIBRARY_PREFIXES@gtest_main@CMAKE_STATIC_LIBRARY_SUFFIX@")
+  set_property(TARGET gmock PROPERTY IMPORTED_LOCATION "${GTEST_BINARY_DIR}/googlemock/@CMAKE_FIND_LIBRARY_PREFIXES@gtest@CMAKE_STATIC_LIBRARY_SUFFIX@")
+  set_property(TARGET gmock_main PROPERTY IMPORTED_LOCATION "${GTEST_BINARY_DIR}/googlemock/@CMAKE_FIND_LIBRARY_PREFIXES@gtest_main@CMAKE_STATIC_LIBRARY_SUFFIX@")
+endif()
+
+set(GTEST_LIBRARIES gtest gtest_main)
+
+
