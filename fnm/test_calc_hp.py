@@ -97,8 +97,8 @@ plt.imshow(np.abs(pressure),extent=np.round(1000*np.r_[0,2*d,-1.5*d/2,1.5*d/2]),
 plt.xlabel('Depth [mm]')
 plt.ylabel('Width [mm]')
 
-if 0:
-  delays = np.sum((a.positions - a.focus)**2,axis=1)/a.c
+if 1:
+  delays = np.sum((a.pos - a.focus)**2,axis=1)/a.c
   a.phases = 2*np.pi*a.f0 * (delays - delays.max())
   out = a.CalcCwFieldRef(pos)
   result3 = out.reshape((nx,nz))
@@ -109,7 +109,7 @@ if 0:
   plt.xlabel('Depth [mm]')
   plt.ylabel('Width [mm]')
 
-if 0:
+if 1:
   a1 = linear_array(nElements=nelex,pitch=width+kerf,kerf=kerf,height=height,c=soundspeed, nAbcissa=[a.nDivW,a.nDivH])
   a1.set_focus([0,0,d],f0)
   result2 = a1.cw_pressure(xs,np.zeros(xs.shape),zs,k)

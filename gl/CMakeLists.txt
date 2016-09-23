@@ -1,0 +1,98 @@
+# Testing start:
+if (0)
+  # Ups, gl_export.h and config.h must reside in a gl subdirectory
+  if(NOT "${CMAKE_MINIMUM_REQUIRED_VERSION}")
+    cmake_minimum_required(VERSION 3.0)
+  endif()    
+  # Add path for custom modules
+  set(CMAKE_MODULE_PATH
+    ${CMAKE_MODULE_PATH}
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
+    )
+
+  # Prefix used for dependencies
+  if (NOT CMAKE_PREFIX_PATH)
+    set(CMAKE_PREFIX_PATH "${CMAKE_CURRENT_BINARY_DIR}/deps-prefix" CACHE STRING "Prefix path for dependencies")
+  endif()
+endif()
+# Testing stop:
+
+include(GenerateExportHeader)
+
+find_package( GoogleTest REQUIRED )
+find_package( Threads REQUIRED )
+find_package( Mathematica )
+include_directories(${GTEST_INCLUDE_DIRS})
+
+set(_BUILD_LUT OFF)
+set(_GL_LUT_TABLE_SIZE 101 CACHE STRING "Max number of abcissa used for Gauss-Legendre integration")
+
+if (MATHEMATICA_FOUND)
+  option(BUILD_LUT "Generate LUT using Mathematica" OFF)
+  set(_BUILD_LUT "${BUILD_LUT}")
+else()
+endif()
+
+set(_BESSELJZERO_LUT_TABLE_SIZE 20 CACHE STRING "First zeros of BesselJ(0,z)")
+set(_BESSELJ_1_SQUARED_LUT_TABLE_SIZE 21 CACHE STRING "Square of BesselJ(1,BesselZero(0,k))")
+
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
+
+set(gl_HEADERS
+  "${CMAKE_CURRENT_BINARY_DIR}/gl_export.h"
+  "${CMAKE_CURRENT_BINARY_DIR}/config.h"
+  fastgl.hpp
+  gl_lut.hpp
+  bessel_lut.hpp
+)
+set(gl_SOURCES
+  fastgl.cpp
+  gl.cpp
+)
+
+if (_BUILD_LUT)
+  add_custom_command(OUTPUT
+    ${CMAKE_CURRENT_BINARY_DIR}/gl_lut.cpp
+    COMMENT "Generating Gauss-Legendre LUT" VERBATIM
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/gl_lut.m ${CMAKE_CURRENT_BINARY_DIR}/gl_lut.cpp ${_GL_LUT_TABLE_SIZE}
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/gl_lut.m)
+  add_custom_command(OUTPUT
+    ${CMAKE_CURRENT_BINARY_DIR}/bessel_lut.cpp
+    COMMENT "Generating Bessel LUT" VERBATIM
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bessel_lut.m ${CMAKE_CURRENT_BINARY_DIR}/bessel_lut.cpp ${_BESSELJZERO_LUT_TABLE_SIZE}
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/bessel_lut.m)
+endif()
+
+if (_BUILD_LUT)
+  set(gl_SOURCES "${gl_SOURCES}" "${CMAKE_CURRENT_BINARY_DIR}/gl_lut.cpp")
+  set(gl_SOURCES "${gl_SOURCES}" "${CMAKE_CURRENT_BINARY_DIR}/bessel_lut.cpp")
+else()
+  set(gl_SOURCES "${gl_SOURCES}" "${CMAKE_CURRENT_SOURCE_DIR}/gl_lut.cpp")
+  set(gl_SOURCES "${gl_SOURCES}" "${CMAKE_CURRENT_SOURCE_DIR}/bessel_lut.cpp")
+endif()
+
+add_library(gl ${LIB_TYPE} ${gl_SOURCES} ${gl_HEADERS})
+
+generate_export_header(gl)# DEFINE_NO_DEPRECATED)
+
+add_executable(gl_test gl_test.cpp)
+
+# Targets are defined in GoogleTest.cmake
+target_link_libraries(gl_test ${GTEST_LIBRARIES})
+
+target_link_libraries(gl_test gl)
+
+# Link to threading library
+set( CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${CMAKE_THREAD_LIBS_INIT}")
+
+enable_testing()
+add_test(NAME    gl_test 
+         COMMAND gl_test)
+
+install(TARGETS gl
+  EXPORT FnmTargets
+  RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
+  ARCHIVE DESTINATION "${INSTALL_LIB_DIR}" COMPONENT lib
+  LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT shlib
+  PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}/gl"
+  COMPONENT dev)

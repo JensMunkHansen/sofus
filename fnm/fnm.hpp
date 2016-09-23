@@ -7,30 +7,7 @@
 #include <complex>
 #include <vector>
 
-int FNM_EXPORT hello();
-
 #define N_MAX_THREADS 8
-
-
-// FIXME
-/*
-template <typename T>
-struct A
-{
-  template <typename T1>
-  struct B
-  {
-    static T1 b;
-  };
-
-  B<T> b;
-  typedef B<T> BT;
-  T val() { return b.b; }
-};
-
-template <typename T> template<typename T1>
-T1 A<T>::B<T1>::b;
-*/
 
 namespace fnm {
   /// Forward-declare ApertureData
@@ -46,22 +23,6 @@ namespace fnm {
 
 namespace fnm {
 
-  typedef struct fractionType {
-    int n;
-    int m;
-    double R;
-    fractionType() = default;
-    fractionType(int n, int m, double R) : n(n), m(m), R(R) {};
-  } fractionType;
-
-  fractionType approximate(double R, int n, int m);
-
-  fractionType calc_incr_int(double startDepth,
-                             double stopDepth,
-                             double startValue=0.0,
-                             double stopValue=-6.0);
-
-  
   template <class T>
   class FNM_EXPORT Aperture {
   private:
@@ -105,6 +66,9 @@ namespace fnm {
 
     void PhasesGet(T** phases, size_t* nPhases);
 
+    void RectanglesGet(T** out, size_t* nElements,
+                       size_t* nSubElements, size_t* nParams) const;
+    
     /**
      * Get focus point or virtual source
      *
@@ -183,6 +147,12 @@ namespace fnm {
      * @return 
      */
     bool SubElementsSet(const T* pos, const size_t nElements, const size_t nSubElementsPerElement, const size_t nDim);
+
+    void ElementsGet(T** out, size_t* nElements,
+                     size_t* nParams) const;
+
+    void SubElementsGet(T** out, size_t* nElements,
+                        size_t* nSubElements, size_t* nParams) const;
     
     const size_t& NDivWGet() const;
 
@@ -192,8 +162,6 @@ namespace fnm {
 
     void NDivHSet(const size_t nDivH);
 
-    void RectanglesGet(T** outRectangles, size_t* nElements,
-                       size_t* nSubElements, size_t* nCornerCoordinates) const;
     
     void CalcCwField(const T* pos, const size_t nPositions, const size_t nDim,
                      std::complex<T>** odata, size_t* nOutPositions);
@@ -274,37 +242,6 @@ STATIC_INLINE_BEGIN std::complex<T> CalcSingle(const T& s1,
                                                const T* uxs,
                                                const T* uweights,
                                                const size_t nUs) STATIC_INLINE_END;
-
-int blockMatch4x4(const unsigned char* refFrame,
-                  int stepBytesRF /*stride*/,
-                  const unsigned char* curBlock,
-                  int stepBytesCB /*stride*/,
-                  int* matchBlock /*results*/,
-                  int frameWidth,
-                  int frameHeight);
-
-int blockMatch4x4SSE2(const unsigned char* refFrame,
-                      int stepBytesRF,
-                      const unsigned char* curBlock,
-                      int stepBytesCB,
-                      int* matchBlock,
-                      int frameWidth,
-                      int frameHeight);
-
-int blockMatch4x4SSE4(const unsigned char* refFrame, int stepBytesRF, const unsigned
-                      char* curBlock, int stepBytesCB, int* matchBlock, int frameWidth, int frameHeight);
-
-int blockMatch8x8SSE2(const unsigned char* refFrame, int stepBytesRF, const unsigned
-                      char* curBlock, int stepBytesCB, int* matchBlock, int frameWidth, int frameHeight);
-  
-int blockMatch8x8SSE4(const unsigned char* refFrame, int stepBytesRF, const unsigned
-                      char* curBlock, int stepBytesCB, int* matchBlock, int frameWidth, int frameHeight);
-
-int blockMatch16x16SSE2(const unsigned char* refFrame, int stepBytesRF, const unsigned
-                        char* curBlock, int stepBytesCB, int* matchBlock, int frameWidth, int frameHeight);
-
-int blockMatch16x16SSE4(const unsigned char* refFrame, int stepBytesRF, const unsigned
-                        char* curBlock, int stepBytesCB, int* matchBlock, int frameWidth, int frameHeight);
 
 /* Local variables: */
 /* indent-tabs-mode: nil */

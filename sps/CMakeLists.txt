@@ -52,9 +52,7 @@ if (NOT TARGET signals_test)
     set(USE_FFTW_THREADS 1)
   endif()
   
-  if (MSVC OR CYGWIN)
-    add_definitions(-DHAVE_CONFIG_H)
-  endif()
+  set(HAVE_CONFIG_H 1)
   
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
   
@@ -68,13 +66,11 @@ if (NOT TARGET signals_test)
 
   set(sps_HEADERS
     smath.hpp
-    signals.hpp
     sps_threads.hpp
   )
   
   set(sps_SOURCES
     smath.cpp
-    signals.cpp
   )
 
   add_library(sps ${sps_HEADERS} ${sps_SOURCES})

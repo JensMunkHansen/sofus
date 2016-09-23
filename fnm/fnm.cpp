@@ -27,65 +27,8 @@
 # include "gauss_legendre.h"
 #endif
 
-int hello() {
-  return 1;
-}
-
-
 namespace fnm {
 
-  fractionType fractionize(double R, int n, int d) {
-    double error = fabs(double(n)/d - R);
-    fractionType retval(n,d,error);
-    return retval;
-  }
-
-  fractionType better(const fractionType a,
-                      const fractionType b) {
-    fractionType retval;
-    if (a.R < b.R) {
-      retval = a;
-    }
-    else {
-      retval = b;
-    }
-    return retval;
-  }
-
-  
-  fractionType approximate(double R, int n, int m) {
-    fractionType result = {0,1,R};
-    int n1, n2;
-    for (int d = 1 ; d < m+1 ; d++) {
-      n1 = std::min<int>(n, (int) floor(R*d));
-      n2 = std::min<int>(n,n1+1);
-      result = better(result, fractionize(R, n1, d));
-      result = better(result, fractionize(R,n2,d));
-    }
-    printf("n: %d, m: %d, R: %f\n",result.n, result.m, result.R);
-    return result;
-  }
-
-  fractionType calc_incr_int(double startDepth, double stopDepth,
-                             double startValue,
-                             double stopValue) {
-    double fs = 12.0e6;
-    double ds = 1540.0 / (2.0*fs);
-    double a = pow(10,(startValue / 20.0));
-    double b = pow(10,(stopValue / 20.0));
-    int u = int(startDepth / ds);
-    int v = int(stopDepth / ds);
-    int maxStep = 255;
-    double increment = 1.0e-6;
-    int maxIncr = (2 << 15) - 1;
-    double R = (round(fabs(a-b) / increment) -1) / (v-u);
-    fractionType retval = approximate(R, maxIncr, maxStep);
-    if (b > a)
-      retval.n = -retval.n;
-    return retval;
-  }
-
-  
 #if defined(C99) && !defined(__STRICT_ANSI__)
   template <class T>
   sysparm_t<T> Aperture<T>::_sysparm =
@@ -561,11 +504,12 @@ namespace fnm {
   }
   
   template <class T>
-  void Aperture<T>::RectanglesGet(T** outRectangles, size_t* nElements,
-                                  size_t* nSubElements, size_t* nCornerCoordinates) const {
+  void Aperture<T>::RectanglesGet(T** out, size_t* nElements,
+                                  size_t* nSubElements, size_t* nParams) const
+  {
 
-    // Needed to avoid temporaries (if a view was returned). We
-    // allocate, so this can be a temporary
+    // Needed to avoid temporaries (if a view is returned). We
+    // allocate, so this is not a temporary
     static size_t _nCornerCoordinates = 12;
 
     const size_t _nElements       = m_data->m_nelements;
@@ -574,7 +518,6 @@ namespace fnm {
 
     // The function allocates
     T* arr = (T*) malloc(arrSize);
-
     memset(arr,0,arrSize);
 
     const sps::rect_t<T>* rectangles = m_data->m_rectangles;
@@ -584,19 +527,101 @@ namespace fnm {
         for (size_t iCorner = 0 ; iCorner < Aperture<T>::nVerticesPerElement ; iCorner++) {
           for (size_t iXYZ = 0 ; iXYZ < 3 ; iXYZ++) {
             arr[iElement * _nSubElements * Aperture<T>::nVerticesPerElement * 3 +
-                iSubElement * Aperture<T>::nVerticesPerElement * 3 + iCorner*3 + iXYZ] = 
-              rectangles[iElement*_nSubElements +
-                         iSubElement][iCorner][iXYZ];
+                iSubElement * Aperture<T>::nVerticesPerElement * 3 + iCorner*3 + iXYZ] =
+                  rectangles[iElement*_nSubElements +
+                             iSubElement][iCorner][iXYZ];
           }
         }
       }
     }
-    
-    *nElements          = m_data->m_nelements;
-    *nSubElements       = m_data->m_nsubelements;
-    *nCornerCoordinates = _nCornerCoordinates;
 
-    *outRectangles = arr;
+    *nElements    = m_data->m_nelements;
+    *nSubElements = m_data->m_nsubelements;
+    *nParams      = _nCornerCoordinates;
+
+    *out          = arr;
+  }
+
+  template <class T>
+  void Aperture<T>::ElementsGet(T** out, size_t* nElements,
+                                size_t* nParams) const
+  {
+
+    // TODO: Use common function for ElementsGet and SubElementsGet
+
+    const size_t nElePosParams = Aperture<T>::nElementPosParameters;
+
+    const size_t _nElements             = m_data->m_nelements;
+    const size_t nSubElementsPerElement = 1;
+    const size_t arrSize                = _nElements * nSubElementsPerElement * nElePosParams * sizeof(T);
+
+    // The function allocates
+    T* arr = (T*) malloc(arrSize);
+    memset(arr,0,arrSize);
+
+    std::vector<std::vector<element_t<T> > >& elements = *m_data->m_elements;
+
+    for (size_t iElement = 0 ; iElement < _nElements ; iElement++) {
+      arr[iElement * nSubElementsPerElement * nElePosParams] = elements[iElement][0].hw;
+
+      arr[iElement * nSubElementsPerElement * nElePosParams + 1] = elements[iElement][0].hh;
+
+      memcpy(&arr[iElement * nSubElementsPerElement * nElePosParams + 2],
+             &elements[iElement][0].center[0],
+             sizeof(sps::point_t<T>));
+      arr[iElement * nSubElementsPerElement * nElePosParams] = elements[iElement][0].euler.alpha;
+      arr[iElement * nSubElementsPerElement * nElePosParams] = elements[iElement][0].euler.beta;
+      arr[iElement * nSubElementsPerElement * nElePosParams] = elements[iElement][0].euler.gamma;
+    }
+
+    *nElements    = m_data->m_nelements;
+    *nParams      = Aperture<T>::nElementPosParameters; // No need to introduce static variable
+
+    *out          = arr;
+
+  }
+
+  template <class T>
+  void Aperture<T>::SubElementsGet(T** out, size_t* nElements,
+                                   size_t* nSubElements, size_t* nParams) const
+  {
+
+    const size_t nElePosParams = Aperture<T>::nElementPosParameters;
+
+    const size_t _nElements             = m_data->m_nelements;
+    const size_t nSubElementsPerElement = m_data->m_nsubelements;
+    const size_t arrSize                = _nElements * nSubElementsPerElement * nElePosParams * sizeof(T);
+
+    // The function allocates
+    T* arr = (T*) malloc(arrSize);
+    memset(arr,0,arrSize);
+
+    std::vector<std::vector<element_t<T> > >& elements = *m_data->m_elements;
+
+    for (size_t iElement = 0 ; iElement < _nElements ; iElement++) {
+      for (size_t jElement = 0 ; jElement < nSubElementsPerElement ; jElement++) {
+
+        arr[iElement * nSubElementsPerElement * nElePosParams +
+            jElement * nElePosParams + 0] = elements[iElement][jElement].hw;
+
+        arr[iElement * nSubElementsPerElement * nElePosParams +
+            jElement * nElePosParams + 1] = elements[iElement][jElement].hh;
+
+        memcpy(&arr[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams + 2],
+               &elements[iElement][jElement].center[0],
+               sizeof(sps::point_t<T>));
+        arr[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams+5] = elements[iElement][jElement].euler.alpha;
+        arr[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams+6] = elements[iElement][jElement].euler.beta;
+        arr[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams+7] = elements[iElement][jElement].euler.gamma;
+      }
+    }
+
+    *nElements    = m_data->m_nelements;
+    *nSubElements = m_data->m_nsubelements;
+    *nParams      = Aperture<T>::nElementPosParameters; // No need to introduce static variable
+
+    *out          = arr;
+
   }
   
   template <class T>
@@ -610,13 +635,13 @@ namespace fnm {
 
   template <class T>
   bool Aperture<T>::SubElementsSet(const T* pos, const size_t nElements,
-                                   const size_t nSubElementsPerElement, const size_t nDim) {
+                                   const size_t nSubElementsPerElement, const size_t nDim)
+  {
     bool retval = true;
 
     if (nDim != Aperture<T>::nElementPosParameters) {
       retval = false;
-    }
-    else {
+    } else {
       if ((nElements != m_data->m_nelements) || (m_data->m_nsubelements != nSubElementsPerElement)) {
 
         if (m_data->m_elements)
@@ -628,7 +653,7 @@ namespace fnm {
 
         m_data->m_elements     =
           new std::vector< std::vector<element_t<T> > >(nElements,
-                                                        std::vector<element_t<T> >(nSubElementsPerElement));
+              std::vector<element_t<T> >(nSubElementsPerElement));
 
         if (m_data->m_apodizations) {
           _mm_free(m_data->m_apodizations);
@@ -644,17 +669,20 @@ namespace fnm {
       std::vector<std::vector<element_t<T> > >& elements = *m_data->m_elements;
 
       const size_t nElePosParams = Aperture<T>::nElementPosParameters;
-      
+
       for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
         for (size_t jElement = 0 ; jElement < nSubElementsPerElement ; jElement++) {
 
           elements[iElement][jElement].hw = pos[iElement * nSubElementsPerElement * nElePosParams +
                                                 jElement * nElePosParams + 0];
-          elements[iElement][jElement].hh = pos[jElement*nElePosParams + 1];
+          // Error was here
+          elements[iElement][jElement].hh = pos[iElement * nSubElementsPerElement * nElePosParams +
+                                                jElement * nElePosParams + 1];
+
           memcpy(&elements[iElement][jElement].center[0],
                  &pos[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams + 2],
                  sizeof(sps::point_t<T>));
-          elements[iElement][jElement].euler.alpha = 
+          elements[iElement][jElement].euler.alpha =
             pos[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams+5];
           elements[iElement][jElement].euler.beta =
             pos[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams+6];
@@ -1646,567 +1674,6 @@ template std::complex<float> FNM_EXPORT CalcHzVecGL(const float& s,
                                                     const float* vxs,
                                                     const float* vweights,
                                                     const size_t nVs);
-
-// Block matching
-
-int blockMatch4x4(const unsigned char* refFrame,
-                  int stepBytesRF /*stride*/,
-                  const unsigned char* curBlock,
-                  int stepBytesCB /*stride*/,
-                  int* matchBlock /*results*/,
-                  int frameWidth,
-                  int frameHeight)
- {
-  int lowSum = INT_MAX;
-  int temSum = 0;
-  int blockHeight = 4;
-  int blockWidth = 4;
-
-  const unsigned char *pRef, *pCur;
-
-  for (int i=0; i<=frameHeight-blockHeight; i++) {
-    for (int j=0; j<=frameWidth-blockWidth; j++) {
-      temSum = 0;
-      pCur = curBlock;
-      pRef = refFrame+i*stepBytesRF+j;
-      for (int k=0; k<blockHeight; k++) {
-        for (int l=0; l<blockWidth; l++) {
-          temSum += labs(*pRef-*pCur);
-          pCur++;
-          pRef++;
-        }
-        // Stride, i.e. next row (move down)
-        pCur+=stepBytesCB-blockWidth;
-        pRef+=stepBytesRF-blockWidth;
-      }
-      
-      if (temSum < lowSum) {
-        printf("Match\n");
-        lowSum = temSum;
-        *matchBlock = j;
-        *(matchBlock+1) = i;
-      }
-    }
-  }
-  return 0;
-}
-
-//
-// m1 a b c d
-// m2 e f g h
-
-// m3 g h a b = _mm_shuffle_ps(m1,m2,_MM_SHUFFLE(1,0,3,2)) // (1 >> 6 | 0 >> 4 | 3 >> 2 | 2
-
-//finds matching blocks for four 4x4 blocks in each call
-int blockMatch4x4SSE2(const unsigned char* refFrame,
-                      int stepBytesRF,
-                      const unsigned char* curBlock,
-                      int stepBytesCB,
-                      int* matchBlock,
-                      int frameWidth,
-                      int frameHeight)
-
-{
-  unsigned int lowSum[4] = {UINT_MAX, UINT_MAX, UINT_MAX, UINT_MAX};
-  unsigned int temSum = 0;
-  int blockHeight = 4;
-  int blockWidth = 4;
-  const unsigned char *pRef, *pCur;
-  __m128i s0, s1, s2, s3, /*s4, s5,*/ s6, s7, s8, s9, s10, s11;
-  pCur = curBlock;
-  s0 = _mm_loadu_si128((__m128i*)pCur);                 // 16 chars
-  s1 = _mm_loadu_si128((__m128i*)(pCur+stepBytesCB));
-  s2 = _mm_loadu_si128((__m128i*)(pCur+2*stepBytesCB));
-  s3 = _mm_loadu_si128((__m128i*)(pCur+3*stepBytesCB));
-  s8 = _mm_unpacklo_epi32(s0, s1);   // s0[0], s1[0], s0[1], s1[1]
-  s9 = _mm_unpacklo_epi32(s2, s3);
-  s10 = _mm_unpackhi_epi32(s0, s1);  // s0[2], s1[2], s0[3], s1[3]
-  s11 = _mm_unpackhi_epi32(s2, s3);
-
-  for (int i=0; i<=frameHeight-blockHeight; i++) {
-    for (int j=0; j<=frameWidth-blockWidth; j++) {
-      pRef = refFrame+i*stepBytesRF+j;
-      s6 = _mm_unpacklo_epi32(
-                              _mm_cvtsi32_si128(*(unsigned int*)pRef),
-                              _mm_cvtsi32_si128(*(unsigned int*)(pRef+stepBytesRF))
-                              );
-      s6 = _mm_shuffle_epi32(s6, 0x44); // b1000100 SHUFFLE(1,0,1,0)
-
-      s7 = _mm_unpacklo_epi32(
-                              _mm_cvtsi32_si128(*(unsigned int*)(pRef+2*stepBytesRF)),
-                              _mm_cvtsi32_si128(*(unsigned int*)(pRef+3*stepBytesRF))
-                              );
-      s7 = _mm_shuffle_epi32(s7, 0x44);
-
-      s0 = _mm_adds_epu16(
-                          _mm_sad_epu8(s6, s8), // r0 = abs(a0-b0)+...+abs(a7-b7), r4 = abs(a8-b8)+...+abs(a15-b15)
-                          _mm_sad_epu8(s7, s9));
-      s1 = _mm_adds_epu16(
-                          _mm_sad_epu8(s6, s10),
-                          _mm_sad_epu8(s7, s11)
-                          );
-      temSum = _mm_extract_epi16(s0,0);
-
-      // Enough right
-      if (temSum < lowSum[0]) {
-        lowSum[0] = temSum;
-        *matchBlock = j;
-        *(matchBlock+1) = i;
-      }
-      temSum = _mm_extract_epi16(s0,4);
-      if (temSum < lowSum[1]) {
-        lowSum[1] = temSum;
-        *(matchBlock+2) = j;
-        *(matchBlock+3) = i;
-      }
-      temSum = _mm_extract_epi16(s1,0);
-      if (temSum < lowSum[2]) {
-        lowSum[2] = temSum;
-        *(matchBlock+4) = j;
-        *(matchBlock+5) = i;
-      }
-      temSum = _mm_extract_epi16(s1,4);
-      if (temSum < lowSum[3]) {
-        lowSum[3] = temSum;
-        *(matchBlock+6) = j;
-        *(matchBlock+7) = i;
-      }
-    }
-  }
-  return 0;
-}
-
-//finds matching blocks for four 4x4 blocks in each call
-int blockMatch4x4SSE4(const unsigned char* refFrame, int stepBytesRF, const unsigned
-                      char* curBlock, int stepBytesCB, int* matchBlock, int frameWidth, int frameHeight) {
-  unsigned int lowSum[4] = {UINT_MAX, UINT_MAX, UINT_MAX, UINT_MAX};
-  unsigned int temSum = 0;
-  int blockHeight = 4;
-  int blockWidth = 4;
-  int k;
-  const unsigned char *pRef, *pCur;
-  __m128i s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11;
-  pCur = curBlock;
-  s0 = _mm_loadu_si128((__m128i*)pCur);
-  s1 = _mm_loadu_si128((__m128i*)(pCur+stepBytesCB));
-  s2 = _mm_loadu_si128((__m128i*)(pCur+2*stepBytesCB));
-  s3 = _mm_loadu_si128((__m128i*)(pCur+3*stepBytesCB));
-  s8 = _mm_unpacklo_epi32(s0, s1);
-  s9 = _mm_unpacklo_epi32(s2, s3);
-  s10 = _mm_unpackhi_epi32(s0, s1);
-  s11 = _mm_unpackhi_epi32(s2, s3);
-  for (int i=0; i<=frameHeight-blockHeight; i++) {
-    int j = 0;
-    for (j=0; j<=frameWidth-16; j+=8) {
-      pCur = curBlock;
-      pRef = refFrame+i*stepBytesRF+j;
-      s2 = _mm_setzero_si128();
-      s3 = _mm_setzero_si128();
-      s4 = _mm_setzero_si128();
-      s5 = _mm_setzero_si128();
-      for (k=0; k<blockHeight; k++) {
-        s0 = _mm_loadu_si128((__m128i*)pRef);
-        s1 = _mm_loadu_si128((__m128i*)pCur);
-        s2 = _mm_adds_epu16(s2, _mm_mpsadbw_epu8(s0, s1, 0));
-        s3 = _mm_adds_epu16(s3, _mm_mpsadbw_epu8(s0, s1, 1));
-        s4 = _mm_adds_epu16(s4, _mm_mpsadbw_epu8(s0, s1, 2));
-        s5 = _mm_adds_epu16(s5, _mm_mpsadbw_epu8(s0, s1, 3));
-        pCur+=stepBytesCB;
-        pRef+=stepBytesRF;
-      }
-      s6 = _mm_minpos_epu16(s2);
-      temSum = _mm_extract_epi16(s6,0);
-      if (temSum < lowSum[0]) {
-        lowSum[0] = temSum;
-        k = _mm_extract_epi16(s6,1);
-        *matchBlock = j+k;
-        *(matchBlock+1) = i;
-      }
-      s6 = _mm_minpos_epu16(s3);
-      temSum = _mm_extract_epi16(s6,0);
-      if (temSum < lowSum[1]) {
-        lowSum[1] = temSum;
-        k = _mm_extract_epi16(s6,1);
-        *(matchBlock+2) = j+k;
-        *(matchBlock+3) = i;
-      }
-      s6 = _mm_minpos_epu16(s4);
-      temSum = _mm_extract_epi16(s6,0);
-      if (temSum < lowSum[2]) {
-        lowSum[2] = temSum;
-        k = _mm_extract_epi16(s6,1);
-        *(matchBlock+4) = j+k;
-        *(matchBlock+5) = i;
-      }
-      s6 = _mm_minpos_epu16(s5);
-      temSum = _mm_extract_epi16(s6,0);
-      if (temSum < lowSum[3]) {
-        lowSum[3] = temSum;
-        k = _mm_extract_epi16(s6,1);
-        *(matchBlock+6) = j+k;
-        *(matchBlock+7) = i;
-      }
-    }
-    for (; j<=frameWidth-blockWidth; j++) {
-      pRef = refFrame+i*stepBytesRF+j;
-      s6 = _mm_unpacklo_epi32(
-                              _mm_cvtsi32_si128(*(unsigned int*)pRef),
-                              _mm_cvtsi32_si128(*(unsigned int*)(pRef+stepBytesRF))
-                              );
-      s6 = _mm_shuffle_epi32(s6, 0x44);
-      s7 = _mm_unpacklo_epi32(
-                              _mm_cvtsi32_si128(*(unsigned int*)(pRef+2*stepBytesRF)),
-                              _mm_cvtsi32_si128(*(unsigned int*)(pRef+3*stepBytesRF))
-                              );
-      s7 = _mm_shuffle_epi32(s7, 0x44);
-      s0 = _mm_adds_epu16(_mm_sad_epu8(s6, s8), _mm_sad_epu8(s7, s9));
-      s1 = _mm_adds_epu16(
-                          _mm_sad_epu8(s6, s10),
-                          _mm_sad_epu8(s7, s11)
-                          );
-      temSum = _mm_extract_epi16(s0,0);
-      if (temSum < lowSum[0]) {
-        lowSum[0] = temSum;
-        *matchBlock = j;
-        *(matchBlock+1) = i;
-      }
-      temSum = _mm_extract_epi16(s0,4);
-      if (temSum < lowSum[1]) {
-        lowSum[1] = temSum;
-        *(matchBlock+2) = j;
-        *(matchBlock+3) = i;
-      }
-      temSum = _mm_extract_epi16(s1,0);
-      if (temSum < lowSum[2]) {
-        lowSum[2] = temSum;
-        *(matchBlock+4) = j;
-        *(matchBlock+5) = i;
-      }
-      temSum = _mm_extract_epi16(s1,4);
-      if (temSum < lowSum[3]) {
-        lowSum[3] = temSum;
-        *(matchBlock+6) = j;
-        *(matchBlock+7) = i;
-      }
-    }
-  }
-  return 0;
-}
-int blockMatch8x8SSE2(const unsigned char* refFrame, int stepBytesRF, const unsigned
-                      char* curBlock, int stepBytesCB, int* matchBlock, int frameWidth, int frameHeight) {
-  unsigned int lowSum = UINT_MAX;
-  unsigned int temSum[2] = {0, 0};
-  int blockHeight = 8;
-  int blockWidth = 8;
-  const unsigned char *pRef, *pCur;
-  __m128i s0, s1, s2, s3, s4, s5, s6, s7, s8;
-  pCur = curBlock;
-  s0 = _mm_shuffle_epi32(_mm_loadu_si128((__m128i*)pCur), 0x44);
-  s1 = _mm_shuffle_epi32(_mm_loadu_si128((__m128i*)(pCur+stepBytesCB)), 0x44);
-  s2 = _mm_shuffle_epi32(_mm_loadu_si128((__m128i*)(pCur+2*stepBytesCB)), 0x44);
-  s3 = _mm_shuffle_epi32(_mm_loadu_si128((__m128i*)(pCur+3*stepBytesCB)), 0x44);
-  s4 = _mm_shuffle_epi32(_mm_loadu_si128((__m128i*)(pCur+4*stepBytesCB)), 0x44);
-  s5 = _mm_shuffle_epi32(_mm_loadu_si128((__m128i*)(pCur+5*stepBytesCB)), 0x44);
-  s6 = _mm_shuffle_epi32(_mm_loadu_si128((__m128i*)(pCur+6*stepBytesCB)), 0x44);
-  s7 = _mm_shuffle_epi32(_mm_loadu_si128((__m128i*)(pCur+7*stepBytesCB)), 0x44);
-  for (int i=0; i<=frameHeight-blockHeight; i++) {
-    int j;
-    for (j=0; j<frameWidth-16; j+=16) {
-      for (int k=0; k<8; k++) {
-        pRef = refFrame+i*stepBytesRF+j+k;
-        s8 = _mm_sad_epu8(s0, _mm_loadu_si128((__m128i*)pRef));
-        s8 = _mm_adds_epu16(s8,
-                            _mm_sad_epu8(s1,
-                                         _mm_loadu_si128((__m128i*)(pRef+stepBytesRF))));
-        s8 = _mm_adds_epu16(s8,
-                            _mm_sad_epu8(s2,
-                                         _mm_loadu_si128((__m128i*)(pRef+2*stepBytesRF))));
-        s8 = _mm_adds_epu16(s8,
-                            _mm_sad_epu8(s3,
-                                         _mm_loadu_si128((__m128i*)(pRef+3*stepBytesRF))));
-        s8 = _mm_adds_epu16(s8,
-                            _mm_sad_epu8(s4,
-                                         _mm_loadu_si128((__m128i*)(pRef+4*stepBytesRF))));
-        s8 = _mm_adds_epu16(s8,
-                            _mm_sad_epu8(s5,
-                                         _mm_loadu_si128((__m128i*)(pRef+5*stepBytesRF))));
-        s8 = _mm_adds_epu16(s8,
-                            _mm_sad_epu8(s6,
-                                         _mm_loadu_si128((__m128i*)(pRef+6*stepBytesRF))));
-        s8 = _mm_adds_epu16(s8,
-                            _mm_sad_epu8(s7,
-                                         _mm_loadu_si128((__m128i*)(pRef+7*stepBytesRF))));
-        temSum[0] = _mm_extract_epi16(s8,0);
-        temSum[1] = _mm_extract_epi16(s8,4);
-        if (temSum[0] <= temSum[1] && temSum[0] < lowSum) {
-          lowSum = temSum[0];
-          *matchBlock = j+k;
-          *(matchBlock+1) = i;
-        }
-        else if (temSum[1] < lowSum) {
-          lowSum = temSum[1];
-          *matchBlock = j+k+8;
-          *(matchBlock+1) = i;
-        }
-      }
-    }
-    for (; j<=frameWidth-blockWidth; j++) {
-      pRef = refFrame+i*stepBytesRF+j;
-      s8 = _mm_sad_epu8(s0, _mm_loadl_epi64((__m128i*)pRef));
-      s8 = _mm_adds_epu16(s8,
-                          _mm_sad_epu8(s1,
-                                       _mm_loadl_epi64((__m128i*)(pRef+stepBytesRF))));
-      s8 = _mm_adds_epu16(s8,
-                          _mm_sad_epu8(s2,
-                                       _mm_loadl_epi64((__m128i*)(pRef+2*stepBytesRF))));
-      s8 = _mm_adds_epu16(s8,
-                          _mm_sad_epu8(s3,
-                                       _mm_loadl_epi64((__m128i*)(pRef+3*stepBytesRF))));
-      s8 = _mm_adds_epu16(s8,
-                          _mm_sad_epu8(s4,
-                                       _mm_loadl_epi64((__m128i*)(pRef+4*stepBytesRF))));
-      s8 = _mm_adds_epu16(s8,
-                          _mm_sad_epu8(s5,
-                                       _mm_loadl_epi64((__m128i*)(pRef+5*stepBytesRF))));
-      s8 = _mm_adds_epu16(s8,
-                          _mm_sad_epu8(s6,
-                                       _mm_loadl_epi64((__m128i*)(pRef+6*stepBytesRF))));
-      s8 = _mm_adds_epu16(s8,
-                          _mm_sad_epu8(s7,
-                                       _mm_loadl_epi64((__m128i*)(pRef+7*stepBytesRF))));
-      temSum[0] = _mm_extract_epi16(s8,0);
-      if (temSum[0] < lowSum) {
-        lowSum = temSum[0];
-        *matchBlock = j;
-        *(matchBlock+1) = i;
-      }
-    }
-  }
-  return 0;
-}
-
-//searches two 8x8 blocks in each call
-int blockMatch8x8SSE4(const unsigned char* refFrame, int stepBytesRF, const unsigned
-                      char* curBlock, int stepBytesCB, int* matchBlock, int frameWidth, int frameHeight) {
-  unsigned int lowSum[2] = {UINT_MAX, UINT_MAX};
-  unsigned int temSum = 0;
-  int blockHeight = 8;
-  int blockWidth = 8;
-  int k;
-  const unsigned char *pRef, *pCur;
-  __m128i s0, s1, s2, s3, s4, s5, s6;
-  for (int i=0; i<=frameHeight-blockHeight; i++) {
-    int j=0;
-    for (j=0; j<=frameWidth-16; j+=8) {
-      pCur = curBlock;
-      pRef = refFrame+i*stepBytesRF+j;
-      s2 = _mm_setzero_si128();
-      s3 = _mm_setzero_si128();
-      s4 = _mm_setzero_si128();
-      s5 = _mm_setzero_si128();
-      for (k=0; k<blockHeight; k++) {
-        s0 = _mm_loadu_si128((__m128i*)pRef);
-        s1 = _mm_loadu_si128((__m128i*)pCur);
-        s2 = _mm_adds_epu16(s2, _mm_mpsadbw_epu8(s0, s1, 0));
-        s3 = _mm_adds_epu16(s3, _mm_mpsadbw_epu8(s0, s1, 5));
-        s4 = _mm_adds_epu16(s4, _mm_mpsadbw_epu8(s0, s1, 2));
-        s5 = _mm_adds_epu16(s5, _mm_mpsadbw_epu8(s0, s1, 7));
-        pCur+=stepBytesCB;
-        pRef+=stepBytesRF;
-      }
-      s6 = _mm_minpos_epu16(_mm_adds_epu16(s2, s3));
-      temSum = _mm_extract_epi16(s6,0);
-      if (temSum < lowSum[0]) {
-        lowSum[0] = temSum;
-        k = _mm_extract_epi16(s6,1);
-        *matchBlock = j+k;
-        *(matchBlock+1) = i;
-      }
-      s6 = _mm_minpos_epu16(_mm_adds_epu16(s4, s5));
-      temSum = _mm_extract_epi16(s6,0);
-      if (temSum < lowSum[1]) {
-        lowSum[1] = temSum;
-        k = _mm_extract_epi16(s6,1);
-        *(matchBlock+2) = j+k;
-        *(matchBlock+3) = i;
-      }
-    }
-    for (; j<=frameWidth-blockWidth; j++) {
-      pCur = curBlock;
-      pRef = refFrame+i*stepBytesRF+j;
-      s2 = _mm_setzero_si128();
-      for (k=0; k<blockHeight; k++) {
-        s0 = _mm_loadl_epi64((__m128i*)pRef);
-        s0 = _mm_shuffle_epi32(s0, 0x44);
-        s1 = _mm_loadu_si128((__m128i*)pCur);
-        s2 = _mm_adds_epu16(s2, _mm_sad_epu8(s0, s1));
-        pCur+=stepBytesCB;
-        pRef+=stepBytesRF;
-      }
-      temSum = _mm_extract_epi16(s2,0);
-      if (temSum < lowSum[0]) {
-        lowSum[0] = temSum;
-        *matchBlock = j;
-        *(matchBlock+1) = i;
-      }
-      temSum = _mm_extract_epi16(s2,4);
-      if (temSum < lowSum[1]) {
-        lowSum[1] = temSum;
-        *(matchBlock+2) = j;
-        *(matchBlock+3) = i;
-      }
-    }
-  }
-  return 0;
-}
-
-int blockMatch16x16SSE2(const unsigned char* refFrame, int stepBytesRF, const unsigned
-                        char* curBlock, int stepBytesCB, int* matchBlock, int frameWidth, int frameHeight) {
-  unsigned int lowSum = UINT_MAX;
-  unsigned int temSum = 0;
-  int blockHeight = 16;
-  int blockWidth = 16;
-  const unsigned char *pRef, *pCur;
-  __m128i s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16;
-  pCur = curBlock;
-  s0 = _mm_loadu_si128((__m128i*)pCur);
-  s1 = _mm_loadu_si128((__m128i*)(pCur+stepBytesCB));
-  s2 = _mm_loadu_si128((__m128i*)(pCur+2*stepBytesCB));
-  s3 = _mm_loadu_si128((__m128i*)(pCur+3*stepBytesCB));
-  s4 = _mm_loadu_si128((__m128i*)(pCur+4*stepBytesCB));
-  s5 = _mm_loadu_si128((__m128i*)(pCur+5*stepBytesCB));
-  s6 = _mm_loadu_si128((__m128i*)(pCur+6*stepBytesCB));
-  s7 = _mm_loadu_si128((__m128i*)(pCur+7*stepBytesCB));
-  s8 = _mm_loadu_si128((__m128i*)(pCur+8*stepBytesCB));
-  s9 = _mm_loadu_si128((__m128i*)(pCur+9*stepBytesCB));
-  s10 = _mm_loadu_si128((__m128i*)(pCur+10*stepBytesCB));
-  s11 = _mm_loadu_si128((__m128i*)(pCur+11*stepBytesCB));
-  s12 = _mm_loadu_si128((__m128i*)(pCur+12*stepBytesCB));
-  s13 = _mm_loadu_si128((__m128i*)(pCur+13*stepBytesCB));
-  s14 = _mm_loadu_si128((__m128i*)(pCur+14*stepBytesCB));
-  s15 = _mm_loadu_si128((__m128i*)(pCur+15*stepBytesCB));
-  for (int i=0; i<=frameHeight-blockHeight; i++) {
-    for (int j=0; j<=frameWidth-blockWidth; j++) {
-      pRef = refFrame+i*stepBytesRF+j;
-      s16 = _mm_sad_epu8(s0, _mm_loadu_si128((__m128i*)pRef));
-      s16 = _mm_adds_epu16(s16,
-                           _mm_sad_epu8(s1,
-                                        _mm_loadu_si128((__m128i*)(pRef+stepBytesRF))));
-      s16 = _mm_adds_epu16(s16,
-                           _mm_sad_epu8(s2,
-                                        _mm_loadu_si128((__m128i*)(pRef+2*stepBytesRF))));
-      s16 = _mm_adds_epu16(s16,
-                           _mm_sad_epu8(s3,
-                                        _mm_loadu_si128((__m128i*)(pRef+3*stepBytesRF))));
-      s16 = _mm_adds_epu16(s16,
-                           _mm_sad_epu8(s4,
-                                        _mm_loadu_si128((__m128i*)(pRef+4*stepBytesRF))));
-      s16 = _mm_adds_epu16(s16,
-                           _mm_sad_epu8(s5,
-                                        _mm_loadu_si128((__m128i*)(pRef+5*stepBytesRF))));
-      s16 = _mm_adds_epu16(s16,
-                           _mm_sad_epu8(s6,
-                                        _mm_loadu_si128((__m128i*)(pRef+6*stepBytesRF))));
-      s16 = _mm_adds_epu16(s16,
-                           _mm_sad_epu8(s7,
-                                        _mm_loadu_si128((__m128i*)(pRef+7*stepBytesRF))));
-      s16 = _mm_adds_epu16(s16,
-                           _mm_sad_epu8(s8,
-                                        _mm_loadu_si128((__m128i*)(pRef+8*stepBytesRF))));
-      s16 = _mm_adds_epu16(s16,
-                           _mm_sad_epu8(s9,
-                                        _mm_loadu_si128((__m128i*)(pRef+9*stepBytesRF))));
-      s16 = _mm_adds_epu16(s16,
-                           _mm_sad_epu8(s10,
-                                        _mm_loadu_si128((__m128i*)(pRef+10*stepBytesRF))));
-      s16 = _mm_adds_epu16(s16,
-                           _mm_sad_epu8(s11,
-                                        _mm_loadu_si128((__m128i*)(pRef+11*stepBytesRF))));
-      s16 = _mm_adds_epu16(s16,
-                           _mm_sad_epu8(s12,
-                                        _mm_loadu_si128((__m128i*)(pRef+12*stepBytesRF))));
-      s16 = _mm_adds_epu16(s16,
-                           _mm_sad_epu8(s13,
-                                        _mm_loadu_si128((__m128i*)(pRef+13*stepBytesRF))));
-      s16 = _mm_adds_epu16(s16,
-                           _mm_sad_epu8(s14,
-                                        _mm_loadu_si128((__m128i*)(pRef+14*stepBytesRF))));
-      s16 = _mm_adds_epu16(s16,
-                           _mm_sad_epu8(s15,
-                                        _mm_loadu_si128((__m128i*)(pRef+15*stepBytesRF))));
-      temSum = _mm_extract_epi16(s16,0) + _mm_extract_epi16(s16,4);
-      if (temSum < lowSum) {
-        lowSum = temSum;
-        *matchBlock = j;
-        *(matchBlock+1) = i;
-      }
-    }
-  }
-  return 0;
-}
-int blockMatch16x16SSE4(const unsigned char* refFrame, int stepBytesRF, const unsigned
-                        char* curBlock, int stepBytesCB, int* matchBlock, int frameWidth, int frameHeight) {
-  unsigned int lowSum = UINT_MAX;
-  unsigned int temSum = 0;
-  int blockHeight = 16;
-  int blockWidth = 16;
-  int k;
-  const unsigned char *pRef, *pCur;
-  __m128i s0, s1, s2, s3, s4, s5, s6, s7;
-  for (int i=0; i<=frameHeight-blockHeight; i++) {
-    int j=0;
-    for (j=0; j<=frameWidth-24; j+=8) {
-      pCur = curBlock;
-      pRef = refFrame+i*stepBytesRF+j;
-      s3 = _mm_setzero_si128();
-      s4 = _mm_setzero_si128();
-      s5 = _mm_setzero_si128();
-      s6 = _mm_setzero_si128();
-      for (k=0; k<blockHeight; k++) {
-        s0 = _mm_loadu_si128((__m128i*)pRef);
-        s1 = _mm_loadu_si128((__m128i*)(pRef+8));
-        s2 = _mm_loadu_si128((__m128i*)pCur);
-        s3 = _mm_adds_epu16(s3, _mm_mpsadbw_epu8(s0, s2, 0));
-        s4 = _mm_adds_epu16(s4, _mm_mpsadbw_epu8(s0, s2, 5));
-        s5 = _mm_adds_epu16(s5, _mm_mpsadbw_epu8(s1, s2, 2));
-        s6 = _mm_adds_epu16(s6, _mm_mpsadbw_epu8(s1, s2, 7));
-        pCur+=stepBytesCB;
-        pRef+=stepBytesRF;
-      }
-      s7 = _mm_adds_epu16(_mm_adds_epu16(s3, s4), _mm_adds_epu16(s5, s6));
-      s7 = _mm_minpos_epu16(s7);
-      temSum = _mm_extract_epi16(s7,0);
-      if (temSum < lowSum) {
-        lowSum = temSum;
-        k = _mm_extract_epi16(s7,1);
-        *matchBlock = j+k;
-        *(matchBlock+1) = i;
-      }
-    }
-    for (; j<=frameWidth-blockWidth; j++) {
-      pCur = curBlock;
-      pRef = refFrame+i*stepBytesRF+j;
-      s2 = _mm_setzero_si128();
-      for (k=0; k<blockHeight; k++) {
-        s0 = _mm_loadu_si128((__m128i*)pRef);
-        s1 = _mm_loadu_si128((__m128i*)pCur);
-        s2 = _mm_adds_epu16(s2, _mm_sad_epu8(s0, s1));
-        pCur+=stepBytesCB;
-        pRef+=stepBytesRF;
-      }
-      temSum = _mm_extract_epi16(s2,0) + _mm_extract_epi16(s2,4);
-      if (temSum < lowSum) {
-        lowSum = temSum;
-        *matchBlock = j;
-        *(matchBlock+1) = i;
-      }
-    }
-  }
-  return 0;
-}
-
-// _mm_stream_load_si128
-
 
 /* Local variables: */
 /* indent-tabs-mode: nil */
