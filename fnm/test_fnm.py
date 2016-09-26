@@ -72,7 +72,7 @@ ys = np.zeros(xs.shape)
 
 rect = rect(hw=width/2.0,hh=height/2.0,nAbcissa=[ndiv,ndiv*factor])
 
-if 1:
+if 0:
   start = timer()
   result2 = rect.H4(xs,ys,zs,k)
   end = timer()
@@ -111,7 +111,7 @@ a.nDivH = ndiv
 a.nDivW = ndiv*factor
 
 start = timer()
-out = a.CalcCwFast(pos)
+out = a.CalcCwFast(pos)[1]
 end = timer()
 timeString = create_time_string(end-start)
 print(timeString)
