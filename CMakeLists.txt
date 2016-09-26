@@ -63,8 +63,6 @@ include_directories(
   "${PROJECT_BINARY_DIR}"   # to find fnm/config.h
   )
 
-enable_testing()
-
 if (BUILD_DOCUMENTATION)
   add_doxygen_target(doc)
 endif()
@@ -82,7 +80,10 @@ add_subdirectory(fnm)
 
 add_subdirectory(python)
 
-add_subdirectory(test)
+if (BUILD_TEST)
+  enable_testing()
+  add_subdirectory(test)
+endif()
 
 # The interesting stuff goes here
 # ===============================

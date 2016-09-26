@@ -1,25 +1,8 @@
-# Testing start:
-if (0)
-  # Ups, gl_export.h and config.h must reside in a gl subdirectory
-  if(NOT "${CMAKE_MINIMUM_REQUIRED_VERSION}")
-    cmake_minimum_required(VERSION 3.0)
-  endif()    
-  # Add path for custom modules
-  set(CMAKE_MODULE_PATH
-    ${CMAKE_MODULE_PATH}
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
-    )
-
-  # Prefix used for dependencies
-  if (NOT CMAKE_PREFIX_PATH)
-    set(CMAKE_PREFIX_PATH "${CMAKE_CURRENT_BINARY_DIR}/deps-prefix" CACHE STRING "Prefix path for dependencies")
-  endif()
-endif()
-# Testing stop:
-
 include(GenerateExportHeader)
 
-find_package( GoogleTest REQUIRED )
+if (BUILD_TEST)
+  find_package( GoogleTest REQUIRED )
+endif()
 find_package( Threads REQUIRED )
 find_package( Mathematica )
 include_directories(${GTEST_INCLUDE_DIRS})
@@ -41,12 +24,10 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY
 set(gl_HEADERS
   "${CMAKE_CURRENT_BINARY_DIR}/gl_export.h"
   "${CMAKE_CURRENT_BINARY_DIR}/config.h"
-  fastgl.hpp
   gl_lut.hpp
   bessel_lut.hpp
 )
 set(gl_SOURCES
-  fastgl.cpp
   gl.cpp
 )
 
@@ -75,20 +56,22 @@ add_library(gl ${LIB_TYPE} ${gl_SOURCES} ${gl_HEADERS})
 
 generate_export_header(gl)# DEFINE_NO_DEPRECATED)
 
-add_executable(gl_test gl_test.cpp)
-
-# Targets are defined in GoogleTest.cmake
-target_link_libraries(gl_test ${GTEST_LIBRARIES})
-
-target_link_libraries(gl_test gl)
-
-# Link to threading library
-set( CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${CMAKE_THREAD_LIBS_INIT}")
-
-enable_testing()
-add_test(NAME    gl_test 
-         COMMAND gl_test)
-
+if (BUILD_TEST)
+  add_executable(gl_test gl_test.cpp)
+  
+  # Targets are defined in GoogleTest.cmake
+  target_link_libraries(gl_test ${GTEST_LIBRARIES})
+  
+  target_link_libraries(gl_test gl)
+  
+  # Link to threading library
+  set( CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${CMAKE_THREAD_LIBS_INIT}")
+  
+  enable_testing()
+  add_test(NAME    gl_test 
+           COMMAND gl_test)
+endif()
+       
 install(TARGETS gl
   EXPORT FnmTargets
   RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin

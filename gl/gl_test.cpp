@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 #include <gl/gl.hpp>
-#include <gl/fastgl.hpp>
 
 #include <sps/math.h>
 #include <iostream>
@@ -15,72 +14,6 @@ almost_equal(T x, T y, int ulp)
   return std::abs(x-y) < std::numeric_limits<T>::epsilon() * std::abs(x+y) * ulp
          // unless the result is subnormal
          || std::abs(x-y) < std::numeric_limits<T>::min();
-}
-
-TEST(gl_test, gl_vs_fastgl_table)
-{
-  const size_t nMaxOrder = _GL_LUT_TABLE_SIZE;
-
-  bool bSuccess = true;
-
-  for (size_t i = 2; i < nMaxOrder ; i++) {
-    for (size_t j = 0 ; j < i ; j++) {
-
-      fastgl::QuadPair ref = fastgl::GLPair(i, i-j);
-      float x_ref = (float) ref.x();
-      float w_ref = (float) ref.weight;
-
-      // NOTE: Reference implementation return pi / 2.0, where pi = 3.141592653589793238463 and cos(pi/2) different from zero
-      if (fabs(x_ref - cos(3.141592653589793238463 / 2.0)) < 1e-3) {
-        x_ref = 0.0f;
-      }
-
-      gl::GLNode val   = gl::GL(i,j);
-      float x_val = (float) val.value;
-      float w_val = (float) val.weight;
-
-      // FastGL executes cosine, so is less accurate than LUT
-      if (!(almost_equal(x_val,x_ref, 1))) {
-        std::cout << "i: " << i << " j: " << j << std::endl;
-        std::cout << "value: " << x_ref << std::endl;
-        bSuccess = false;
-      }
-      if (!(almost_equal(w_val,w_ref, 1))) {
-        bSuccess = false;
-      }
-    }
-  }
-  EXPECT_EQ(bSuccess, true);
-}
-
-TEST(gl_test, gl_vs_fastgl)
-{
-  const size_t nMaxOrder = _GL_LUT_TABLE_SIZE;
-  const size_t nCount = 10;
-
-  bool bSuccess = true;
-  for (size_t i = nMaxOrder ; i < nCount ; i++) {
-    for (size_t j = 0 ; j < i ; j++) {
-
-      fastgl::QuadPair ref = fastgl::GLPair(i, i-j);
-      float x_ref = (float) ref.x();
-      float w_ref = (float) ref.weight;
-
-      gl::GLNode val   = gl::GL(i,j);
-      float x_val = (float) val.value;
-      float w_val = (float) val.weight;
-
-      if (!(almost_equal(x_val,x_ref, 1))) {
-        std::cout << "i: " << i << " j: " << j << std::endl;
-        std::cout << "value: " << x_ref << std::endl;
-        bSuccess = false;
-      }
-      if (!(almost_equal(w_val,w_ref, 1))) {
-        bSuccess = false;
-      }
-    }
-  }
-  EXPECT_EQ(bSuccess, true);
 }
 
 TEST(gl_test, gl_vs_table)
