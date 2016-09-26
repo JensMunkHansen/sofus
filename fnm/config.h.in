@@ -1,5 +1,15 @@
+/**
+* @file   config.h
+* @author Jens Munk Hansen <jens.munk.hansen@gmai.com>
+* @date   Tue Apr 29 19:46:27 2014
+*
+* @brief  Auto-generated configuration file
+*
+*
+*/
 #cmakedefine HAVE_PTHREAD_H   @HAVE_PTHREAD_H@
 #cmakedefine HAVE_THREAD      @HAVE_THREAD@
-//CMAKE_HAVE_PTHREAD_H
+#cmakedefine HAVE_MQUEUE_H    @HAVE_MQUEUE_H@
 
-#define ACCURATE_TRIGONOMETRICS @ACCURATE_TRIGONOMETRICS@
+#cmakedefine ACCURATE_TRIGONOMETRICS @ACCURATE_TRIGONOMETRICS@
+#cmakedefine N_MAX_THREADS    @N_MAX_THREADS@
