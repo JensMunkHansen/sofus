@@ -4,6 +4,7 @@ SIMD optimized fast ultrasound simulator
 ## Installation
 At the moment, a reference implementation of the fast nearfield method
 (FNM) is available for download. The code can be built by issuing
+
     cd sofus
     mkdir build
 	cd build
