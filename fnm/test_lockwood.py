@@ -61,7 +61,7 @@ zs = zs.reshape((nz,nx))
 a.method = 0x14
 a.delays = np.zeros(1,dtype=np.float32)
 
-out = a.CalcCwFast(pos)
+out = a.CalcCwFast(pos)[1]
 
 out = out.reshape((nz,nx))
 
