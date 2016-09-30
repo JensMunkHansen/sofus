@@ -192,6 +192,7 @@ namespace fnm {
 
       memset((void*)&elements[i][0].euler,0,sizeof(sps::euler_t<T>));
       elements[i][0].hh           = height/2;
+      printf("width: %f\n",width);
       elements[i][0].hw           = width/2;
       elements[i][0].euler.alpha  = T(0.0);
       elements[i][0].euler.beta   = T(0.0);
@@ -299,7 +300,7 @@ namespace fnm {
   void Aperture<T>::FocusSet(const T iFocus[3])
   {
     if ((iFocus[0] != m_data->m_focus[0]) || (iFocus[0] != m_data->m_focus[0]) || (iFocus[0] != m_data->m_focus[0])) {
-      m_data->_focus_valid = false;
+      m_data->_focus_validity = FocusingType::FocusingTypeCount;
     }
     memcpy(&m_data->m_focus[0],&iFocus[0],3*sizeof(T));
   }
@@ -310,35 +311,35 @@ namespace fnm {
 
     size_t nElements = m_data->m_nelements;
 
-#if 0
-    std::unique_ptr<T[]> delays = std::unique_ptr<T[]>(new T[nElements]);
-    T maxDelay = T(0.0);
-    for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
-      delays[iElement] = norm(m_data->m_pos[iElement] - m_data->m_focus) / Aperture<T>::_sysparm.c;
-      maxDelay = std::max<T>(maxDelay,delays[iElement]);
-    }
-    for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
-      m_data->m_phases[iElement] = T(M_2PI) * (delays[iElement] - maxDelay) * m_data->m_f0;
-    }
-#else
-    // Right for CW only
-    size_t nPositions = nElements;
-    std::unique_ptr<T[]> positions = std::unique_ptr<T[]>(new T[3*nPositions]);
-    for (size_t iPosition = 0 ; iPosition < nPositions ; iPosition++) {
-      positions[3*iPosition]   = m_data->m_focus[0];
-      positions[3*iPosition+1] = m_data->m_focus[1];
-      positions[3*iPosition+2] = m_data->m_focus[2];
-    }
+    if (m_data->m_focus_type == FocusingType::Pythagorean) {
+      std::unique_ptr<T[]> delays = std::unique_ptr<T[]>(new T[nElements]);
+      T maxDelay = T(0.0);
+      for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
+        delays[iElement] = norm(m_data->m_pos[iElement] - m_data->m_focus) / Aperture<T>::_sysparm.c;
+        maxDelay = std::max<T>(maxDelay,delays[iElement]);
+      }
+      for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
+        m_data->m_phases[iElement] = T(M_2PI) * (delays[iElement] - maxDelay) * m_data->m_f0;
+      }
+    } else if (m_data->m_focus_type == FocusingType::Rayleigh) {
+      // Right for CW only
+      size_t nPositions = nElements;
+      std::unique_ptr<T[]> positions = std::unique_ptr<T[]>(new T[3*nPositions]);
+      for (size_t iPosition = 0 ; iPosition < nPositions ; iPosition++) {
+        positions[3*iPosition]   = m_data->m_focus[0];
+        positions[3*iPosition+1] = m_data->m_focus[1];
+        positions[3*iPosition+2] = m_data->m_focus[2];
+      }
 
-    std::complex<T>* pFieldValues = NULL;
-    size_t nFieldValues;
-    this->CalcCwFocus(positions.get(),nPositions,3,&pFieldValues,&nFieldValues);
+      std::complex<T>* pFieldValues = NULL;
+      size_t nFieldValues;
+      this->CalcCwFocus(positions.get(),nPositions,3,&pFieldValues,&nFieldValues);
 
-    for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
-      m_data->m_phases[iElement] = - std::arg<T>(pFieldValues[iElement]);
+      for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
+        m_data->m_phases[iElement] = - std::arg<T>(pFieldValues[iElement]);
+      }
+      free(pFieldValues);
     }
-    free(pFieldValues);
-#endif
   }
 
   template <class T>
@@ -359,6 +360,18 @@ namespace fnm {
   void Aperture<T>::FocusGet(T oFocus[3]) const
   {
     memcpy(oFocus,&m_data->m_focus[0],3*sizeof(T));
+  }
+
+  template <class T>
+  int Aperture<T>::FocusingTypeGet() const
+  {
+    return m_data->m_focus_type;
+  }
+
+  template <class T>
+  void Aperture<T>::FocusingTypeSet(const int iFocusingType)
+  {
+    m_data->m_focus_type = iFocusingType;
   }
 
   template <class T>
@@ -475,8 +488,10 @@ namespace fnm {
       }
 
       for (jElement=0 ; jElement < nSubElements ; jElement++) {
-        element_t<T>& element = elements[iElement][jElement];
+        const element_t<T>& element = elements[iElement][jElement];
 
+        printf("half width: %f\n",element.hw);
+        
         // Hack (not working for double anyway)
         SPS_UNREFERENCED_PARAMETER(normal);
         sps::euler_t<float> euler;
@@ -567,7 +582,7 @@ namespace fnm {
       *nElements    = m_data->m_nelements;
       *nSubElements = m_data->m_nsubelements;
       *nParams      = _nCornerCoordinates;
-      
+
       *out          = arr;
     }
   }
@@ -576,6 +591,8 @@ namespace fnm {
   void Aperture<T>::ElementsGet(T** out, size_t* nElements,
                                 size_t* nParams) const
   {
+    printf("half width: %f\n", (*m_data->m_elements)[0][0].hw);
+    printf("half height: %f\n", (*m_data->m_elements)[0][0].hh);
 
     // TODO: Use common function for ElementsGet and SubElementsGet
 
@@ -597,12 +614,15 @@ namespace fnm {
 
         arr[iElement * nSubElementsPerElement * nElePosParams + 1] = elements[iElement][0].hh;
 
+        printf("half width: %f\n", elements[iElement][0].hw);
+        printf("half height: %f\n", elements[iElement][0].hh);
+        
         memcpy(&arr[iElement * nSubElementsPerElement * nElePosParams + 2],
                &elements[iElement][0].center[0],
                sizeof(sps::point_t<T>));
-        arr[iElement * nSubElementsPerElement * nElePosParams] = elements[iElement][0].euler.alpha;
-        arr[iElement * nSubElementsPerElement * nElePosParams] = elements[iElement][0].euler.beta;
-        arr[iElement * nSubElementsPerElement * nElePosParams] = elements[iElement][0].euler.gamma;
+        arr[iElement * nSubElementsPerElement * nElePosParams+5] = elements[iElement][0].euler.alpha;
+        arr[iElement * nSubElementsPerElement * nElePosParams+6] = elements[iElement][0].euler.beta;
+        arr[iElement * nSubElementsPerElement * nElePosParams+7] = elements[iElement][0].euler.gamma;
       }
 
       *nElements    = m_data->m_nelements;
@@ -634,10 +654,10 @@ namespace fnm {
 
           arr[iElement * nSubElementsPerElement * nElePosParams +
               jElement * nElePosParams + 0] = elements[iElement][jElement].hw;
-          
+
           arr[iElement * nSubElementsPerElement * nElePosParams +
               jElement * nElePosParams + 1] = elements[iElement][jElement].hh;
-          
+
           memcpy(&arr[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams + 2],
                  &elements[iElement][jElement].center[0],
                  sizeof(sps::point_t<T>));
@@ -649,7 +669,7 @@ namespace fnm {
       *nElements    = m_data->m_nelements;
       *nSubElements = m_data->m_nsubelements;
       *nParams      = Aperture<T>::nElementPosParameters; // No need to introduce static variable
-  
+
       *out          = arr;
     }
   }
@@ -743,6 +763,12 @@ namespace fnm {
     *odata = (std::complex<T>*) malloc(nScatterers*sizeof(std::complex<T>));
     *nOutPositions = nScatterers;
 
+    if (m_data->_focus_validity != m_data->m_focus_type) {
+      // TODO: Choose between time-of-flight or phase adjustment
+      this->FocusUpdate();
+      m_data->_focus_validity = m_data->m_focus_type;
+    }
+
     fnm::CalcCwField<T>(*this->m_data,
                         pos, nPositions,
                         odata);
@@ -750,42 +776,56 @@ namespace fnm {
 
 // Optimal sampling for integral (reduced integration path)
   template <class T>
-  void Aperture<T>::CalcCwFieldRef(const T* pos, const size_t nPositions, const size_t nDim,
-                                   std::complex<T>** odata, size_t* nOutPositions)
+  int Aperture<T>::CalcCwFieldRef(const T* pos, const size_t nPositions, const size_t nDim,
+                                  std::complex<T>** odata, size_t* nOutPositions)
   {
 
     assert(nDim == 3);
     if (nDim != 3) {
       *odata = NULL;
       *nOutPositions = 0;
-      return;
+      return -1;
     }
+
     size_t nScatterers = nPositions;
     *odata = (std::complex<T>*) malloc(nScatterers*sizeof(std::complex<T>));
     *nOutPositions = nScatterers;
 
-    fnm::CalcCwFieldRef<T>(*this->m_data,
-                           pos, nPositions,
-                           odata);
+    if (m_data->_focus_validity != m_data->m_focus_type) {
+      // TODO: Choose between time-of-flight or phase adjustment
+      this->FocusUpdate();
+      m_data->_focus_validity = m_data->m_focus_type;
+    }
+
+    int retval = fnm::CalcCwFieldRef<T>(*this->m_data,
+                                        pos, nPositions,
+                                        odata);
+    return retval;
   }
 
 
 // Sub-optimal integration range (Old function)
   template <class T>
-  void Aperture<T>::CalcCwField2(const T* pos, const size_t nPositions, const size_t nDim,
-                                 std::complex<T>** odata, size_t* nOutPositions)
+  int Aperture<T>::CalcCwField2(const T* pos, const size_t nPositions, const size_t nDim,
+                                std::complex<T>** odata, size_t* nOutPositions)
   {
 
     assert(nDim == 3);
     if (nDim != 3) {
       *odata = NULL;
       *nOutPositions = 0;
-      return;
+      return -1;
     }
     size_t nScatterers = nPositions;
     *odata = (std::complex<T>*) malloc(nScatterers*sizeof(std::complex<T>));
     memset(*odata, 0, nScatterers*sizeof(std::complex<T>));
     *nOutPositions = nScatterers;
+
+    if (m_data->_focus_validity != m_data->m_focus_type) {
+      // TODO: Choose between time-of-flight or phase adjustment
+      this->FocusUpdate();
+      m_data->_focus_validity = m_data->m_focus_type;
+    }
 
     const T lambda = Aperture<T>::_sysparm.c / m_data->m_f0;
 
@@ -887,12 +927,22 @@ namespace fnm {
                                   uxs.get(), uweights.get(), nDivW,
                                   vxs.get(), vweights.get(), nDivH);
             final = final + result * exp(std::complex<T>(0,m_data->m_phases[iElement]));
+#if 0
+            T real = result.real();
+            T imag = result.imag();
+
+            T carg = cos(m_data->m_phases[iElement]);
+            T sarg = sin(m_data->m_phases[iElement]);
+            final.real(final.real() + real*carg - imag*sarg);
+            final.imag(final.imag() + real*sarg + imag*carg);
+#endif
           }
         }
       }
       (*odata)[iPoint].real(final.real());
       (*odata)[iPoint].imag(final.imag());
     }
+    return 0;
   }
 
 // Reduced integral and fast (the one to use)
@@ -918,9 +968,10 @@ namespace fnm {
     memset(*odata, 0, nPositions*sizeof(std::complex<T>));
     *nOutPositions = nPositions;
 
-    if (!m_data->_focus_valid) {
+    if (m_data->_focus_validity != m_data->m_focus_type) {
+      // TODO: Choose between time-of-flight or phase adjustment
       this->FocusUpdate();
-      m_data->_focus_valid = true;
+      m_data->_focus_validity = m_data->m_focus_type;
     }
 
     const T lambda = Aperture<T>::_sysparm.c / m_data->m_f0;
@@ -1225,15 +1276,15 @@ namespace fnm {
   }
 
   template <class T>
-  void Aperture<T>::CalcCwFocus(const T* pos, const size_t nPositions, const size_t nDim,
-                                std::complex<T>** odata, size_t* nOutPositions)
+  int Aperture<T>::CalcCwFocus(const T* pos, const size_t nPositions, const size_t nDim,
+                               std::complex<T>** odata, size_t* nOutPositions)
   {
 
     assert(nDim == 3);
     if (nDim != 3) {
       *odata = NULL;
       *nOutPositions = 0;
-      return;
+      return -1;
     }
     *odata = (std::complex<T>*) malloc(nPositions*sizeof(std::complex<T>));
     memset(*odata, 0, nPositions*sizeof(std::complex<T>));
@@ -1350,6 +1401,7 @@ namespace fnm {
       (*odata)[iPoint].real(final.real());
       (*odata)[iPoint].imag(final.imag());
     }
+    return 0;
   }
 
 // How do we pass arguments to running thread
@@ -1575,12 +1627,21 @@ namespace fnm {
 #endif
   }
 
+  template <class T>
+  void Aperture<T>::ManagedAllocation(std::complex<T>** outTest, size_t* nOutTest)
+  {
+    const size_t _nData = 100000000;
+    *nOutTest = _nData;
+    *outTest = (std::complex<T>*) malloc(_nData*sizeof(std::complex<T>));
+  }
+
+
   // Specialize static variable
   template <class T>
   thread_arg<T> ApertureThreadArgs<T>::args[N_MAX_THREADS];
 
 #ifdef HAVE_MQUEUE_H
-// Static variables
+  // Static variables
   template <class T>
   bool  ApertureQueue<T>::threads_initialized = false;
 
