@@ -10,13 +10,11 @@
 
 #pragma once
 
-// Example of wrong include
-#include <sps/cenv.h>
-#include <sps/trigintrin.h>
-//#include <sps/smath.hpp>
-
-#include <fnm/FnmMath.hpp>
 #include <fnm/config.h>
+#include <sps/cenv.h>
+#include <sps/smath.hpp>
+#include <fnm/fnm_types.hpp>
+#include <sps/trigintrin.h>
 
 #include <complex>
 
@@ -35,7 +33,7 @@ STATIC_INLINE_BEGIN std::complex<T> CalcHzVecGL(const T& s,
 
 // Non-reduced integral, but simple
 template <class T>
-STATIC_INLINE_BEGIN std::complex<T> CalcHzAll(const fnm::element_t<T>& element,
+STATIC_INLINE_BEGIN std::complex<T> CalcHzAll(const sps::element_t<T>& element,
     const sps::point_t<T>& projection,
     const T& k,
     const T* us,
@@ -45,17 +43,6 @@ STATIC_INLINE_BEGIN std::complex<T> CalcHzAll(const fnm::element_t<T>& element,
     const T* vweights,
     const size_t nVs) STATIC_INLINE_END;
 
-
-template <class T>
-STATIC_INLINE_BEGIN std::complex<T> CalcHzShort(const fnm::element_t<T>& element,
-    const sps::point_t<T>& projection,
-    const T& k,
-    const T* us,
-    const T* uweights,
-    const size_t nUs,
-    const T* vs,
-    const T* vweights,
-    const size_t nVs) STATIC_INLINE_END;
 
 /**
  * Integral with (nUs x nVs) points inside the region of integration
@@ -73,18 +60,7 @@ STATIC_INLINE_BEGIN std::complex<T> CalcHzShort(const fnm::element_t<T>& element
  * @return
  */
 template <class T>
-STATIC_INLINE_BEGIN std::complex<T> CalcHzFast(const fnm::element_t<T>& element,
-    const sps::point_t<T>& projection,
-    const T& k,
-    const T* us,
-    const T* uweights,
-    const size_t nUs,
-    const T* vs,
-    const T* vweights,
-    const size_t nVs) STATIC_INLINE_END;
-
-template <class T>
-STATIC_INLINE_BEGIN std::complex<T> CalcHzFast4(const fnm::element_t<T>& element,
+STATIC_INLINE_BEGIN std::complex<T> CalcHzFast(const sps::element_t<T>& element,
     const sps::point_t<T>& projection,
     const T& k,
     const T* us,
@@ -95,16 +71,17 @@ STATIC_INLINE_BEGIN std::complex<T> CalcHzFast4(const fnm::element_t<T>& element
     const size_t nVs) STATIC_INLINE_END;
 
 template <>
-std::complex<float> CalcHzVecGL(const float& s,
-                                const float& l,
-                                const float& z,
-                                const float& k,
-                                const float* us,
-                                const float* uweights,
-                                const size_t nUs,
-                                const float* vs,
-                                const float* vweights,
-                                const size_t nVs)
+std::complex<float>
+inline CalcHzVecGL(const float& s,
+                   const float& l,
+                   const float& z,
+                   const float& k,
+                   const float* us,
+                   const float* uweights,
+                   const size_t nUs,
+                   const float* vs,
+                   const float* vweights,
+                   const size_t nVs)
 {
 
   const __m128 carg = _mm_set1_ps(cos(-k*z));
@@ -135,7 +112,9 @@ std::complex<float> CalcHzVecGL(const float& s,
 
     __m128 vec_uweight = _mm_load_ps((float*)&uweights[iu]);
 
-    __m128 rcp_denom = _mm_rcp_ps(_mm_add_ps(ls2,s2));
+    __m128 denom = _mm_add_ps(ls2,s2);
+    __m128 rcp_denom = _mm_rcp_ps(denom);
+
     real = _mm_mul_ps(_mm_mul_ps(vec_uweight,_mm_sub_ps(cargw, carg)),rcp_denom);
     imag = _mm_mul_ps(_mm_mul_ps(vec_uweight,_mm_sub_ps(sargw, sarg)),rcp_denom);
 
@@ -203,15 +182,15 @@ std::complex<float> CalcHzVecGL(const float& s,
 
 template <>
 std::complex<float>
-CalcHzAll(const fnm::element_t<float>& element,
-          const sps::point_t<float>& projection, // Consider 4 points
-          const float& k,
-          const float* us,
-          const float* uweights,
-          const size_t nUs,
-          const float* vs,
-          const float* vweights,
-          const size_t nVs)
+inline CalcHzAll(const sps::element_t<float>& element,
+                 const sps::point_t<float>& projection, // Consider 4 points
+                 const float& k,
+                 const float* us,
+                 const float* uweights,
+                 const size_t nUs,
+                 const float* vs,
+                 const float* vweights,
+                 const size_t nVs)
 {
 
   std::complex<float> retval;
@@ -344,261 +323,18 @@ CalcHzAll(const fnm::element_t<float>& element,
   return retval;
 }
 
-
+// TODO: Verify what happens on edges
 template <>
 std::complex<float>
-CalcHzShort(const fnm::element_t<float>& element,
-            const sps::point_t<float>& projection,
-            const float& k,
-            const float* us,
-            const float* uweights,
-            const size_t nUs,
-            const float* vs,
-            const float* vweights,
-            const size_t nVs)
-{
-
-  std::complex<float> retval = std::complex<float>(0.0f,0.0f);
-
-  const float x = projection[0];
-  const float y = projection[1];
-  const float z = projection[2];
-
-  const float hw = element.hw;
-  const float hh = element.hh;
-
-  float s0 = fabs(x) + hw; // [0;|x|+hw] -> [0;hw+|x|]  -> [|x|;|x|+hw]
-  float s1 = hw - fabs(x); // [0;hw-|x|] -> -[hw-|x|;0] -> [|x|-hw;|x|]
-  float l0 = fabs(y) + hh;
-  float l2 = hh - fabs(y);
-
-
-  // Integral (stop, inside)
-  __m128 s_start_in = _mm_setzero_ps();
-  __m128 l_start_in = _mm_setzero_ps();
-
-  // Negative
-  __m128 s_stop_in = _mm_set_ps(s1,s0,s1,s0);
-  __m128 l_stop_in = _mm_set_ps(l2,l2,l0,l0);
-
-  __m128 s_start_out = _mm_set_ps(fabs(x)-hw,fabs(x)   ,fabs(x)-hw,fabs(x));
-  __m128 s_stop_out  = _mm_set_ps(fabs(x)   ,fabs(x)+hw,fabs(x)   ,fabs(x)+hw);
-
-  // |x| > hw
-  __m128 mask = _mm_cmpgt_ps(_mm_fabs_ps(_mm_set1_ps(x)),_mm_set1_ps(hw));
-
-  __m128 s_start = _mm_sel_ps(s_start_in,s_start_out,mask);
-  __m128 s_stop  = _mm_sel_ps(s_stop_in,s_stop_out  ,mask);
-
-  __m128 l_start_out = _mm_set_ps(fabs(y)-hh, fabs(y)-hh, fabs(y)   , fabs(y));
-  __m128 l_stop_out  = _mm_set_ps(fabs(y)   , fabs(y)   , fabs(y)+hh, fabs(y)+hh);
-
-  // Okay
-  __m128 mask1 = _mm_cmpgt_ps(_mm_fabs_ps(_mm_set1_ps(y)),_mm_set1_ps(hh));
-
-  __m128 l_start = _mm_sel_ps(l_start_in,l_start_out,mask1);
-  __m128 l_stop  = _mm_sel_ps(l_stop_in, l_stop_out, mask1);
-
-
-  // start (abs(x)-a,abs(x),abs(x)-a,abs(x))
-  // stop  (abs(x),abs(x)+a,abs(x),abs(x)+a)
-  __m128 s = _mm_sub_ps(s_stop,s_start); // Always positive
-  __m128 l = _mm_sub_ps(l_stop,l_start);
-
-  const __m128 vec_s = _mm_fabs_ps(s);
-  const __m128 vec_l = _mm_fabs_ps(l);
-
-  const __m128 cargz = _mm_set1_ps(cos(-k*z));
-  const __m128 sargz = _mm_set1_ps(sin(-k*z));
-
-  const __m128 vec_l_2 = _mm_mul_ps(l,_m_half_ps);
-
-  const __m128 vec_s_2 = _mm_mul_ps(s,_m_half_ps);
-
-  const __m128 z2     = _mm_set1_ps(SQUARE(z));
-
-  __m128 real, imag;
-
-  __m128 intWreal = _mm_setzero_ps();
-  __m128 intWimag = _mm_setzero_ps();
-
-  __m128 rcp_denom1 = _mm_rcp_ps(_mm_mul_ps(_m_2pi_ps,_mm_set1_ps(k)));
-
-
-  // u-integral, s-integral
-  for (size_t iu = 0 ; iu < nUs ; iu++) {
-
-    __m128 us1       = _mm_load1_ps(&us[iu]);
-    __m128 uweights1 = _mm_load1_ps(&uweights[iu]);
-
-    // [0 ; |x|+hw] , [0 ; hw - |x|];
-    __m128 ls  = _mm_add_ps(
-                   _mm_mul_ps(
-                     _mm_mul_ps(
-                       _m_half_ps,
-                       _mm_sub_ps(s_stop,s_start)),
-                     us1),
-                   _mm_mul_ps(
-                     _m_half_ps,
-                     _mm_add_ps(s_stop,s_start)));
-
-    __m128 ls2 = _mm_square_ps(ls);
-
-    __m128 argw = _mm_mul_ps(
-                    _mm_set1_ps(-k),
-                    _mm_sqrt_ps(
-                      _mm_add_ps(
-                        _mm_add_ps(
-                          ls2,
-                          z2),
-                        _mm_square_ps(l_stop_in))));
-
-    __m128 cargw, sargw;
-
-    _mm_sin_cos_ps(argw, &sargw, &cargw);
-
-    __m128 rcp_denom = _mm_rcp_ps(_mm_add_ps(ls2,_mm_square_ps(l_stop_in)));
-
-    real = _mm_mul_ps(
-             _mm_mul_ps(
-               uweights1,
-               _mm_sub_ps(
-                 cargw,
-                 cargz)),
-             rcp_denom);
-
-    imag = _mm_mul_ps(
-             _mm_mul_ps(
-               uweights1,
-               _mm_sub_ps(
-                 sargw,
-                 sargz)),
-             rcp_denom);
-    intWreal = _mm_add_ps(intWreal, real);
-    intWimag = _mm_add_ps(intWimag, imag);
-  }
-
-  // Divide by denominator
-  intWreal = _mm_mul_ps(
-               intWreal,
-               _mm_mul_ps(
-                 _mm_mul_ps(
-                   _mm_sel_ps(vec_s_2,vec_s,mask), // Half integral
-                   l_stop_in),                     // Stop value
-                 rcp_denom1));
-  intWimag = _mm_mul_ps(
-               intWimag,
-               _mm_mul_ps(
-                 _mm_mul_ps(
-                   _mm_sel_ps(vec_s_2,vec_s,mask),
-                   l_stop_in),                     // Insert sign
-                 rcp_denom1));
-
-  // Filter (consider recover sign earlier)
-  __m128 intHreal = _mm_setzero_ps();
-  __m128 intHimag = _mm_setzero_ps();
-
-  for(size_t iv = 0 ; iv < nVs ; iv++) {
-
-    __m128 vs1       = _mm_load1_ps(&vs[iv]);
-    __m128 vweights1 = _mm_load1_ps(&vweights[iv]);
-
-    __m128 ss  = _mm_add_ps(
-                   _mm_mul_ps(
-                     _mm_mul_ps(
-                       _m_half_ps,
-                       _mm_sub_ps(
-                         l_stop,
-                         l_start)),
-                     vs1),
-                   _mm_mul_ps(
-                     _m_half_ps,
-                     _mm_add_ps(
-                       l_start,
-                       l_stop)));
-    __m128 ss2 = _mm_square_ps(ss);
-
-    __m128 argh = _mm_mul_ps(
-                    _mm_set1_ps(-k),
-                    _mm_sqrt_ps(
-                      _mm_add_ps(
-                        _mm_add_ps(
-                          ss2,
-                          z2),
-                        _mm_square_ps(s_stop_in))));
-
-    __m128 cargh, sargh;
-
-    _mm_sin_cos_ps(argh, &sargh, &cargh);
-
-    __m128 rcp_denom = _mm_rcp_ps(_mm_add_ps(ss2,_mm_square_ps(s_stop_in)));
-
-    real = _mm_mul_ps(
-             _mm_mul_ps(
-               vweights1,
-               _mm_sub_ps(
-                 cargh,
-                 cargz)),
-             rcp_denom);
-    imag = _mm_mul_ps(
-             _mm_mul_ps(
-               vweights1,
-               _mm_sub_ps(
-                 sargh,
-                 sargz)),
-             rcp_denom);
-    intHreal = _mm_add_ps(intHreal, real);
-    intHimag = _mm_add_ps(intHimag, imag);
-  }
-
-  // Divide by denominator
-  intHreal = _mm_mul_ps(
-               intHreal,
-               _mm_mul_ps(
-                 _mm_mul_ps(
-                   _mm_sel_ps(vec_l_2,vec_l,mask1), // Half integral
-                   s_stop_in),                      // Inserts sign
-                 rcp_denom1));
-  intHimag = _mm_mul_ps(
-               intHimag,
-               _mm_mul_ps(
-                 _mm_mul_ps(
-                   _mm_sel_ps(vec_l_2,vec_l,mask1), // Half integral
-                   s_stop_in),         // Inserts sign
-                 rcp_denom1));
-
-  intHreal = _mm_add_ps(intHreal,intWreal);
-  intHimag = _mm_add_ps(intHimag,intWimag);
-
-  // Multiply by -i
-  __m128 tmp = intHreal;
-  intHreal = intHimag;
-  intHimag = _mm_neg_ps(tmp);
-
-  // Horizontal sum
-  _mm_store_ss(&(reinterpret_cast<float(&)[2]>(retval)[0]),
-               _mm_dp_ps(
-                 _m_one_ps,
-                 intHreal,0xF1));
-  _mm_store_ss(&(reinterpret_cast<float(&)[2]>(retval)[1]),
-               _mm_dp_ps(
-                 _m_one_ps,
-                 intHimag,0xF1));
-
-  return retval;
-}
-
-template <>
-std::complex<float>
-CalcHzFast(const fnm::element_t<float>& element,
-           const sps::point_t<float>& projection,
-           const float& k,
-           const float* us,
-           const float* uweights,
-           const size_t nUs,
-           const float* vs,
-           const float* vweights,
-           const size_t nVs)
+inline CalcHzFast(const sps::element_t<float>& element,
+                  const sps::point_t<float>& projection,
+                  const float& k,
+                  const float* us,
+                  const float* uweights,
+                  const size_t nUs,
+                  const float* vs,
+                  const float* vweights,
+                  const size_t nVs)
 {
 
   std::complex<float> retval = std::complex<float>(0.0f,0.0f);
@@ -626,7 +362,8 @@ CalcHzFast(const fnm::element_t<float>& element,
   const __m128 v_hw   = _mm_set1_ps(hw);
   const __m128 v_hh   = _mm_set1_ps(hh);
 
-#if 1
+#if 0
+  // Look equally bad
   const float absX = fabs(projection[0]);
   const float absY = fabs(projection[1]);
 
@@ -661,8 +398,6 @@ CalcHzFast(const fnm::element_t<float>& element,
   const __m128 v_ppmm = _mm_set_ps(1.0f,1.0f,-1.0f,-1.0f);
   const __m128 v_p0p0 = _mm_set_ps(1.0f,0.0f,1.0f,0.0f);
   const __m128 v_pp00 = _mm_set_ps(1.0f,1.0f,0.0f,0.0f);
-  const __m128 v_absx = _mm_set1_ps(fabs(x));
-  const __m128 v_absy = _mm_set1_ps(fabs(y));
 
   s_stop_in   = _mm_sub_ps(v_hw,_mm_mul_ps(v_pmpm,v_absx));
   l_stop_in   = _mm_sub_ps(v_hh,_mm_mul_ps(v_ppmm,v_absy));
@@ -693,25 +428,20 @@ CalcHzFast(const fnm::element_t<float>& element,
   __m128 l = _mm_sub_ps(l_stop, l_start); // Always positive
 
   __m128 cargz, sargz;
-#if ACCURATE_TRIGONOMETRICS
-  sargz = _mm_set1_ps(sin(-z*k));
-  cargz = _mm_set1_ps(cos(-z*k));
-#else
+
   _mm_sin_cos_ps(_mm_mul_ps(v_mk,v_z),&sargz,&cargz);
-#endif
 
-
-  const __m128 v_z2     = _mm_square_ps(v_z);
+  const __m128 v_z2 = _mm_square_ps(v_z);
   const __m128 v_l2 = _mm_square_ps(l_stop_in);
   const __m128 v_s2 = _mm_square_ps(s_stop_in);
 
   __m128 rcp_denom1 = _mm_rcp_ps(_mm_mul_ps(_m_2pi_ps,_mm_neg_ps(v_mk)));
 
-
   // u-integral, s-integral
   const __m128 s_offset = _mm_mul_ps(_m_half_ps,_mm_add_ps(s_stop,s_start));
   const __m128 s_scale  = _mm_mul_ps(_m_half_ps,_mm_sub_ps(s_stop,s_start));
 
+  // v-integral, l-integral
   const __m128 l_offset = _mm_mul_ps(_m_half_ps,_mm_add_ps(l_start,l_stop));
   const __m128 l_scale  =_mm_mul_ps(_m_half_ps,_mm_sub_ps(l_stop,l_start));
 
@@ -741,23 +471,13 @@ CalcHzFast(const fnm::element_t<float>& element,
 
     __m128 cargw, sargw;
 
-#if ACCURATE_TRIGONOMETRICS
-    ALIGN16_BEGIN float in[4] ALIGN16_END;
-    ALIGN16_BEGIN float out[4] ALIGN16_END;
-    _mm_store_ps(in,argw);
-    out[0] = sin(in[0]);
-    out[1] = sin(in[1]);
-    out[2] = sin(in[2]);
-    sargw = _mm_load_ps(out);
-    out[0] = cos(in[0]);
-    out[1] = cos(in[1]);
-    out[2] = cos(in[2]);
-    cargw = _mm_load_ps(out);
-#else
     _mm_sin_cos_ps(argw, &sargw, &cargw);
-#endif
 
-    __m128 rcp_denom = _mm_rcp_ps(_mm_add_ps(ls2,v_l2));
+    __m128 denom = _mm_add_ps(ls2,v_l2);
+    __m128 rcp_denom = _mm_rcp_ps(denom);
+    // If the integral has zero length, reciprocal of denominator is set to zero
+    __m128 mask_denom = _mm_cmplt_ps(_mm_fabs_ps(s_scale),_m_eps_ps);
+    rcp_denom = _mm_sel_ps(rcp_denom,_mm_setzero_ps(),mask_denom);
 
     real = _mm_mul_ps(
              _mm_mul_ps(
@@ -780,8 +500,8 @@ CalcHzFast(const fnm::element_t<float>& element,
 
   __m128 intScale = _mm_mul_ps(
                       _mm_mul_ps(
-                        _mm_sel_ps(s_scale,_mm_mul_ps(s,_m_half_ps),mask), // Half integral
-                        l_stop_in),                 // Stop value
+                        _mm_sel_ps(s_scale,_mm_mul_ps(s,_m_half_ps),mask),
+                        l_stop_in),
                       rcp_denom1);
 
   // Divide by denominator
@@ -811,23 +531,13 @@ CalcHzFast(const fnm::element_t<float>& element,
 
     __m128 cargh, sargh;
 
-#if ACCURATE_TRIGONOMETRICS
-    ALIGN16_BEGIN float in[4] ALIGN16_END;
-    ALIGN16_BEGIN float out[4] ALIGN16_END;
-    _mm_store_ps(in,argh);
-    out[0] = sin(in[0]);
-    out[1] = sin(in[1]);
-    out[2] = sin(in[2]);
-    sargh = _mm_load_ps(out);
-    out[0] = cos(in[0]);
-    out[1] = cos(in[1]);
-    out[2] = cos(in[2]);
-    cargh = _mm_load_ps(out);
-#else
     _mm_sin_cos_ps(argh, &sargh, &cargh);
-#endif
 
-    __m128 rcp_denom = _mm_rcp_ps(_mm_add_ps(ss2,v_s2));
+    __m128 denom = _mm_add_ps(ss2,v_s2);
+    __m128 rcp_denom = _mm_rcp_ps(denom);
+    // If the integral has zero length, reciprocal of denominator is set to zero
+    __m128 mask_denom = _mm_cmplt_ps(_mm_fabs_ps(l_scale),_m_eps_ps);
+    rcp_denom = _mm_sel_ps(rcp_denom,_mm_setzero_ps(),mask_denom);
 
     real = _mm_mul_ps(
              _mm_mul_ps(
@@ -849,8 +559,8 @@ CalcHzFast(const fnm::element_t<float>& element,
 
   intScale = _mm_mul_ps(
                _mm_mul_ps(
-                 _mm_sel_ps(l_scale,_mm_mul_ps(_m_half_ps,l),mask1), // Half integral
-                 s_stop_in),                  // Inserts sign
+                 _mm_sel_ps(l_scale,_mm_mul_ps(_m_half_ps,l),mask1),
+                 s_stop_in),
                rcp_denom1);
 
   // Divide by denominator
@@ -881,145 +591,18 @@ CalcHzFast(const fnm::element_t<float>& element,
   return retval;
 }
 
-// Only for region |x| > a, |y| > b, forgot the V-part
-template <>
-std::complex<float>
-CalcHzFast4(const fnm::element_t<float>& element,
-            const sps::point_t<float>& projection,
-            const float& k,
-            const float* us,
-            const float* uweights,
-            const size_t nUs,
-            const float* vs,
-            const float* vweights,
-            const size_t nVs)
-{
-
-  SPS_UNREFERENCED_PARAMETER(nVs);
-  SPS_UNREFERENCED_PARAMETER(vweights);
-  SPS_UNREFERENCED_PARAMETER(vs);
-
-  const float z       = projection[2];
-
-  const __m128 v_pmpm = _mm_set_ps(1.0f,-1.0f,1.0f,-1.0f);
-  const __m128 v_xxyy  = _mm_set_ps(projection[0],projection[0],projection[1],projection[1]);
-  const __m128 v_aabb  = _mm_set_ps(element.hw,element.hw,element.hh,element.hh);
-
-  const __m128 vec_mk = _mm_set1_ps(-k);
-  const __m128 vec_z  = _mm_set1_ps(z);
-
-  const __m128 rcp_denom1 = _mm_rcp_ps(_mm_mul_ps(_m_2pi_ps,_mm_set1_ps(k)));
-  const __m128 vec_z2 = _mm_square_ps(vec_z);
-
-  __m128 cargz = _mm_setzero_ps();
-  __m128 sargz = _mm_setzero_ps();
-  _mm_sin_cos_ps(_mm_mul_ps(vec_mk,vec_z),&sargz,&cargz);
-
-  __m128 v_bbaa  = _mm_permute_ps(v_aabb,   0xB1);
-  __m128 v_yyxx  = _mm_permute_ps(v_xxyy,   0xB1);
-
-  __m128 v_stop  = _mm_add_ps(v_xxyy,v_aabb);
-  __m128 v_start = _mm_sub_ps(v_xxyy,v_aabb);
-
-  __m128 v_scale  = _mm_mul_ps(_m_half_ps,_mm_sub_ps(v_stop,v_start));
-  __m128 v_offset = _mm_mul_ps(_m_half_ps,_mm_add_ps(v_stop,v_start));
-
-  __m128 intReal = _mm_setzero_ps();
-  __m128 intImag = _mm_setzero_ps();
-
-  __m128 real, imag;
-
-  __m128 v_adj  = _mm_add_ps(v_yyxx,_mm_mul_ps(v_pmpm,v_bbaa));
-  __m128 v_adj2 = _mm_square_ps(v_adj);
-
-  // Both integrals (assumes nUs = nUv)
-  for (size_t iu = 0 ; iu < nUs ; iu++) {
-    __m128 v_s = _mm_load1_ps(&us[iu]);
-    __m128 v_w  = _mm_load1_ps(&uweights[iu]);
-
-    __m128 v_xy = _mm_add_ps(_mm_mul_ps(v_scale,v_s),v_offset);
-
-    __m128 v_xy2 = _mm_square_ps(v_xy);
-
-    __m128 argw = _mm_mul_ps(
-                    vec_mk,
-                    _mm_sqrt_ps(
-                      _mm_add_ps(
-                        _mm_add_ps(
-                          v_xy2,
-                          vec_z2),
-                        v_adj2)));
-
-    __m128 cargw, sargw;
-
-    _mm_sin_cos_ps(argw, &sargw, &cargw);
-
-    __m128 rcp_denom = _mm_rcp_ps(_mm_add_ps(v_xy2,v_adj2));
-
-    real = _mm_mul_ps(
-             _mm_mul_ps(
-               v_w,
-               _mm_sub_ps(
-                 cargw,
-                 cargz)),
-             rcp_denom);
-
-    imag = _mm_mul_ps(
-             _mm_mul_ps(
-               v_w,
-               _mm_sub_ps(
-                 sargw,
-                 sargz)),
-             rcp_denom);
-    intReal = _mm_add_ps(intReal, real);
-    intImag = _mm_add_ps(intImag, imag);
-  }
-
-  __m128 v_int_scale = _mm_mul_ps(_mm_mul_ps(
-                                    _mm_mul_ps(
-                                      v_adj,
-                                      v_scale),
-                                    rcp_denom1),/*_mm_permute_ps(*/v_pmpm/*,0xB1)*/);
-
-  // Divide by denominator
-  intReal = _mm_mul_ps(intReal,v_int_scale);
-  intImag = _mm_mul_ps(intImag,v_int_scale);
-
-  // Multiply by -i
-  __m128 tmp = intReal;
-  intReal = intImag;
-  intImag = _mm_neg_ps(tmp);
-
-  std::complex<float> retval = std::complex<float>(0.0f,0.0f);
-
-  // Horizontal sums
-  _mm_store_ss(
-    &(reinterpret_cast<float(&)[2]>(retval)[0]),
-    _mm_dp_ps(
-      _m_one_ps,
-      intReal,
-      0xF1));
-  _mm_store_ss(&(reinterpret_cast<float(&)[2]>(retval)[1]),
-               _mm_dp_ps(
-                 _m_one_ps,
-                 intImag,
-                 0xF1));
-
-  return retval;
-
-}
-
+// Not working!!!
 template <>
 std::complex<double>
-CalcHzFast(const fnm::element_t<double>& element,
-           const sps::point_t<double>& projection,
-           const double& k,
-           const double* us,
-           const double* uweights,
-           const size_t nUs,
-           const double* vs,
-           const double* vweights,
-           const size_t nVs)
+inline CalcHzFast(const sps::element_t<double>& element,
+                  const sps::point_t<double>& projection,
+                  const double& k,
+                  const double* us,
+                  const double* uweights,
+                  const size_t nUs,
+                  const double* vs,
+                  const double* vweights,
+                  const size_t nVs)
 {
 
   std::complex<double> retval = std::complex<double>(0.0f,0.0f);
@@ -1072,9 +655,9 @@ CalcHzFast(const fnm::element_t<double>& element,
   __m128d cargz, sargz;
   _mm_sin_cos_pd(_mm_mul_pd(vec_mk,vec_z),&sargz,&cargz);
 
-  const __m128d z2     = _mm_square_pd(vec_z);
-  __m128d vec_l2 = _mm_square_pd(l_stop_in);
-  __m128d vec_s2 = _mm_square_pd(s_stop_in);
+  const __m128d z2 = _mm_square_pd(vec_z);
+  __m128d vec_l2   = _mm_square_pd(l_stop_in);
+  __m128d vec_s2   = _mm_square_pd(s_stop_in);
 
   __m128d rcp_denom1 = _mm_rcp_pd(_mm_mul_pd(_m_2pi_pd,_mm_set1_pd(k)));
 
@@ -1115,6 +698,8 @@ CalcHzFast(const fnm::element_t<double>& element,
     _mm_sin_cos_pd(argw, &sargw, &cargw);
 
     __m128d rcp_denom = _mm_rcp_pd(_mm_add_pd(ls2,vec_l2));
+    __m128d mask_denom = _mm_cmplt_pd(_mm_fabs_pd(s_scale),_m_eps_pd);
+    rcp_denom = _mm_sel_pd(rcp_denom,_mm_setzero_pd(),mask_denom);
 
     real = _mm_mul_pd(
              _mm_mul_pd(
@@ -1171,6 +756,9 @@ CalcHzFast(const fnm::element_t<double>& element,
     _mm_sin_cos_pd(argh, &sargh, &cargh);
 
     __m128d rcp_denom = _mm_rcp_pd(_mm_add_pd(ss2,vec_s2));
+
+    __m128d mask_denom = _mm_cmplt_pd(_mm_fabs_pd(l_scale),_m_eps_pd);
+    rcp_denom = _mm_sel_pd(rcp_denom,_mm_setzero_pd(),mask_denom);
 
     real = _mm_mul_pd(
              _mm_mul_pd(
@@ -1386,105 +974,40 @@ CalcHzFast(const fnm::element_t<double>& element,
 }
 
 template <>
-std::complex<double> CalcHzVecGL(const double& s,
-                                 const double& l,
-                                 const double& z,
-                                 const double& k,
-                                 const double* us,
-                                 const double* uweights,
-                                 const size_t nUs,
-                                 const double* vs,
-                                 const double* vweights,
-                                 const size_t nVs)
+std::complex<double>
+inline CalcHzVecGL(const double& s,
+                   const double& l,
+                   const double& z,
+                   const double& k,
+                   const double* us,
+                   const double* uweights,
+                   const size_t nUs,
+                   const double* vs,
+                   const double* vweights,
+                   const size_t nVs)
 {
-  SPS_UNREFERENCED_PARAMETER(s);
-  SPS_UNREFERENCED_PARAMETER(l);
-  SPS_UNREFERENCED_PARAMETER(z);
-  SPS_UNREFERENCED_PARAMETER(k);
-  SPS_UNREFERENCED_PARAMETER(us);
-  SPS_UNREFERENCED_PARAMETER(uweights);
-  SPS_UNREFERENCED_PARAMETER(nUs);
-  SPS_UNREFERENCED_PARAMETER(vs);
-  SPS_UNREFERENCED_PARAMETER(vweights);
-  SPS_UNREFERENCED_PARAMETER(nVs);
+  SPS_UNREFERENCED_PARAMETERS(s,l,z,k,us,uweights,nUs,vs,vweights,nVs);
   return std::complex<double>();
 }
 
 template <>
-std::complex<double> CalcHzAll(const fnm::element_t<double>& element,
-                               const sps::point_t<double>& projection,
-                               const double& k,
-                               const double* us,
-                               const double* uweights,
-                               const size_t nUs,
-                               const double* vs,
-                               const double* vweights,
-                               const size_t nVs)
+std::complex<double>
+inline CalcHzAll(const sps::element_t<double>& element,
+                 const sps::point_t<double>& projection,
+                 const double& k,
+                 const double* us,
+                 const double* uweights,
+                 const size_t nUs,
+                 const double* vs,
+                 const double* vweights,
+                 const size_t nVs)
 {
-  SPS_UNREFERENCED_PARAMETER(element);
-  SPS_UNREFERENCED_PARAMETER(projection);
-  SPS_UNREFERENCED_PARAMETER(k);
-  SPS_UNREFERENCED_PARAMETER(us);
-  SPS_UNREFERENCED_PARAMETER(uweights);
-  SPS_UNREFERENCED_PARAMETER(nUs);
-  SPS_UNREFERENCED_PARAMETER(vs);
-  SPS_UNREFERENCED_PARAMETER(vweights);
-  SPS_UNREFERENCED_PARAMETER(nVs);
+  SPS_UNREFERENCED_PARAMETERS(element,projection,k,us,uweights,nUs,vs,vweights,nVs);
 
   std::complex<double> retval;
   return retval;
 }
 
-template <>
-std::complex<double>
-CalcHzShort(const fnm::element_t<double>& element,
-            const sps::point_t<double>& projection,
-            const double& k,
-            const double* us,
-            const double* uweights,
-            const size_t nUs,
-            const double* vs,
-            const double* vweights,
-            const size_t nVs)
-{
-
-  SPS_UNREFERENCED_PARAMETER(element);
-  SPS_UNREFERENCED_PARAMETER(projection);
-  SPS_UNREFERENCED_PARAMETER(k);
-  SPS_UNREFERENCED_PARAMETER(us);
-  SPS_UNREFERENCED_PARAMETER(uweights);
-  SPS_UNREFERENCED_PARAMETER(nUs);
-  SPS_UNREFERENCED_PARAMETER(vs);
-  SPS_UNREFERENCED_PARAMETER(vweights);
-  SPS_UNREFERENCED_PARAMETER(nVs);
-  std::complex<double> retval;
-  return retval;
-}
-
-
-template <>
-std::complex<double>
-CalcHzFast4(const fnm::element_t<double>& element,
-            const sps::point_t<double>& projection,
-            const double& k,
-            const double* us,
-            const double* uweights,
-            const size_t nUs,
-            const double* vs,
-            const double* vweights,
-            const size_t nVs)
-{
-  SPS_UNREFERENCED_PARAMETER(element);
-  SPS_UNREFERENCED_PARAMETER(projection);
-  SPS_UNREFERENCED_PARAMETER(k);
-  SPS_UNREFERENCED_PARAMETER(us);
-  SPS_UNREFERENCED_PARAMETER(uweights);
-  SPS_UNREFERENCED_PARAMETER(nUs);
-  SPS_UNREFERENCED_PARAMETER(vs);
-  SPS_UNREFERENCED_PARAMETER(vweights);
-  SPS_UNREFERENCED_PARAMETER(nVs);
-  return std::complex<double>(0.0,0.0);
-}
 /* Local variables: */
 /* indent-tabs-mode: nil */
 /* tab-width: 2 */

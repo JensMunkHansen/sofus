@@ -85,7 +85,7 @@ namespace sps {
   }
 
   template <>
-  void basis_vectors_ps(float* vec0, float* vec1, float* vec2, const sps::euler_t<float>& euler)
+  void basis_vectors(float* vec0, float* vec1, float* vec2, const sps::euler_t<float>& euler)
   {
 
     __m128 a;
@@ -118,7 +118,7 @@ namespace sps {
   }
 
   template <>
-  void basis_vectors_ps(double* vec0, double* vec1, double* vec2, const sps::euler_t<double>& euler)
+  void basis_vectors(double* vec0, double* vec1, double* vec2, const sps::euler_t<double>& euler)
   {
 
     // TODO: TEST ME
@@ -174,10 +174,20 @@ namespace sps {
   template void SPS_EXPORT basis_vectors(sps::point_t<float>& output, const sps::euler_t<float>& euler, size_t index);
 
   template std::ostream& operator<<(std::ostream& out, const point_t<float>& point);
-  template void SPS_EXPORT basis_vectors_ps(float* vec0, float* vec1, float* vec2, const sps::euler_t<float>& euler);
+  template void SPS_EXPORT basis_vectors(float* vec0, float* vec1, float* vec2, const sps::euler_t<float>& euler);
+
+  template void SPS_EXPORT dists_most_distant_and_closest(const sps::bbox_t<float> &box0,
+      const sps::bbox_t<float> &box1,
+      float* distNear,
+      float* distFar);
+
 
   template struct euler_t<double>;
   template struct point_t<double>;
+
+  template struct element_t<float>;
+  template struct element_t<double>;
+
 
   template point_t<double> operator-(const point_t<double> &a, const point_t<double> &b);
   template point_t<double> operator+(const point_t<double> &a, const point_t<double> &b);
@@ -189,8 +199,12 @@ namespace sps {
                                const point_t<double>& direction);
   template void SPS_EXPORT basis_vectors(sps::point_t<double>& output, const sps::euler_t<double>& euler, size_t index);
   template std::ostream& operator<<(std::ostream& out, const point_t<double>& point);
-  template void SPS_EXPORT basis_vectors_ps(double* vec0, double* vec1, double* vec2, const sps::euler_t<double>& euler);
+  template void SPS_EXPORT basis_vectors(double* vec0, double* vec1, double* vec2, const sps::euler_t<double>& euler);
 
+  template void SPS_EXPORT dists_most_distant_and_closest(const sps::bbox_t<double> &box0,
+      const sps::bbox_t<double> &box1,
+      double* distNear,
+      double* distFar);
 }
 
 

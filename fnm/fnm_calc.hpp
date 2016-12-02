@@ -84,9 +84,9 @@ namespace fnm {
    * @param odata         complex output
    */
   template <class T>
-  void CalcCwFieldRef(const ApertureData<T>& data,
-                      const T* pos, const size_t nPositions,
-                      std::complex<T>** odata);
+  int CalcCwFieldRef(const ApertureData<T>& data,
+                     const T* pos, const size_t nPositions,
+                     std::complex<T>** odata);
 
   /**
    * Naive integral, no re-use of parts and many abcissa are needed when projection is far away from rectangle

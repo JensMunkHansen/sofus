@@ -1,22 +1,27 @@
 #include <fnm/fnm.hpp>
 #include <fnm/fnm_calc.hpp>
+#include <fnm/FnmSIMD.hpp>
 
 #include <gl/gl.hpp>
 
+#include <sps/smath.hpp>
 #include <sps/mm_malloc.h>
+#include <sps/memory>
 #include <memory>
+#include <sps/debug.h>
 
 namespace fnm {
 
   template <class T>
-  STATIC_INLINE_BEGIN std::complex<T> CalcSingle(const T& s1,
-      const T& s2,
-      const T& l,
-      const T& z,
-      const T& k,
-      const T* uxs,
-      const T* uweights,
-      const size_t nUs)
+  STATIC_INLINE_BEGIN
+  std::complex<T> CalcSingle(const T& s1,
+                             const T& s2,
+                             const T& l,
+                             const T& z,
+                             const T& k,
+                             const T* uxs,
+                             const T* uweights,
+                             const size_t nUs)
   {
 
     const T carg = cos(-k*z);
@@ -27,26 +32,25 @@ namespace fnm {
     const T z2 = SQUARE(z);
     const T l2 = SQUARE(l);
 
-    // integral width
-    std::complex<T> intW = std::complex<T>(T(0.0),T(0.0));
+    // Integral
+    T intWreal = T(0.0), intWimag = T(0.0);
 
     for (size_t iu = 0 ; iu < nUs ; iu++) {
 
       T s = sm * uxs[iu] + sp;
       T s22 = SQUARE(s);
 
-      T argw = -k * sqrt(s2 + z2 + l2);
-      T real = uweights[iu] * (cos(argw) - carg) / (s22+l2);
-      T imag = uweights[iu] * (sin(argw) - sarg) / (s22+l2);
-      intW.real(real + intW.real());
-      intW.imag(imag + intW.imag());
+      T argw = -k * sqrt(s22 + z2 + l2);
+      T real = uweights[iu] * (cos(argw) - carg) / std::max<T>((s22+l2),std::numeric_limits<T>::epsilon());
+      T imag = uweights[iu] * (sin(argw) - sarg) / std::max<T>((s22+l2),std::numeric_limits<T>::epsilon());
+      intWreal += real;
+      intWimag += imag;
     }
-    intW *= sm * l / (T(M_2PI)*k);
-    T realW = intW.real();
-    intW.real(intW.imag());
-    intW.imag(-realW);
 
-    return intW;
+    intWreal *= sm * l;
+    intWimag *= sm * l;
+
+    return std::complex<T>(intWreal,intWimag);
   }
 
   template <class T>
@@ -111,6 +115,7 @@ namespace fnm {
     return intH;
   }
 
+  // Cannot pass a unique_ptr by reference
   template <class T>
   void CalcCwField(const ApertureData<T>& data,
                    const T* pos, const size_t nPositions,
@@ -121,20 +126,16 @@ namespace fnm {
 
     const T k = T(M_2PI)/lambda;
 
-    size_t nDivW = Aperture<T>::_sysparm.nDivW;
-    size_t nDivH = Aperture<T>::_sysparm.nDivH;
+    const size_t nDivW = Aperture<T>::_sysparm.nDivW;
+    const size_t nDivH = Aperture<T>::_sysparm.nDivH;
 
-    auto del = [](T* p) {
-      _mm_free(p);
-    };
-    std::unique_ptr<T[], decltype(del)> uweights((T*)_mm_malloc(sizeof(T)*nDivW,16), del);
-    std::unique_ptr<T[], decltype(del)> vweights((T*)_mm_malloc(sizeof(T)*nDivH,16), del);
-    std::unique_ptr<T[], decltype(del)> uxs((T*)_mm_malloc(sizeof(T)*nDivW,16), del);
-    std::unique_ptr<T[], decltype(del)> vxs((T*)_mm_malloc(sizeof(T)*nDivH,16), del);
+    auto uweights = sps::deleted_aligned_array_create<T>(nDivW);
+    auto vweights = sps::deleted_aligned_array_create<T>(nDivH);
+    auto uxs      = sps::deleted_aligned_array_create<T>(nDivW);
+    auto vxs      = sps::deleted_aligned_array_create<T>(nDivH);
 
     memset(uxs.get(),0,sizeof(T)*nDivW);
     memset(vxs.get(),0,sizeof(T)*nDivH);
-
     memset(uweights.get(),0,sizeof(T)*nDivW);
     memset(vweights.get(),0,sizeof(T)*nDivH);
 
@@ -154,7 +155,7 @@ namespace fnm {
 
     size_t nElements = data.m_nelements;
 
-    std::vector<std::vector<element_t<T> > >& elements = *data.m_elements;
+    auto& elements = data.m_elements;
 
     for (size_t iPoint = 0 ; iPoint < nPositions ; iPoint++) {
 
@@ -166,58 +167,61 @@ namespace fnm {
 
       for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
 
-        std::complex<T> field1 = std::complex<T>(T(0.0),T(0.0));
+        T apodization = data.m_apodizations[iElement];
+        if (apodization != 0.0) {
+          std::complex<T> field1 = std::complex<T>(T(0.0),T(0.0));
 
-        for (size_t jElement = 0 ; jElement < elements[iElement].size() ; jElement++) {
+          for (size_t jElement = 0 ; jElement < data.m_nsubelements ; jElement++) {
 
-          element_t<T> element = elements[iElement][jElement];
+            const sps::element_t<T>& element = elements[iElement][jElement];
 
-          // Get basis vectors (can be stored)
-          sps::point_t<T> hh_dir, hw_dir, normal;
+            // Get basis vectors (can be stored)
+            sps::point_t<T> hh_dir, hw_dir, normal;
 
-          basis_vectors(hw_dir, element.euler, 0);
-          basis_vectors(hh_dir, element.euler, 1);
-          basis_vectors(normal, element.euler, 2);
+            basis_vectors(hw_dir, element.euler, 0);
+            basis_vectors(hh_dir, element.euler, 1);
+            basis_vectors(normal, element.euler, 2);
 
-          sps::point_t<T> r2p = point - element.center;
+            sps::point_t<T> r2p = point - element.center;
 
-          // Distance to plane
-          T dist2plane = fabs(dot(normal,r2p));
+            // Distance to plane
+            T dist2plane = fabs(dot(normal,r2p));
 
-          // Projection onto plane
-          T u = dot(hw_dir,r2p);
-          T v = dot(hh_dir,r2p);
+            // Projection onto plane
+            T u = dot(hw_dir,r2p);
+            T v = dot(hh_dir,r2p);
 
-          T z  = dist2plane;
+            T z  = dist2plane;
 
-          T l = fabs(u) + element.hw;
-          T s = fabs(v) + element.hh;
+            T l = fabs(u) + element.hw;
+            T s = fabs(v) + element.hh;
 
-          field1 += CalcHz<T>(fabs(s),fabs(l),z,k,uxs.get(),uweights.get(),nDivW,
-                              vxs.get(),vweights.get(),nDivH)*T(signum<T>(s)*signum<T>(l));
+            field1 += CalcHz<T>(fabs(s),fabs(l),z,k,uxs.get(),uweights.get(),nDivW,
+                                vxs.get(),vweights.get(),nDivH)*T(signum<T>(s)*signum<T>(l));
 
-          l = element.hw - fabs(u);
+            l = element.hw - fabs(u);
 
-          field1 += CalcHz<T>(fabs(s),fabs(l),z,k,uxs.get(),uweights.get(),nDivW,
-                              vxs.get(),vweights.get(),nDivH)*T(signum<T>(s)*signum<T>(l));
+            field1 += CalcHz<T>(fabs(s),fabs(l),z,k,uxs.get(),uweights.get(),nDivW,
+                                vxs.get(),vweights.get(),nDivH)*T(signum<T>(s)*signum<T>(l));
 
-          l = fabs(u) + element.hw;
-          s = element.hh - fabs(v);
+            l = fabs(u) + element.hw;
+            s = element.hh - fabs(v);
 
-          field1 += CalcHz<T>(fabs(s),fabs(l),z,k,uxs.get(),uweights.get(),nDivW,
-                              vxs.get(),vweights.get(),nDivH)*T(signum<T>(s)*signum<T>(l));
+            field1 += CalcHz<T>(fabs(s),fabs(l),z,k,uxs.get(),uweights.get(),nDivW,
+                                vxs.get(),vweights.get(),nDivH)*T(signum<T>(s)*signum<T>(l));
 
-          l = element.hw - fabs(u);
+            l = element.hw - fabs(u);
 
-          field1 += CalcHz<T>(fabs(s),fabs(l),z,k,uxs.get(),uweights.get(),nDivW,
-                              vxs.get(),vweights.get(),nDivH)*T(signum<T>(s)*signum<T>(l));
+            field1 += CalcHz<T>(fabs(s),fabs(l),z,k,uxs.get(),uweights.get(),nDivW,
+                                vxs.get(),vweights.get(),nDivH)*T(signum<T>(s)*signum<T>(l));
+          }
+
+          T real = apodization * field1.real();
+          T imag = apodization * field1.imag();
+
+          field.real(field.real() + real*cos(data.m_phases[iElement]) - imag*sin(data.m_phases[iElement]));
+          field.imag(field.imag() + real*sin(data.m_phases[iElement]) + imag*cos(data.m_phases[iElement]));
         }
-
-        T real = field1.real();
-        T imag = field1.imag();
-
-        field.real(field.real() + real*cos(data.m_phases[iElement]) - imag*sin(data.m_phases[iElement]));
-        field.imag(field.imag() + real*sin(data.m_phases[iElement]) + imag*cos(data.m_phases[iElement]));
       }
       (*odata)[iPoint].real(field.real());
       (*odata)[iPoint].imag(field.imag());
@@ -225,9 +229,9 @@ namespace fnm {
   }
 
   template <class T>
-  void CalcCwFieldRef(const ApertureData<T>& data,
-                      const T* pos, const size_t nPositions,
-                      std::complex<T>** odata)
+  int CalcCwFieldRef(const ApertureData<T>& data,
+                     const T* pos, const size_t nPositions,
+                     std::complex<T>** odata)
   {
     const T lambda = Aperture<T>::_sysparm.c / data.m_f0;
 
@@ -236,13 +240,10 @@ namespace fnm {
     size_t nDivW = Aperture<T>::_sysparm.nDivW;
     size_t nDivH = Aperture<T>::_sysparm.nDivH;
 
-    auto del = [](T* p) {
-      _mm_free(p);
-    };
-    std::unique_ptr<T[], decltype(del)> uweights((T*)_mm_malloc(sizeof(T)*nDivW,16), del);
-    std::unique_ptr<T[], decltype(del)> vweights((T*)_mm_malloc(sizeof(T)*nDivH,16), del);
-    std::unique_ptr<T[], decltype(del)> uxs((T*)_mm_malloc(sizeof(T)*nDivW,16), del);
-    std::unique_ptr<T[], decltype(del)> vxs((T*)_mm_malloc(sizeof(T)*nDivH,16), del);
+    auto uweights = sps::deleted_aligned_array_create<T>(nDivW);
+    auto vweights = sps::deleted_aligned_array_create<T>(nDivH);
+    auto uxs      = sps::deleted_aligned_array_create<T>(nDivW);
+    auto vxs      = sps::deleted_aligned_array_create<T>(nDivH);
 
     memset(uxs.get(),0,sizeof(T)*nDivW);
     memset(vxs.get(),0,sizeof(T)*nDivH);
@@ -266,7 +267,11 @@ namespace fnm {
 
     size_t nElements = data.m_nelements;
 
-    std::vector<std::vector<element_t<T> > >& elements = *data.m_elements;
+    auto& elements = data.m_elements;
+
+    const T* apodizations = data.m_apodizations.get();
+
+    T apodization;
 
     for (size_t iPoint = 0 ; iPoint < nPositions ; iPoint++) {
 
@@ -278,90 +283,155 @@ namespace fnm {
 
       for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
 
+        apodization = apodizations[iElement];
+
+        // Output of individual integrals are complex
         std::complex<T> field1 = std::complex<T>(T(0.0),T(0.0));
 
-        for (size_t jElement = 0 ; jElement < elements[iElement].size() ; jElement++) {
+        if (apodization != 0.0) {
 
-          element_t<T> element = elements[iElement][jElement];
+          for (size_t jElement = 0 ; jElement < data.m_nsubelements ; jElement++) {
 
-          // Get basis vectors (can be stored)
-          sps::point_t<T> hh_dir, hw_dir, normal;
+            const sps::element_t<T>& element = elements[iElement][jElement];
 
-          basis_vectors(hw_dir, element.euler, 0);
-          basis_vectors(hh_dir, element.euler, 1);
-          basis_vectors(normal, element.euler, 2);
+            // Get basis vectors (can be stored)
+            sps::point_t<T> hh_dir, hw_dir, normal;
 
-          sps::point_t<T> r2p = point - element.center;
+            basis_vectors(hw_dir, element.euler, 0);
+            basis_vectors(hh_dir, element.euler, 1);
+            basis_vectors(normal, element.euler, 2);
 
-          // Distance to plane
-          T dist2plane = fabs(dot(normal,r2p));
+            debug_print("hw_dir: %f %f %f\n", hw_dir[0], hw_dir[1], hw_dir[2]);
+            debug_print("hh_dir: %f %f %f\n", hh_dir[0], hh_dir[1], hh_dir[2]);
+            debug_print("normal: %f %f %f\n", normal[0], normal[1], normal[2]);
+            sps::point_t<T> r2p = point - element.center;
 
-          // Projection onto plane
-          T u = dot(hw_dir,r2p);
-          T v = dot(hh_dir,r2p);
+            // Distance to plane
+            T dist2plane = dot(normal,r2p);
 
-          T z  = dist2plane;
+            // Projection onto plane
+            T u = dot(hw_dir,r2p);
+            T v = dot(hh_dir,r2p);
+            T z  = dist2plane;
+            debug_print("u: %f, v: %f, z: %f\n",u,v,z);
 
-          T s = fabs(v) + element.hh;
+            // We could wait multiplying by -i and dividing with (2*pi*k) till the end
 
-          if (fabs(u) > element.hw) {
-            field1 += CalcSingle<T>(fabs(u)-element.hw, fabs(u)           , s, z, k, uxs.get(),uweights.get(),nDivW);
-            s = fabs(fabs(v) - element.hh);
-            field1 += CalcSingle<T>(fabs(u),            fabs(u)+element.hw, s, z, k, uxs.get(),uweights.get(),nDivW);
-            field1 += CalcSingle<T>(fabs(u)-element.hw, fabs(u)           , s, z, k, uxs.get(),uweights.get(),nDivW);
-          } else {
-            field1 += CalcSingle<T>(0,                  fabs(u)+element.hw, s, z, k, uxs.get(),uweights.get(),nDivW);
-            field1 += CalcSingle<T>(0,                  element.hw-fabs(u), s, z, k, uxs.get(),uweights.get(),nDivW);
-            s = element.hh - fabs(v);
-            field1 += CalcSingle<T>(0,                  fabs(u)+element.hw, s, z, k, uxs.get(),uweights.get(),nDivW);
-            field1 += CalcSingle<T>(0,                  element.hw-fabs(u), s, z, k, uxs.get(),uweights.get(),nDivW);
-          }
+            T s = fabs(v) + element.hh;
+            std::complex<T> tmp;
+            // u-integral  x (Python), hw is a (Python)
+            if (fabs(u) > element.hw) {
+              // Outside
+              tmp = CalcSingle<T>(fabs(u),            fabs(u)+element.hw, s, z, k, uxs.get(),uweights.get(),nDivW);
+              debug_print("int_u: %f %f\n",tmp.real(),tmp.imag());
+              field1 += tmp;
+              tmp = CalcSingle<T>(fabs(u)-element.hw, fabs(u)           , s, z, k, uxs.get(),uweights.get(),nDivW);
+              debug_print("int_u: %f %f\n",tmp.real(),tmp.imag());
+              field1 += tmp;
+              s = element.hh - fabs(v);
+              tmp = CalcSingle<T>(fabs(u),            fabs(u)+element.hw, s, z, k, uxs.get(),uweights.get(),nDivW);
+              debug_print("int_u: %f %f\n",tmp.real(),tmp.imag());
+              field1 += tmp;
+              tmp = CalcSingle<T>(fabs(u)-element.hw, fabs(u)           , s, z, k, uxs.get(),uweights.get(),nDivW);
+              debug_print("int_u: %f %f\n",tmp.real(),tmp.imag());
+              field1 += tmp;
+            } else {
+              // Inside
+              debug_print("low: %f, high: %f, l: %f, z: %f, k: %f\n",
+                          T(0.0), fabs(u) + element.hw, s, z, k);
+              tmp = CalcSingle<T>(0,                  fabs(u)+element.hw, s, z, k, uxs.get(),uweights.get(),nDivW);
+              debug_print("int_u: %f %f\n",tmp.real(),tmp.imag());
+              field1 += tmp;
+              tmp = CalcSingle<T>(0,                  element.hw-fabs(u), s, z, k, uxs.get(),uweights.get(),nDivW);
+              debug_print("int_u: %f %f\n",tmp.real(),tmp.imag());
+              field1 += tmp;
+              s = element.hh - fabs(v);
+              tmp = CalcSingle<T>(0,                  fabs(u)+element.hw, s, z, k, uxs.get(),uweights.get(),nDivW);
+              debug_print("int_u: %f %f\n",tmp.real(),tmp.imag());
+              field1 += tmp;
+              tmp = CalcSingle<T>(0,                  element.hw-fabs(u), s, z, k, uxs.get(),uweights.get(),nDivW);
+              debug_print("int_u: %f %f\n",tmp.real(),tmp.imag());
+              field1 += tmp;
+            }
 
-          s = fabs(u) + element.hw;
-          if (fabs(v) > element.hh) {
-            field1 += CalcSingle<T>(fabs(v)-element.hh, fabs(v)           , s, z, k, vxs.get(),uweights.get(),nDivH);
-            field1 += CalcSingle<T>(fabs(v),            fabs(v)+element.hh, s, z, k, vxs.get(),uweights.get(),nDivH);
-            s = element.hw - fabs(u);
-            field1 += CalcSingle<T>(fabs(v)-element.hh, fabs(v)           , s, z, k, vxs.get(),uweights.get(),nDivH);
-            field1 += CalcSingle<T>(fabs(v),            fabs(v)+element.hh, s, z, k, vxs.get(),uweights.get(),nDivH);
-          } else {
-            field1 += CalcSingle<T>(0,                  fabs(v)+element.hh, s, z, k, vxs.get(),vweights.get(),nDivH);
-            s = element.hw - fabs(u);
-            field1 += CalcSingle<T>(0,                  fabs(v)+element.hh, s, z, k, vxs.get(),vweights.get(),nDivH);
+            // v-integral
             s = fabs(u) + element.hw;
-            field1 += CalcSingle<T>(0,                  element.hh-fabs(v), s, z, k, vxs.get(),vweights.get(),nDivH);
-            s = element.hw - fabs(u);
-            field1 += CalcSingle<T>(0,                  element.hh-fabs(v), s, z, k, vxs.get(),vweights.get(),nDivH);
+            if (fabs(v) > element.hh) {
+              // Outside
+              tmp = CalcSingle<T>(fabs(v)-element.hh, fabs(v)           , s, z, k, vxs.get(),vweights.get(),nDivH);
+              field1 += tmp;
+              debug_print("int_v: %f %f\n",tmp.real(),tmp.imag());
+              tmp = CalcSingle<T>(fabs(v),            fabs(v)+element.hh, s, z, k, vxs.get(),vweights.get(),nDivH);
+              field1 += tmp;
+              debug_print("int_v: %f %f\n",tmp.real(),tmp.imag());
+              s = element.hw - fabs(u);
+              tmp = CalcSingle<T>(fabs(v)-element.hh, fabs(v)           , s, z, k, vxs.get(),vweights.get(),nDivH);
+              debug_print("int_v: %f %f\n",tmp.real(),tmp.imag());
+              field1 += tmp;
+              tmp = CalcSingle<T>(fabs(v),            fabs(v)+element.hh, s, z, k, vxs.get(),vweights.get(),nDivH);
+              debug_print("int_v: %f %f\n",tmp.real(),tmp.imag());
+              field1 += tmp;
+            } else {
+              // Inside
+              tmp = CalcSingle<T>(0,                  fabs(v)+element.hh, s, z, k, vxs.get(),vweights.get(),nDivH);
+              debug_print("int_v: %f %f\n",tmp.real(),tmp.imag());
+              field1 += tmp;
+              s = element.hw - fabs(u);
+              tmp = CalcSingle<T>(0,                  fabs(v)+element.hh, s, z, k, vxs.get(),vweights.get(),nDivH);
+              debug_print("int_v: %f %f\n",tmp.real(),tmp.imag());
+              field1 += tmp;
+              s = fabs(u) + element.hw;
+              tmp = CalcSingle<T>(0,                  element.hh-fabs(v), s, z, k, vxs.get(),vweights.get(),nDivH);
+              debug_print("int_v: %f %f\n",tmp.real(),tmp.imag());
+              field1 += tmp;
+              s = element.hw - fabs(u);
+              tmp = CalcSingle<T>(0,                  element.hh-fabs(v), s, z, k, vxs.get(),vweights.get(),nDivH);
+              debug_print("int_v: %f %f\n",tmp.real(),tmp.imag());
+              field1 += tmp;
+            }
           }
-        }
 
-        T real = field1.real();
-        T imag = field1.imag();
+          T real = field1.real();
+          T imag = field1.imag();
 
-        field.real(field.real() + real*cos(data.m_phases[iElement]) - imag*sin(data.m_phases[iElement]));
-        field.imag(field.imag() + real*sin(data.m_phases[iElement]) + imag*cos(data.m_phases[iElement]));
-      }
+          // Multiply with i
+          std::swap(real,imag);
+          imag = -imag;
+
+          // Divide with 2*pi*k
+          real = real / (T(M_2PI)*k);
+          imag = imag / (T(M_2PI)*k);
+
+          // Phases
+          field.real(field.real() + real*cos(data.m_phases[iElement]) - imag*sin(data.m_phases[iElement]));
+          field.imag(field.imag() + real*sin(data.m_phases[iElement]) + imag*cos(data.m_phases[iElement]));
+
+        } /* if (apodization != 0.0) */
+      } /* for (size_t iElement = 0 ; iElement < nElements ; iElement++) */
+
       (*odata)[iPoint].real(field.real());
       (*odata)[iPoint].imag(field.imag());
     }
+    return 0;
   }
 
-  template void FNM_EXPORT CalcCwFieldRef(const ApertureData<float>& data,
-                                          const float* pos, const size_t nPositions,
-                                          std::complex<float>** odata);
-
-  template void FNM_EXPORT CalcCwFieldRef(const ApertureData<double>& data,
-                                          const double* pos, const size_t nPositions,
-                                          std::complex<double>** odata);
+  template int FNM_EXPORT CalcCwFieldRef(const ApertureData<float>& data,
+                                         const float* pos, const size_t nPositions,
+                                         std::complex<float>** odata);
 
   template void FNM_EXPORT CalcCwField(const ApertureData<float>& data,
                                        const float* pos, const size_t nPositions,
                                        std::complex<float>** odata);
 
+#ifdef FNM_DOUBLE_SUPPORT
+  template int FNM_EXPORT CalcCwFieldRef(const ApertureData<double>& data,
+                                         const double* pos, const size_t nPositions,
+                                         std::complex<double>** odata);
+
   template void FNM_EXPORT CalcCwField(const ApertureData<double>& data,
                                        const double* pos, const size_t nPositions,
                                        std::complex<double>** odata);
-
+#endif
 }
 
 /* Local variables: */

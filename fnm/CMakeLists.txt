@@ -45,11 +45,11 @@ endif()
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
 
 set(fnm_HEADERS
+  ../sps/progress.hpp
+  fnm_types.hpp
   FnmSIMD.hpp
-  FnmMath.hpp
   fnm_calc.hpp
   fnm_data.hpp
-#  block_match.hpp
 )
 
 set(fnm_PUBLIC_HEADERS
@@ -59,10 +59,11 @@ set(fnm_PUBLIC_HEADERS
 )
 
 set(fnm_SOURCES
-  fnm.cpp
-  fnm_calc.cpp
+  ../sps/progress.cpp
+  fnm_types.cpp
   fnm_data.cpp
-#  block_match.cpp
+  fnm_calc.cpp
+  fnm.cpp
 )
 
 if (UNIX AND NOT WIN32)

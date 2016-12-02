@@ -9,6 +9,8 @@
  */
 #pragma once
 
+// TODO: Introduce header with interface structs
+
 /** @defgroup FNM Fast Near-field Method
  * @brief This module is used for computing responses using the fast nearfield method (FNM)
  *
@@ -16,6 +18,11 @@
 
 #include <fnm/fnm_export.h>
 #include <fnm/config.h>
+#include <fnm/fnm_types.hpp>
+
+#ifdef FNM_PULSED_WAVE
+#include <sofus/sofus_pulses.hpp>
+#endif
 
 #include <complex>
 
@@ -23,11 +30,15 @@
 namespace fnm {
   /// Forward-declare ApertureData
   template<class T>
-  struct ApertureData;
+  class ApertureData;
 }
 
 namespace std {
   class runtime_error;
+}
+
+namespace sps {
+  class ProgressBarInterface;
 }
 
 /*!
@@ -36,21 +47,6 @@ namespace std {
  */
 
 namespace fnm {
-
-  /*! \brief Sysparm structure
-   *
-   *
-   * A structure containing global simulation parameters
-   */
-  template <typename T>
-  struct FNM_EXPORT sysparm_t {
-    /// Speed of sound
-    T c;
-    /// Number of width abcissas
-    size_t nDivW;
-    /// Number of height abcissas
-    size_t nDivH;
-  };
 
   /*! \brief Aperture class
    *
@@ -104,6 +100,42 @@ namespace fnm {
      */
     const size_t& NSubElementsGet() const;
 
+    void ExtentGet(T** coordinates, size_t* nDim, size_t* nLimits) const;
+
+    T AreaGet() const;
+
+    /**
+     * Get phases of elements
+     *
+     * @param data
+     * @param nData
+     */
+    void PhasesGet(T** data, size_t* nData);
+
+    /**
+     * Get delays of elements
+     *
+     * @param data
+     * @param nData
+     */
+    void DelaysGet(T** data, size_t* nData);
+
+    /**
+     * Get rectangles for display
+     *
+     * @param out
+     * @param nElements
+     * @param nSubElements
+     * @param nParams
+     */
+    void RectanglesGet(T** out, size_t* nElements,
+                       size_t* nSubElements, size_t* nParams) const;
+
+    //a}
+
+    //a{
+    /** Read-write attributes */
+
     /**
      * Get element position data
      *
@@ -123,25 +155,6 @@ namespace fnm {
     void PositionsSet(const T* pos, const size_t nPositions, const size_t nDim);
 
     /**
-     * Get phases of elements
-     *
-     * @param phases
-     * @param nPhases
-     */
-    void PhasesGet(T** phases, size_t* nPhases);
-
-
-    void RectanglesGet(T** out, size_t* nElements,
-                       size_t* nSubElements, size_t* nParams) const;
-
-    // TODO: Group properly
-    //a}
-
-
-    //a{
-    /** Read-write attributes */
-
-    /**
      * Get focus point or virtual source
      *
      * @param oFocus
@@ -154,6 +167,20 @@ namespace fnm {
      * @param iFocus
      */
     void FocusSet(const T iFocus[3]);
+
+    /**
+     * Get focus type used
+     *
+     * @param oFocus
+     */
+    int FocusingTypeGet() const;
+
+    /**
+     * Set focus type used
+     *
+     * @param iFocus
+     */
+    void FocusingTypeSet(const int iFocusingType);
 
     /**
      * Get number of threads
@@ -183,6 +210,59 @@ namespace fnm {
      * @param f0
      */
     void F0Set(const T f0);
+
+    void SysParmSet(const sysparm_t<T> *arg);
+
+#ifdef FNM_PULSED_WAVE
+    /**
+     * Get sampling frequency
+     *
+     * @return
+     */
+    const T& FsGet() const;
+
+    /**
+     * Set sampling frequency
+     *
+     * @param f0
+     */
+    void FsSet(const T f0);
+
+    /**
+     * Get excitation (reference to or view of)
+     *
+     * @param data
+     * @param nData
+     */
+    void ExcitationGet(T** data, size_t* nData) const;
+
+    /**
+     * Set excitation
+     *
+     * @param data
+     * @param nData
+     */
+    void ExcitationSet(const T* data,
+                       const size_t nData);
+
+    /**
+     * Get impulse (reference to or view of)
+     *
+     * @param data
+     * @param nData
+     */
+    void ImpulseGet(T** data, size_t* nData) const;
+
+    /**
+     * Set impulse
+     *
+     * @param data
+     * @param nData
+     */
+    void ImpulseSet(const T* data,
+                    const size_t nData);
+
+#endif
 
     /**
      * Get speed of sound
@@ -220,6 +300,14 @@ namespace fnm {
      *  \return true on success
      */
 
+    /**
+     * Get sub-element positions
+     *
+     * @param out
+     * @param nElements
+     * @param nSubElements
+     * @param nParams
+     */
     void SubElementsGet(T** out, size_t* nElements,
                         size_t* nSubElements, size_t* nParams) const;
 
@@ -265,10 +353,70 @@ namespace fnm {
      */
     void NDivHSet(const size_t nDivH);
 
+    /**
+     * Get apodization
+     *
+     * @param data
+     * @param nData
+     */
+    void ApodizationGet(T** data, size_t* nData) const;
+
+    /**
+     * Set apodization
+     *
+     * @param data
+     * @param nData
+     */
+    void ApodizationSet(const T* data, const size_t nData);
+
+    void ProgressBarSet(sps::ProgressBarInterface* pbar);
     //a}
 
     /**
-     * Compute CW response at multiple positions (uses SIMD)
+     * Update phases after setting focus. This function is used by all
+     * methods for adjusting phases for focusing.
+     *
+     */
+    void FocusUpdate();
+
+    //@{ Calculation functions
+
+#ifdef FNM_PULSED_WAVE
+    /**
+     *
+     *
+     * @param pos
+     * @param nPositions
+     * @param nDim
+     * @param odata
+     * @param nSignals
+     * @param nSamples
+     *
+     * @return
+     */
+    T CalcPwField(const T* pos, const size_t nPositions, const size_t nDim,
+                  T** odata, size_t* nSignals, size_t* nSamples);
+#endif
+
+    /**
+     * Compute CW response at multiple positions. Reference
+     * implementation. The ranges of integration are reduced to give
+     * the most accurate result with less abcissas.
+     *
+     * @param pos
+     * @param nPositions
+     * @param nDim
+     * @param odata
+     * @param nOutPositions
+     */
+    int CalcCwFieldRef(const T* pos, const size_t nPositions, const size_t nDim,
+                       std::complex<T>** odata, size_t* nOutPositions);
+
+#ifndef FNM_DOUBLE_SUPPORT
+    /**
+     * Compute CW response at multiple positions (uses SIMD). The
+     * ranges of integration are reduced to give the most accurate
+     * result with less abcissas.
      *
      * @param pos
      * @param nPositions
@@ -278,19 +426,15 @@ namespace fnm {
      */
     int CalcCwFast(const T* pos, const size_t nPositions, const size_t nDim,
                    std::complex<T>** odata, size_t* nOutPositions);
+#endif
 
     /**
-     * Update phases after setting focus. This is called automatically.
+     * Compute CW response at multiple positions. The range of
+     * integration is naive so it is accurate when projections lie
+     * inside an element, but requires a huge amount of abcissas to
+     * get a usuable result, when projections lie outside an element.
      *
-     */
-    void FocusUpdate();
-
-    // Experimental undocumented functions
-    void CalcCwField(const T* pos, const size_t nPositions, const size_t nDim,
-                     std::complex<T>** odata, size_t* nOutPositions);
-
-    /**
-     * Compute CW response at multiple positions. Reference implementation.
+     * TODO: Remove when CalcCwFieldRef is fixed
      *
      * @param pos
      * @param nPositions
@@ -298,14 +442,40 @@ namespace fnm {
      * @param odata
      * @param nOutPositions
      */
-    void CalcCwFieldRef(const T* pos, const size_t nPositions, const size_t nDim,
-                        std::complex<T>** odata, size_t* nOutPositions);
+    int CalcCwField(const T* pos, const size_t nPositions, const size_t nDim,
+                    std::complex<T>** odata, size_t* nOutPositions);
 
-    void CalcCwField2(const T* pos, const size_t nPositions, const size_t nDim,
-                      std::complex<T>** odata, size_t* nOutPositions);
-
-    void CalcCwFocus(const T* pos, const size_t nPositions, const size_t nDim,
+#ifndef FNM_DOUBLE_SUPPORT
+    /**
+     * Same as CalcCwField, but uses SIMD.
+     *
+     * TODO: Remove when CalcCwFieldRef is fixed
+     *
+     * @param pos
+     * @param nPositions
+     * @param nDim
+     * @param odata
+     * @param nOutPositions
+     *
+     * @return
+     */
+    int CalcCwField2(const T* pos, const size_t nPositions, const size_t nDim,
                      std::complex<T>** odata, size_t* nOutPositions);
+#endif
+
+    //@}
+
+    //a{
+    /** Experimental functions */
+
+#ifndef FNM_DOUBLE_SUPPORT
+    int CalcAsa(const T* y0,const size_t nx,const size_t ny,
+                const T dx,const T dy,
+                const size_t Nx,const size_t Ny,
+                std::complex<T>** p1, size_t *onx, size_t *ony, size_t *onz);
+#endif
+
+    //a}
 
     //a{
     /** Static variables */
@@ -315,8 +485,30 @@ namespace fnm {
 
     /// System parameters (We could make a long list of functions friends of Aperture)
     static sysparm_t<T> _sysparm;
+
+    static T fs;
     //a}
   private:
+    void ManagedAllocation(std::complex<T>** outTest, size_t* nOutTest);
+
+
+    /**
+     * The positions must all equal the focus point and the number
+     * should match the number of elements. By doing so, a set of
+     * phases is computed for focusing.
+     *
+     * Used by \ref FocusUpdate
+     *
+     * @param pos
+     * @param nPositions
+     * @param nDim
+     * @param odata
+     * @param nOutPositions
+     *
+     * @return
+     */
+    int CalcCwFocus(const T* pos, const size_t nPositions, const size_t nDim,
+                    std::complex<T>** odata, size_t* nOutPositions);
 
     /// Number of threads
     static size_t nthreads;
@@ -330,6 +522,7 @@ namespace fnm {
 
     // TODO: Move these to .cpp translation unit, must take pointer to Aperture<T>
 
+#ifndef FNM_DOUBLE_SUPPORT
     /**
      * Thread function for computing harmonic response
      *
@@ -341,13 +534,20 @@ namespace fnm {
 # ifdef HAVE_MQUEUE_H
     void* CalcThreadFunc(void* ptarg);
 # endif
+    // TODO: Invalid read of size 4
     void* CalcThreaded(void* ptarg);
 #elif defined(_WIN32)
     unsigned int __stdcall CalcThreaded(void *ptarg);
 #endif
+#endif
 
     ///< Data
     ApertureData<T>* m_data;
+
+    sps::ProgressBarInterface* m_pbar;
+#ifdef FNM_PULSED_WAVE
+    sofus::AperturePulses<T>* m_pulses;
+#endif
   };
 }
 /*! @} End of FNM Group */

@@ -13,24 +13,10 @@
 #include <sps/sps_export.h>
 #include <sps/math.h>
 
-#ifdef _MSC_VER
-// TODO: Try out: alignas (16) std::array<char, 10>
-# include <sps/aligned_array.hpp>
-#else
-# include <array>
-#endif
-
-
-#ifdef _WIN32
-namespace std {
-  template class SPS_EXPORT aligned_array<float,4>;
-  template class SPS_EXPORT aligned_array<double,4>;
-}
-#endif
+#include <sps/smath_types.hpp>
 
 // Remove eventually
 #include <iostream>
-
 
 #ifdef _WIN32
 /**
@@ -88,83 +74,8 @@ int signum(T x)
 #endif
 
 /** @addtogroup SPS */
-/*@{*/
-
 namespace sps {
 
-  /*! \brief Point type (aligned)
-   *
-   *
-   *  Point as an aligned array
-   */
-#ifdef _MSC_VER
-//    template <typename T>
-//    struct SPS_EXPORT point_t: public std::aligned_array<T,4> {};
-    template <typename T>
-    struct SPS_EXPORT point_t : public std::aligned_array<T,4> {};
-#else
-  template <typename T>
-  ALIGN16_BEGIN struct ALIGN16_END SPS_EXPORT point_t : public std::array<T,4> {};
-#endif
-
-  /*! \brief Rectangle
-   *
-   *
-   *  Rectangle structure as an array of \ref sps::point_t
-   */
-#ifdef _MSC_VER
-  template <typename T>
-  struct SPS_EXPORT rect_t : public std::aligned_array<point_t<T> ,4> {};
-#else
-  template <typename T>
-  struct rect_t : public std::array<point_t<T> ,4> {};
-#endif
-
-
-  /*! \brief Bounding box
-   *
-   *
-   *  The bounding box is used for fast parallel computation and to
-   *  optimize the cache usage.
-   */
-  template <typename T>
-  struct SPS_EXPORT bbox_t {
-    /// Boundary minimum
-    point_t<T> min;
-    /// Boundary maximum
-    point_t<T> max;
-  };
-
-  /*! \brief Euler angles
-   *
-   *
-   *  Euler angles, the z-x-z' convention is used.
-   */
-#ifdef _MSC_VER
-  template <typename T>
-  struct SPS_EXPORT euler_t {
-    /// alpha
-    T alpha;
-    /// beta
-    T beta;
-    /// gamma
-    T gamma;
-    /// Dummy used by alignment
-    T dummy;
-  };
-#else
-  template <typename T>
-  ALIGN16_BEGIN struct ALIGN16_END euler_t {
-    /// alpha
-    T alpha;
-    /// beta
-    T beta;
-    /// gamma
-    T gamma;
-    /// Dummy used by alignment
-    T dummy;
-  };
-#endif
 
   /**
    * Distance from point to point
@@ -369,6 +280,59 @@ namespace sps {
     return farthest;
   }
 
+  template <typename T>
+  inline void dists_most_distant_and_closest(const sps::bbox_t<T> &box0,
+      const sps::bbox_t<T> &box1,
+      T* distNear,
+      T* distFar)
+  {
+    // Corners
+    T boundaries[6];
+    sps::point_t<T> border_points0[8];
+    sps::point_t<T> border_points1[8];
+
+    memcpy(&boundaries[0],&box0.min[0],3*sizeof(T));
+    memcpy(&boundaries[3],&box0.max[0],3*sizeof(T));
+    for (size_t i = 0 ; i < 2 ; i++) {
+      for (size_t j = 0 ; j < 2 ; j++) {
+        for (size_t k = 0 ; k < 2 ; k++) {
+          border_points0[i*4+j*2+k][0] = boundaries[i*3];   // 0,3
+          border_points0[i*4+j*2+k][1] = boundaries[1+j*3]; // 1,4
+          border_points0[i*4+j*2+k][2] = boundaries[2+k*3]; // 2,5
+        }
+      }
+    }
+
+    memcpy(&boundaries[0],&box1.min[0],3*sizeof(T));
+    memcpy(&boundaries[3],&box1.max[0],3*sizeof(T));
+    for (size_t i = 0 ; i < 2 ; i++) {
+      for (size_t j = 0 ; j < 2 ; j++) {
+        for (size_t k = 0 ; k < 2 ; k++) {
+          border_points1[i*4+j*2+k][0] = boundaries[i*3];   // 0,3
+          border_points1[i*4+j*2+k][1] = boundaries[1+j*3]; // 1,4
+          border_points1[i*4+j*2+k][2] = boundaries[2+k*3]; // 2,5
+        }
+      }
+    }
+
+    *distNear = std::numeric_limits<T>::max();
+    *distFar  = std::numeric_limits<T>::min();
+
+    for (size_t iBorderPoint = 0 ; iBorderPoint < 8 ; iBorderPoint++) {
+      sps::point_t<T> corner0 = border_points0[iBorderPoint];
+      sps::point_t<T> near0 = nearest_point_on_bbox(corner0,
+                              box1);
+      for (size_t jBorderPoint = 0 ; jBorderPoint < 8 ; jBorderPoint++) {
+        sps::point_t<T> corner1 = border_points1[jBorderPoint];
+
+        *distFar = std::max<T>(*distFar, dist_point_to_point<T>(corner0,corner1));
+
+        sps::point_t<T> near1 = nearest_point_on_bbox(near0,box0);
+        *distNear = std::min<T>(*distNear, dist_point_to_point<T>(near0,near1));
+      }
+    }
+  }
+
 #ifdef _WIN32
   template struct SPS_EXPORT point_t<float>;
   template struct SPS_EXPORT point_t<double>;
@@ -399,7 +363,7 @@ namespace sps {
    * @param euler
    */
   template <typename T>
-  void SPS_EXPORT basis_vectors_ps(T* vec0, T* vec1, T* vec2, const sps::euler_t<T>& euler);
+  void SPS_EXPORT basis_vectors(T* vec0, T* vec1, T* vec2, const sps::euler_t<T>& euler);
 
   /**
    * Operator for printing points to a stream
@@ -419,6 +383,28 @@ namespace sps {
 }
 
 /*@}*/
+
+// TODO: Consider using aligned memory (only), e.g.
+
+/*
+typedef float f4 __attribute__((vector_size(16)));
+typedef union { f4 v; float f[4]; } simdfu;
+
+void vecadd(f4 * restrict a, f4 * restrict b, f4 * restrict c);
+
+float a[16] __attribute__((aligned(16)));
+float b[16] __attribute__((aligned(16)));
+float c[16] __attribute__((aligned(16)));
+
+int main()
+{
+a = __builtin_assume_aligned (a, 8);
+
+    vecadd((f4 *) a, (f4 *) b, (f4 *) c);
+    return 0;
+}
+*/
+
 
 /* Local variables: */
 /* indent-tab-mode: nil */
