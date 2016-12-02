@@ -1,0 +1,72 @@
+#pragma once
+
+#include <sps/cenv.h>
+#include <sps/mm_malloc.h>
+#include <malloc.h>
+
+#include <memory>
+#include <functional>
+
+namespace sps {
+  STATIC_INLINE_BEGIN size_t msize(void* data) {
+#ifdef _WIN32
+    return _msize(data);
+#elif __APPLE__
+    return malloc_size(data);
+#elif defined(__GNUG__)
+    return malloc_usable_size(data);
+#endif
+  }
+}
+
+#include <sps/win32/memory>
+#include <sps/unix/memory>
+
+#if __cplusplus <= 201103L
+// Backport std::make_unique from C++14
+namespace std {
+  template<typename T, typename ...Args>
+  std::unique_ptr<T> make_unique(Args&& ...args)
+  {
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+  }
+} // namespace std
+#endif // __cplusplus <= 201103L
+
+namespace sps {
+#if (defined(__GNUG__) && __cplusplus >= 201103L)
+  // TODO: Figure out how Microsoft reveals true C++11
+  using sps::nix::deleted_aligned_array;
+  using sps::nix::deleted_aligned_array_create;
+
+  using sps::nix::deleted_aligned_multi_array;
+  using sps::nix::deleted_aligned_multi_array_create;
+#elif defined(_MSC_VER)
+  using sps::win32::base_align16;
+
+  using sps::win32::deleted_aligned_array;
+  using sps::win32::deleted_aligned_array_create;
+
+  using sps::win32::deleted_aligned_multi_array;
+  using sps::win32::deleted_aligned_multi_array_create;
+#endif
+}
+
+/*
+#include <memory>
+#include <functional>
+#include <iostream>
+
+int main() {
+    auto str = new const char[6]{'h', 'e', 'l', 'l', 'o', '\0'};
+    std::unique_ptr<const char[], std::function<void(const char *)>> u_ptr(str, [](const char *s){ delete[] s; });
+    std::cout << u_ptr.get() << std::endl;
+}
+*/
+
+/* Local variables: */
+/* mode: c++ */
+/* indent-tabs-mode: nil */
+/* tab-width: 2 */
+/* c-basic-offset: 2 */
+/* End: */

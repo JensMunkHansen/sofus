@@ -1,0 +1,265 @@
+#pragma once
+
+#include <sps/cenv.h>
+
+namespace sps {
+  namespace win32 {
+
+#ifdef _MSC_VER
+# pragma warning(push)
+# pragma warning(disable : 4324)
+#endif
+    ALIGN16_BEGIN struct ALIGN16_END base_align16 {
+      /*
+        Empty classes are "special" because the standard requires that no complete object have size 0,
+        so a class with no data members or bases always requires some padding if it doesn't have a vtable.    
+
+        Apparently, MSVC creates a struct of size 16, if a struct of size 16 is derived from a struct of
+        size 0, so we have removed this and ignored warning 4324
+    
+    */
+      //      char dummy[16];
+    };
+    ALIGN32_BEGIN struct ALIGN32_END sps_base_align32 {
+    };
+#ifdef _MSC_VER
+# pragma warning(pop)
+#endif
+    
+    /*
+      Using Microsoft Visual Studio 2013, the following construct
+      works.
+
+      auto del = [](T* p) {
+      _mm_free(p);
+      };
+      std::unique_ptr<T[], decltype(del)> bla((T*)_mm_malloc(sizeof(T)*nDivW,16), del);
+  
+      A bug in Visual Studio 2013 causes the below expression to fail with a message about a
+      deleted function is referenced
+
+      typedef std::unique_ptr<T[], std::function<void(T*)> > deleted_unique_array;
+      
+      http://stackoverflow.com/questions/30578497/unique-ptr-constructor-with-custom-deleter-is-deleted
+      
+    */
+
+    template<typename T>
+    class deleted_aligned_array {
+    public:
+      /* 
+         A much simpler approach works using GCC
+      
+         typedef std::unique_ptr<T[], std::function<void(T*)> > deleted_unique_array;
+        
+         deleted_aligned_array(size_t n) : m_data((T*)_mm_malloc(n*sizeof(T),16), [](T* p) {_mm_free(p);}) {};
+        
+         or
+  
+         static void deleter(T* p)
+         {
+           _mm_free(p);
+         }
+  
+         deleted_aligned_array(size_t n) : m_data((T*)_mm_malloc(n*sizeof(T),16),
+                                                  std::bind(&deleted_aligned_array::deleter,
+                                                            this, std::placeholders::_1)) {}
+       */
+      typedef T* pointer;
+      
+      typedef std::unique_ptr<T, std::function<void(T*)> > deleted_unique_array;
+  
+      deleted_aligned_array() : m_data() {}
+  
+      deleted_aligned_array(size_t n) : m_data((T*)_mm_malloc(n*sizeof(T),16), [](T* p) {_mm_free(p);}) {}
+  
+      deleted_aligned_array(deleted_aligned_array&& other) : m_data(std::move(other.m_data)) {}
+  
+      deleted_aligned_array& operator=( deleted_aligned_array&& other ) 
+      {
+        m_data = std::move( other.m_data );
+        return *this;
+      }
+  
+      T& operator[](const size_t i) 
+      {
+        return m_data.get()[i];
+      }
+  
+      const T& operator[](const size_t i) const 
+      {
+        return m_data.get()[i];
+      }
+  
+      T* get() 
+      {
+        return m_data.get();
+      }
+  
+      const T* get() const 
+      {
+        return m_data.get();
+      }
+  
+      void reset(pointer p = pointer()) {
+        m_data.reset(p);
+      }
+      
+    private:
+      deleted_aligned_array(const deleted_aligned_array& other) = delete;
+      deleted_aligned_array& operator=( const deleted_aligned_array& a ) = delete;
+      deleted_unique_array m_data;
+    };
+  
+    template <class T>
+    deleted_aligned_array<T> deleted_aligned_array_create(size_t n) {
+      return deleted_aligned_array<T>(n);
+    }
+
+    template <class T, size_t D>
+    class deleted_aligned_multi_array {
+    };
+
+    template <class T>
+    class deleted_aligned_multi_array<T,2> {
+    public:
+      typedef T** pointer;
+      typedef std::unique_ptr<T*, std::function<void(T**)>> deleted_unique_array;
+      
+      deleted_aligned_multi_array() : m_data(), m(0), n(0) {}
+
+      deleted_aligned_multi_array(size_t m, size_t n) : m_data(new T*[m](),
+                                                               [](T** x) {
+# ifndef _DEBUG
+                                                                 // TODO: Check using sps::msize(x[0])
+                                                                 if (sps::msize(x) > sizeof(intptr_t))
+                                                                 {
+                                                                   _mm_free(&(x[0][0]));
+                                                                 }
+# else
+                                                                 if (sps::msize(x) > 0)
+                                                                 {
+                                                                   _mm_free(&(x[0][0]));
+                                                                 }
+# endif
+                                                                 delete[] x;}), m(m), n(n) {
+        // Allocate
+        if (m*n > 0) {
+          m_data.get()[0] = (T*) _mm_malloc(m*n*sizeof(T),16);
+        
+          // Row pointers. First pointer may screw up de-allocation.
+          for (size_t iRow = 1; iRow < m; iRow++) {
+            (m_data.get())[iRow] = &(m_data.get()[0][iRow*n]);
+          }
+        }
+      }
+      
+      deleted_aligned_multi_array(deleted_aligned_multi_array&& other) : m_data(std::move(other.m_data)), m(other.m), n(other.n) {}
+
+      // Dangerous
+      deleted_aligned_multi_array& operator=( deleted_aligned_multi_array&& other ) 
+      {
+        if (this != &other) {
+          m_data = std::move( other.m_data );
+          m    = other.m;
+          n    = other.n;
+        }
+        return *this;
+      }
+
+      T& operator()(size_t i, size_t j) {
+        return this->m_data.get()[0][i*n + j];
+      }
+      
+      T* operator[](size_t m) {
+        return &(m_data.get()[m][0]);
+      }
+      
+      const T* operator[](size_t m) const {
+        return m_data.get()[m];
+      }
+      
+      pointer get() const {
+        return m_data.get();
+      }
+      
+      void reset(pointer __p = pointer()) {
+        m_data.reset(__p);
+      }
+
+      template<typename _Up>
+      void reset(_Up) = delete;
+      
+    private:
+      deleted_aligned_multi_array(const deleted_aligned_multi_array& other) = delete;
+      deleted_aligned_multi_array& operator=( const deleted_aligned_multi_array& a ) = delete;
+
+      deleted_unique_array m_data;  ///<Data
+    public:
+      size_t m;                   ///<Number of rows
+      size_t n;                   ///<Number of columns
+    };
+
+    // Work-around to partially specialize a function (multiple dimensions)
+    template <class T, size_t I>
+    inline typename std::enable_if<I==2, deleted_aligned_multi_array<T,2> >::type
+    deleted_aligned_multi_array_create(size_t m, size_t n)
+    {
+      return deleted_aligned_multi_array<T,2>(m,n);
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+/* Local variables: */
+/* mode: c++ */
+/* indent-tabs-mode: nil */
+/* tab-width: 2 */
+/* c-basic-offset: 2 */
+/* End: */
