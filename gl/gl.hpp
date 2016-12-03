@@ -101,6 +101,14 @@
  * \f]
  *
  * @section gl_usage Using the library
+ *
+ * A simple example of usage is to use the library for integrating the
+ * normal distribution, which must equal the error function, erf. The
+ * normal distribution is implemented below:
+ * @snippet gl_test.cpp GL_normal example
+ * The integral is evaluated as follows:
+ * @snippet gl_test.cpp GL_erf example
+ * Using 33 abcissas is sufficient to get a result within floating point precision.
  */
 
 /** @addtogroup GL */

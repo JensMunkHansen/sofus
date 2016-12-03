@@ -24,10 +24,12 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY
 set(gl_HEADERS
   "${CMAKE_CURRENT_BINARY_DIR}/gl_export.h"
   "${CMAKE_CURRENT_BINARY_DIR}/config.h"
+  fastgl.hpp
   gl_lut.hpp
   bessel_lut.hpp
 )
 set(gl_SOURCES
+  fastgl.cpp
   gl.cpp
 )
 
@@ -58,20 +60,20 @@ generate_export_header(gl)# DEFINE_NO_DEPRECATED)
 
 if (BUILD_TEST)
   add_executable(gl_test gl_test.cpp)
-  
+
   # Targets are defined in GoogleTest.cmake
   target_link_libraries(gl_test ${GTEST_LIBRARIES})
   
   target_link_libraries(gl_test gl)
-  
+
   # Link to threading library
   set( CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${CMAKE_THREAD_LIBS_INIT}")
-  
+
   enable_testing()
   add_test(NAME    gl_test 
            COMMAND gl_test)
 endif()
-       
+
 install(TARGETS gl
   EXPORT FnmTargets
   RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
