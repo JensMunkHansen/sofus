@@ -1,7 +1,0 @@
-<map id="config.h" name="config.h">
-<area shape="rect" id="node2" href="$fnm_8hpp.html" title="Contains Aperture class with methods using the fast nearfield method (FNM) " alt="" coords="156,155,251,181"/>
-<area shape="rect" id="node4" href="$fnm__data_8hpp.html" title="fnm/fnm_data.hpp" alt="" coords="5,155,132,181"/>
-<area shape="rect" id="node5" href="$fnm__types_8hpp.html" title="fnm/fnm_types.hpp" alt="" coords="161,80,296,107"/>
-<area shape="rect" id="node6" href="$FnmSIMD_8hpp.html" title="fnm/FnmSIMD.hpp" alt="" coords="275,155,409,181"/>
-<area shape="rect" id="node3" href="$fnm__calc_8hpp.html" title="Function used for Fast&#45;Nearfield&#45;Method. " alt="" coords="72,229,199,256"/>
-</map>
