@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['focusingtypens',['FocusingTypeNS',['../structfnm_1_1FocusingTypeNS.html',1,'fnm']]]
+  ['glnode',['GLNode',['../structgl_1_1GLNode.html',1,'gl']]]
 ];

@@ -23,7 +23,6 @@ var searchData=
   ['fnm_5fexport_2eh',['fnm_export.h',['../fnm__export_8h.html',1,'']]],
   ['fnm_5fno_5fexport',['FNM_NO_EXPORT',['../fnm__export_8h.html#affaa1420e4dc887bc24274ff1c58ef82',1,'fnm_export.h']]],
   ['fnm_5ftypes_2ehpp',['fnm_types.hpp',['../fnm__types_8hpp.html',1,'']]],
-  ['fnmmath_2ehpp',['FnmMath.hpp',['../FnmMath_8hpp.html',1,'']]],
   ['fnmsimd_2ehpp',['FnmSIMD.hpp',['../FnmSIMD_8hpp.html',1,'']]],
   ['focusget',['FocusGet',['../classfnm_1_1Aperture.html#aed74195d0a3d7bb7bf42a9d97691ebbf',1,'fnm::Aperture']]],
   ['focusingtype',['FocusingType',['../namespacefnm.html#ac5c8ed1b3501db991ccb6065c89c3b54',1,'fnm']]],
