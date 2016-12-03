@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.8">
+  <compounddef id="structgl_1_1GLNode" kind="struct" prot="public">
+    <compoundname>gl::GLNode</compoundname>
+    <includes local="no">gl.hpp</includes>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structgl_1_1GLNode_1aee90379adb0307effb138f4871edbc5c" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double value</definition>
+        <argsstring></argsstring>
+        <name>value</name>
+        <briefdescription>
+<para>Nodes. </para>        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/gl/gl.hpp" line="117" column="1" bodyfile="/home/jmh/github/sofus/gl/gl.hpp" bodystart="117" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structgl_1_1GLNode_1a99108733d00274978a4979dc072bd513" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double weight</definition>
+        <argsstring></argsstring>
+        <name>weight</name>
+        <briefdescription>
+<para>Weight. </para>        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/gl/gl.hpp" line="119" column="1" bodyfile="/home/jmh/github/sofus/gl/gl.hpp" bodystart="119" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+<para>Container for weight and nodes. </para>    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/jmh/github/sofus/gl/gl.hpp" line="115" column="1" bodyfile="/home/jmh/github/sofus/gl/gl.hpp" bodystart="115" bodyend="120"/>
+    <listofallmembers>
+      <member refid="structgl_1_1GLNode_1aee90379adb0307effb138f4871edbc5c" prot="public" virt="non-virtual"><scope>gl::GLNode</scope><name>value</name></member>
+      <member refid="structgl_1_1GLNode_1a99108733d00274978a4979dc072bd513" prot="public" virt="non-virtual"><scope>gl::GLNode</scope><name>weight</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

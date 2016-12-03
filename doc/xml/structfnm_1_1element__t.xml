@@ -1,0 +1,91 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.8">
+  <compounddef id="structfnm_1_1element__t" kind="struct" prot="public">
+    <compoundname>fnm::element_t</compoundname>
+    <includes local="no">FnmMath.hpp</includes>
+    <templateparamlist>
+      <param>
+        <type>typename T</type>
+      </param>
+    </templateparamlist>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structfnm_1_1element__t_1a1320f8d1d8db5d6492829bb545e52819" prot="public" static="no" mutable="no">
+        <type>ALIGN16_BEGIN sps::point_t&lt; T &gt; center</type>
+        <definition>ALIGN16_BEGIN sps::point_t&lt;T&gt; center ALIGN16_END</definition>
+        <argsstring></argsstring>
+        <name>ALIGN16_END</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/FnmMath.hpp" line="33" column="1" bodyfile="/home/jmh/github/sofus/fnm/FnmMath.hpp" bodystart="33" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structfnm_1_1element__t_1abb6cbad93f868c1374b91cbef203e31a" prot="public" static="no" mutable="no">
+        <type>ALIGN16_BEGIN sps::euler_t&lt; T &gt; euler</type>
+        <definition>ALIGN16_BEGIN sps::euler_t&lt;T&gt; euler ALIGN16_END</definition>
+        <argsstring></argsstring>
+        <name>ALIGN16_END</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/FnmMath.hpp" line="34" column="1" bodyfile="/home/jmh/github/sofus/fnm/FnmMath.hpp" bodystart="34" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structfnm_1_1element__t_1ab091fbc55910c6b961a1dd5c69b7076a" prot="public" static="no" mutable="no">
+        <type>ALIGN16_BEGIN T hw</type>
+        <definition>ALIGN16_BEGIN T hw ALIGN16_END</definition>
+        <argsstring></argsstring>
+        <name>ALIGN16_END</name>
+        <briefdescription>
+<para>Half width. </para>        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/FnmMath.hpp" line="35" column="1" bodyfile="/home/jmh/github/sofus/fnm/FnmMath.hpp" bodystart="35" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structfnm_1_1element__t_1a089b2ab5959eb8478e45d4ab106327ef" prot="public" static="no" mutable="no">
+        <type>ALIGN16_BEGIN T hh</type>
+        <definition>ALIGN16_BEGIN T hh ALIGN16_END</definition>
+        <argsstring></argsstring>
+        <name>ALIGN16_END</name>
+        <briefdescription>
+<para>Half height. </para>        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/FnmMath.hpp" line="36" column="1" bodyfile="/home/jmh/github/sofus/fnm/FnmMath.hpp" bodystart="36" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structfnm_1_1element__t_1a1452d7d19d990f8a131fb5b8b613d188" prot="public" static="no" mutable="no">
+        <type>ALIGN16_BEGIN T dummy[2]</type>
+        <definition>ALIGN16_BEGIN T dummy [2] ALIGN16_END</definition>
+        <argsstring></argsstring>
+        <name>ALIGN16_END</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/FnmMath.hpp" line="37" column="1" bodyfile="/home/jmh/github/sofus/fnm/FnmMath.hpp" bodystart="37" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+<para>Element representation. </para>    </briefdescription>
+    <detaileddescription>
+<para>The element representation is used no matter if the PP(Plane-parallel)-wave approximation is used or the more accurate analytical responses. </para>    </detaileddescription>
+    <location file="/home/jmh/github/sofus/fnm/FnmMath.hpp" line="31" column="1" bodyfile="/home/jmh/github/sofus/fnm/FnmMath.hpp" bodystart="29" bodyend="38"/>
+    <listofallmembers>
+      <member refid="structfnm_1_1element__t_1a1320f8d1d8db5d6492829bb545e52819" prot="public" virt="non-virtual"><scope>fnm::element_t</scope><name>ALIGN16_END</name></member>
+      <member refid="structfnm_1_1element__t_1abb6cbad93f868c1374b91cbef203e31a" prot="public" virt="non-virtual"><scope>fnm::element_t</scope><name>ALIGN16_END</name></member>
+      <member refid="structfnm_1_1element__t_1ab091fbc55910c6b961a1dd5c69b7076a" prot="public" virt="non-virtual"><scope>fnm::element_t</scope><name>ALIGN16_END</name></member>
+      <member refid="structfnm_1_1element__t_1a089b2ab5959eb8478e45d4ab106327ef" prot="public" virt="non-virtual"><scope>fnm::element_t</scope><name>ALIGN16_END</name></member>
+      <member refid="structfnm_1_1element__t_1a1452d7d19d990f8a131fb5b8b613d188" prot="public" virt="non-virtual"><scope>fnm::element_t</scope><name>ALIGN16_END</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

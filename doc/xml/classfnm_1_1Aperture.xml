@@ -1,0 +1,1648 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.8">
+  <compounddef id="classfnm_1_1Aperture" kind="class" prot="public">
+    <compoundname>fnm::Aperture</compoundname>
+    <includes local="no">fnm.hpp</includes>
+    <templateparamlist>
+      <param>
+        <type>class T</type>
+      </param>
+    </templateparamlist>
+      <sectiondef kind="user-defined">
+      <memberdef kind="function" id="classfnm_1_1Aperture_1aa12e26aae03e1310de3b419d6eda061c" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int CalcCwFieldRef</definition>
+        <argsstring>(const T *pos, const size_t nPositions, const size_t nDim, std::complex&lt; T &gt; **odata, size_t *nOutPositions)</argsstring>
+        <name>CalcCwFieldRef</name>
+        <param>
+          <type>const T *</type>
+          <declname>pos</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>nPositions</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>nDim</declname>
+        </param>
+        <param>
+          <type>std::complex&lt; T &gt; **</type>
+          <declname>odata</declname>
+        </param>
+        <param>
+          <type>size_t *</type>
+          <declname>nOutPositions</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Compute CW response at multiple positions. Reference implementation. The ranges of integration are reduced to give the most accurate result with less abcissas.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pos</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nPositions</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nDim</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>odata</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nOutPositions</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="412" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1affc58ecd7f649cbeab23b676f308f185" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int CalcCwFast</definition>
+        <argsstring>(const T *pos, const size_t nPositions, const size_t nDim, std::complex&lt; T &gt; **odata, size_t *nOutPositions)</argsstring>
+        <name>CalcCwFast</name>
+        <param>
+          <type>const T *</type>
+          <declname>pos</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>nPositions</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>nDim</declname>
+        </param>
+        <param>
+          <type>std::complex&lt; T &gt; **</type>
+          <declname>odata</declname>
+        </param>
+        <param>
+          <type>size_t *</type>
+          <declname>nOutPositions</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Compute CW response at multiple positions (uses SIMD). The ranges of integration are reduced to give the most accurate result with less abcissas.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pos</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nPositions</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nDim</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>odata</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nOutPositions</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="427" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1ac02ec8b45ead743c15fd64127a9cff67" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int CalcCwField</definition>
+        <argsstring>(const T *pos, const size_t nPositions, const size_t nDim, std::complex&lt; T &gt; **odata, size_t *nOutPositions)</argsstring>
+        <name>CalcCwField</name>
+        <param>
+          <type>const T *</type>
+          <declname>pos</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>nPositions</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>nDim</declname>
+        </param>
+        <param>
+          <type>std::complex&lt; T &gt; **</type>
+          <declname>odata</declname>
+        </param>
+        <param>
+          <type>size_t *</type>
+          <declname>nOutPositions</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Compute CW response at multiple positions. The range of integration is naive so it is accurate when projections lie inside an element, but requires a huge amount of abcissas to get a usuable result, when projections lie outside an element.</para><para>TODO: Remove when CalcCwFieldRef is fixed</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pos</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nPositions</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nDim</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>odata</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nOutPositions</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="445" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a00d23fa1c2a6c6547606702a72d71aa1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int CalcCwField2</definition>
+        <argsstring>(const T *pos, const size_t nPositions, const size_t nDim, std::complex&lt; T &gt; **odata, size_t *nOutPositions)</argsstring>
+        <name>CalcCwField2</name>
+        <param>
+          <type>const T *</type>
+          <declname>pos</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>nPositions</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>nDim</declname>
+        </param>
+        <param>
+          <type>std::complex&lt; T &gt; **</type>
+          <declname>odata</declname>
+        </param>
+        <param>
+          <type>size_t *</type>
+          <declname>nOutPositions</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Same as CalcCwField, but uses SIMD.</para><para>TODO: Remove when CalcCwFieldRef is fixed</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pos</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nPositions</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nDim</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>odata</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nOutPositions</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para></para></simplesect>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="462" column="1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-static-attrib">
+      <memberdef kind="variable" id="classfnm_1_1Aperture_1ac08006cf2e1c77856e2332b6d98ca861" prot="public" static="yes" mutable="no">
+        <type>const size_t</type>
+        <definition>const size_t nVerticesPerElement</definition>
+        <argsstring></argsstring>
+        <name>nVerticesPerElement</name>
+        <initializer>= 4</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Static variables Number of corners for an element </para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="482" column="1" bodyfile="/home/jmh/github/sofus/fnm/fnm.hpp" bodystart="482" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classfnm_1_1Aperture_1adaffd7c31c339cecbb613daa7eae4f64" prot="public" static="yes" mutable="no">
+        <type>const size_t</type>
+        <definition>const size_t nElementPosParameters</definition>
+        <argsstring></argsstring>
+        <name>nElementPosParameters</name>
+        <initializer>= 8</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Number of parameters for an element </para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="484" column="1" bodyfile="/home/jmh/github/sofus/fnm/fnm.hpp" bodystart="484" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classfnm_1_1Aperture_1a7f24436369eec62f8d62cd18fc1eda03" prot="public" static="yes" mutable="no">
+        <type><ref refid="structfnm_1_1sysparm__t" kindref="compound">sysparm_t</ref>&lt; T &gt;</type>
+        <definition>sysparm_t&lt;T&gt; _sysparm</definition>
+        <argsstring></argsstring>
+        <name>_sysparm</name>
+        <briefdescription>
+<para>System parameters (We could make a long list of functions friends of <ref refid="classfnm_1_1Aperture" kindref="compound">Aperture</ref>) </para>        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="487" column="1" bodyfile="/home/jmh/github/sofus/fnm/fnm.hpp" bodystart="487" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classfnm_1_1Aperture_1aeba68ad214d4eb5ef51b3f3763d099dd" prot="public" static="yes" mutable="no">
+        <type>T</type>
+        <definition>T fs</definition>
+        <argsstring></argsstring>
+        <name>fs</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="489" column="1" bodyfile="/home/jmh/github/sofus/fnm/fnm.hpp" bodystart="489" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="private-static-attrib">
+      <memberdef kind="variable" id="classfnm_1_1Aperture_1a66a588988a3bc62a9ba92966365696f2" prot="private" static="yes" mutable="no">
+        <type>size_t</type>
+        <definition>size_t nthreads</definition>
+        <argsstring></argsstring>
+        <name>nthreads</name>
+        <briefdescription>
+<para>Number of threads. </para>        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="514" column="1" bodyfile="/home/jmh/github/sofus/fnm/fnm.hpp" bodystart="514" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="private-attrib">
+      <memberdef kind="variable" id="classfnm_1_1Aperture_1a4fd259d5d0c9ac1d74b82c4bfdab8a9e" prot="private" static="no" mutable="no">
+        <type><ref refid="singletonfnm_1_1ApertureData" kindref="compound">ApertureData</ref>&lt; T &gt; *</type>
+        <definition>ApertureData&lt;T&gt;* m_data</definition>
+        <argsstring></argsstring>
+        <name>m_data</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="545" column="1" bodyfile="/home/jmh/github/sofus/fnm/fnm.hpp" bodystart="545" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classfnm_1_1Aperture_1a4cdcfc0353f149e1ea28e297a943ea4a" prot="private" static="no" mutable="no">
+        <type>sps::ProgressBarInterface *</type>
+        <definition>sps::ProgressBarInterface* m_pbar</definition>
+        <argsstring></argsstring>
+        <name>m_pbar</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="547" column="1" bodyfile="/home/jmh/github/sofus/fnm/fnm.hpp" bodystart="547" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a3990298bb3b2d0cd9275a039d6bd8319" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>Aperture</definition>
+        <argsstring>()</argsstring>
+        <name>Aperture</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Constructor </para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="64" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a48761e9fd3f7270c9de20abce9a8bad5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>Aperture</definition>
+        <argsstring>(const size_t nElements, const T width, const T kerf, const T height)</argsstring>
+        <name>Aperture</name>
+        <param>
+          <type>const size_t</type>
+          <declname>nElements</declname>
+        </param>
+        <param>
+          <type>const T</type>
+          <declname>width</declname>
+        </param>
+        <param>
+          <type>const T</type>
+          <declname>kerf</declname>
+        </param>
+        <param>
+          <type>const T</type>
+          <declname>height</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Constructor for linear array</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>nElements</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>width</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>kerf</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>height</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para></para></simplesect>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="76" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1acf8f763505318fa40717d41620560d3b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>~Aperture</definition>
+        <argsstring>()</argsstring>
+        <name>~Aperture</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Destructor</para><para><simplesect kind="return"><para></para></simplesect>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="84" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1ab0d91160f41e515aa56b4a961c528e32" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>const size_t &amp;</type>
+        <definition>const size_t&amp; NElementsGet</definition>
+        <argsstring>() const </argsstring>
+        <name>NElementsGet</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Read-only attributes Get element count</para><para><simplesect kind="return"><para></para></simplesect>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="94" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a5c28c71c5172cfe9ecce41f112297073" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>const size_t &amp;</type>
+        <definition>const size_t&amp; NSubElementsGet</definition>
+        <argsstring>() const </argsstring>
+        <name>NSubElementsGet</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Get sub-element count</para><para><simplesect kind="return"><para></para></simplesect>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="101" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a63d391bb8c52d45c1ba48f765ce1943c" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void ExtentGet</definition>
+        <argsstring>(T **coordinates, size_t *nDim, size_t *nLimits) const </argsstring>
+        <name>ExtentGet</name>
+        <param>
+          <type>T **</type>
+          <declname>coordinates</declname>
+        </param>
+        <param>
+          <type>size_t *</type>
+          <declname>nDim</declname>
+        </param>
+        <param>
+          <type>size_t *</type>
+          <declname>nLimits</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="103" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a5a2beeb4beb4cdac3ee643598eb43421" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>T</type>
+        <definition>T AreaGet</definition>
+        <argsstring>() const </argsstring>
+        <name>AreaGet</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="105" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a7f1c68283a50419ef55a3af3a2da7a18" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void PhasesGet</definition>
+        <argsstring>(T **data, size_t *nData)</argsstring>
+        <name>PhasesGet</name>
+        <param>
+          <type>T **</type>
+          <declname>data</declname>
+        </param>
+        <param>
+          <type>size_t *</type>
+          <declname>nData</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Get phases of elements</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>data</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nData</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="113" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a4af91355130ec0fe184a9ccd380b8ba1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void DelaysGet</definition>
+        <argsstring>(T **data, size_t *nData)</argsstring>
+        <name>DelaysGet</name>
+        <param>
+          <type>T **</type>
+          <declname>data</declname>
+        </param>
+        <param>
+          <type>size_t *</type>
+          <declname>nData</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Get delays of elements</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>data</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nData</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="121" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a109e4080fa678b8ae57cfc4da2c9e364" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void RectanglesGet</definition>
+        <argsstring>(T **out, size_t *nElements, size_t *nSubElements, size_t *nParams) const </argsstring>
+        <name>RectanglesGet</name>
+        <param>
+          <type>T **</type>
+          <declname>out</declname>
+        </param>
+        <param>
+          <type>size_t *</type>
+          <declname>nElements</declname>
+        </param>
+        <param>
+          <type>size_t *</type>
+          <declname>nSubElements</declname>
+        </param>
+        <param>
+          <type>size_t *</type>
+          <declname>nParams</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Get rectangles for display</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>out</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nElements</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nSubElements</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nParams</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="131" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1ad5917a3f2f62df8cf44a9a8db7fd6fde" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void PositionsGet</definition>
+        <argsstring>(T **out, size_t *nElements, size_t *nParams) const </argsstring>
+        <name>PositionsGet</name>
+        <param>
+          <type>T **</type>
+          <declname>out</declname>
+        </param>
+        <param>
+          <type>size_t *</type>
+          <declname>nElements</declname>
+        </param>
+        <param>
+          <type>size_t *</type>
+          <declname>nParams</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Read-write attributes Get element position data</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>out</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nElements</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nParams</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="146" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1ab10c2efc99c80b25caa3abab50b14856" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void PositionsSet</definition>
+        <argsstring>(const T *pos, const size_t nPositions, const size_t nDim)</argsstring>
+        <name>PositionsSet</name>
+        <param>
+          <type>const T *</type>
+          <declname>pos</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>nPositions</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>nDim</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Set element position data (may differ from center-most sub-element)</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pos</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nPositions</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nDim</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="155" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1aed74195d0a3d7bb7bf42a9d97691ebbf" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void FocusGet</definition>
+        <argsstring>(T oFocus[3]) const </argsstring>
+        <name>FocusGet</name>
+        <param>
+          <type>T</type>
+          <declname>oFocus</declname>
+          <array>[3]</array>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Get focus point or virtual source</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>oFocus</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="162" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1aa2a0b49036000182665d4218489bf2e4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void FocusSet</definition>
+        <argsstring>(const T iFocus[3])</argsstring>
+        <name>FocusSet</name>
+        <param>
+          <type>const T</type>
+          <declname>iFocus</declname>
+          <array>[3]</array>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Set focus point or virtual source</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>iFocus</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="169" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a77d8cd829340ff37dfdd502b1b47f5fe" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int FocusingTypeGet</definition>
+        <argsstring>() const </argsstring>
+        <name>FocusingTypeGet</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Get focus type used</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>oFocus</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="176" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a7ec287084c79fb733e2ff5a471387f5f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void FocusingTypeSet</definition>
+        <argsstring>(const int iFocusingType)</argsstring>
+        <name>FocusingTypeSet</name>
+        <param>
+          <type>const int</type>
+          <declname>iFocusingType</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Set focus type used</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>iFocus</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="183" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a6697d507490040a87dbd4a3d67a13fc7" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>const size_t &amp;</type>
+        <definition>const size_t&amp; NThreadsGet</definition>
+        <argsstring>() const </argsstring>
+        <name>NThreadsGet</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Get number of threads</para><para><simplesect kind="return"><para># of threads </para></simplesect>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="191" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a4cfa8bc49387e8ab7d2ac23ed1b1ccf6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void NThreadsSet</definition>
+        <argsstring>(const size_t &amp;nThreads)</argsstring>
+        <name>NThreadsSet</name>
+        <param>
+          <type>const size_t &amp;</type>
+          <declname>nThreads</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Set number of threads</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>nThreads</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="198" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1afd19e2ba296df82e56e58ebd151c7a71" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>const T &amp;</type>
+        <definition>const T&amp; F0Get</definition>
+        <argsstring>() const </argsstring>
+        <name>F0Get</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Get center frequency</para><para><simplesect kind="return"><para></para></simplesect>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="205" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a67f51a08d98cc368cc4c4a6414edb3fa" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void F0Set</definition>
+        <argsstring>(const T f0)</argsstring>
+        <name>F0Set</name>
+        <param>
+          <type>const T</type>
+          <declname>f0</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Set center frequency</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>f0</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="212" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1adffaa1f7cab073f40c532fc58cf6e55c" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void SysParmSet</definition>
+        <argsstring>(const sysparm_t&lt; T &gt; *arg)</argsstring>
+        <name>SysParmSet</name>
+        <param>
+          <type>const <ref refid="structfnm_1_1sysparm__t" kindref="compound">sysparm_t</ref>&lt; T &gt; *</type>
+          <declname>arg</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="214" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a315ccdf731ff56729bfa8f5a1305a345" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>const T &amp;</type>
+        <definition>const T&amp; CGet</definition>
+        <argsstring>() const </argsstring>
+        <name>CGet</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Get speed of sound</para><para><simplesect kind="return"><para></para></simplesect>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="273" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a49d9268feca025de3dc648abf6a8b3e1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void CSet</definition>
+        <argsstring>(const T c)</argsstring>
+        <name>CSet</name>
+        <param>
+          <type>const T</type>
+          <declname>c</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Set speed of sound</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>c</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="280" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a8bab384e28c3bb00f9e0a521c30ef64c" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void ElementsGet</definition>
+        <argsstring>(T **out, size_t *nElements, size_t *nParams) const </argsstring>
+        <name>ElementsGet</name>
+        <param>
+          <type>T **</type>
+          <declname>out</declname>
+        </param>
+        <param>
+          <type>size_t *</type>
+          <declname>nElements</declname>
+        </param>
+        <param>
+          <type>size_t *</type>
+          <declname>nParams</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Get element definitions</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>out</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nElements</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nParams</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="289" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a907987dd1686d882fdd35fd677d9c56d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool ElementsSet</definition>
+        <argsstring>(const T *pos, const size_t nPositions, const size_t nDim)</argsstring>
+        <name>ElementsSet</name>
+        <param>
+          <type>const T *</type>
+          <declname>pos</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>nPositions</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>nDim</declname>
+        </param>
+        <exceptions> throw (std::runtime_error)</exceptions>
+        <briefdescription>
+<para>Set element positions. </para>        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pos</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Input data T[nElements][8] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nPositions</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nDim</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Must equal 8 </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="exception"><parameteritem>
+<parameternamelist>
+<parametername>std::runtime_error</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>nDim != 8 </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>true on success </para></simplesect>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="292" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1abaa41240b00a74b090b718872a44fac8" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void SubElementsGet</definition>
+        <argsstring>(T **out, size_t *nElements, size_t *nSubElements, size_t *nParams) const </argsstring>
+        <name>SubElementsGet</name>
+        <param>
+          <type>T **</type>
+          <declname>out</declname>
+        </param>
+        <param>
+          <type>size_t *</type>
+          <declname>nElements</declname>
+        </param>
+        <param>
+          <type>size_t *</type>
+          <declname>nSubElements</declname>
+        </param>
+        <param>
+          <type>size_t *</type>
+          <declname>nParams</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Get sub-element positions</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>out</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nElements</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nSubElements</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nParams</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="311" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1abeee1842f9d811720380ee3ba3f059f5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool SubElementsSet</definition>
+        <argsstring>(const T *pos, const size_t nElements, const size_t nSubElementsPerElement, const size_t nDim)</argsstring>
+        <name>SubElementsSet</name>
+        <param>
+          <type>const T *</type>
+          <declname>pos</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>nElements</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>nSubElementsPerElement</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>nDim</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Set sub-element positions</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pos</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nElements</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nSubElementsPerElement</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nDim</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>true on success </para></simplesect>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="324" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a67496fa5642e3becc2531aa0bee54041" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>const size_t &amp;</type>
+        <definition>const size_t&amp; NDivWGet</definition>
+        <argsstring>() const </argsstring>
+        <name>NDivWGet</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Get number of width abcissas</para><para><simplesect kind="return"><para># of abcissa in the width dimension </para></simplesect>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="332" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a85ddb5a2c36e41d4b2b4714372abe931" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void NDivWSet</definition>
+        <argsstring>(const size_t nDivW)</argsstring>
+        <name>NDivWSet</name>
+        <param>
+          <type>const size_t</type>
+          <declname>nDivW</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Set number of width abcissas</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>nDivW</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="339" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a60d4b397ce55604848f2b8b92ce23f51" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>const size_t &amp;</type>
+        <definition>const size_t&amp; NDivHGet</definition>
+        <argsstring>() const </argsstring>
+        <name>NDivHGet</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Get number of height abcissas</para><para><simplesect kind="return"><para></para></simplesect>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="347" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1aa01cd8acfe2f084f20172afb68c2983a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void NDivHSet</definition>
+        <argsstring>(const size_t nDivH)</argsstring>
+        <name>NDivHSet</name>
+        <param>
+          <type>const size_t</type>
+          <declname>nDivH</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Set number of height abicissas</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>nDivH</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="354" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a289829b660a5ef3e4cdf4bbbae5d9dbf" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void ApodizationGet</definition>
+        <argsstring>(T **data, size_t *nData) const </argsstring>
+        <name>ApodizationGet</name>
+        <param>
+          <type>T **</type>
+          <declname>data</declname>
+        </param>
+        <param>
+          <type>size_t *</type>
+          <declname>nData</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Get apodization</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>data</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nData</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="362" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a6ec932bbf0a8cc4d51df50f54f9dced0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void ApodizationSet</definition>
+        <argsstring>(const T *data, const size_t nData)</argsstring>
+        <name>ApodizationSet</name>
+        <param>
+          <type>const T *</type>
+          <declname>data</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>nData</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Set apodization</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>data</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nData</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="370" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1af409f86faed17c9b7f2cf098ec4ba9e8" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void ProgressBarSet</definition>
+        <argsstring>(sps::ProgressBarInterface *pbar)</argsstring>
+        <name>ProgressBarSet</name>
+        <param>
+          <type>sps::ProgressBarInterface *</type>
+          <declname>pbar</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="372" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a9508a8d8cebc92f46019929e14f288b3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void FocusUpdate</definition>
+        <argsstring>()</argsstring>
+        <name>FocusUpdate</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Update phases after setting focus. This function is used by all methods for adjusting phases for focusing. </para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="380" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a10975da23ed3050191c892cd54b7e3f3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int CalcAsa</definition>
+        <argsstring>(const T *y0, const size_t nx, const size_t ny, const T dx, const T dy, const size_t Nx, const size_t Ny, std::complex&lt; T &gt; **p1, size_t *onx, size_t *ony, size_t *onz)</argsstring>
+        <name>CalcAsa</name>
+        <param>
+          <type>const T *</type>
+          <declname>y0</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>nx</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>ny</declname>
+        </param>
+        <param>
+          <type>const T</type>
+          <declname>dx</declname>
+        </param>
+        <param>
+          <type>const T</type>
+          <declname>dy</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>Nx</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>Ny</declname>
+        </param>
+        <param>
+          <type>std::complex&lt; T &gt; **</type>
+          <declname>p1</declname>
+        </param>
+        <param>
+          <type>size_t *</type>
+          <declname>onx</declname>
+        </param>
+        <param>
+          <type>size_t *</type>
+          <declname>ony</declname>
+        </param>
+        <param>
+          <type>size_t *</type>
+          <declname>onz</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Experimental functions </para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="472" column="1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="private-func">
+      <memberdef kind="function" id="classfnm_1_1Aperture_1afcdc6eaf9f636bac45c70bfd48df6c90" prot="private" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void ManagedAllocation</definition>
+        <argsstring>(std::complex&lt; T &gt; **outTest, size_t *nOutTest)</argsstring>
+        <name>ManagedAllocation</name>
+        <param>
+          <type>std::complex&lt; T &gt; **</type>
+          <declname>outTest</declname>
+        </param>
+        <param>
+          <type>size_t *</type>
+          <declname>nOutTest</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="492" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1ae444d6880874358be9f4f31dccd603e9" prot="private" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int CalcCwFocus</definition>
+        <argsstring>(const T *pos, const size_t nPositions, const size_t nDim, std::complex&lt; T &gt; **odata, size_t *nOutPositions)</argsstring>
+        <name>CalcCwFocus</name>
+        <param>
+          <type>const T *</type>
+          <declname>pos</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>nPositions</declname>
+        </param>
+        <param>
+          <type>const size_t</type>
+          <declname>nDim</declname>
+        </param>
+        <param>
+          <type>std::complex&lt; T &gt; **</type>
+          <declname>odata</declname>
+        </param>
+        <param>
+          <type>size_t *</type>
+          <declname>nOutPositions</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>The positions must all equal the focus point and the number should match the number of elements. By doing so, a set of phases is computed for focusing.</para><para>Used by <ref refid="classfnm_1_1Aperture_1a9508a8d8cebc92f46019929e14f288b3" kindref="member">FocusUpdate</ref></para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pos</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nPositions</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nDim</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>odata</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>nOutPositions</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para></para></simplesect>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="510" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1aaed1a8deb647bf6ffb6d6b5727f02811" prot="private" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void initElements</definition>
+        <argsstring>()</argsstring>
+        <name>initElements</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Initialize elements. This function must be called whenever elements are changed. </para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="521" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classfnm_1_1Aperture_1a18e49e20481aa364589fcc9446be3cea" prot="private" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void *</type>
+        <definition>void* CalcThreaded</definition>
+        <argsstring>(void *ptarg)</argsstring>
+        <name>CalcThreaded</name>
+        <param>
+          <type>void *</type>
+          <declname>ptarg</declname>
+        </param>
+        <briefdescription>
+<para>Data. </para>        </briefdescription>
+        <detaileddescription>
+<para>Thread function for computing harmonic response</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>ptarg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para></para></parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para></para></simplesect>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="538" column="1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+<para><ref refid="classfnm_1_1Aperture" kindref="compound">Aperture</ref> class. </para>    </briefdescription>
+    <detaileddescription>
+<para>A class representing an aperture </para>    </detaileddescription>
+    <location file="/home/jmh/github/sofus/fnm/fnm.hpp" line="57" column="1" bodyfile="/home/jmh/github/sofus/fnm/fnm.hpp" bodystart="57" bodyend="551"/>
+    <listofallmembers>
+      <member refid="classfnm_1_1Aperture_1a7f24436369eec62f8d62cd18fc1eda03" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>_sysparm</name></member>
+      <member refid="classfnm_1_1Aperture_1a3990298bb3b2d0cd9275a039d6bd8319" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>Aperture</name></member>
+      <member refid="classfnm_1_1Aperture_1a48761e9fd3f7270c9de20abce9a8bad5" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>Aperture</name></member>
+      <member refid="classfnm_1_1Aperture_1a289829b660a5ef3e4cdf4bbbae5d9dbf" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>ApodizationGet</name></member>
+      <member refid="classfnm_1_1Aperture_1a6ec932bbf0a8cc4d51df50f54f9dced0" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>ApodizationSet</name></member>
+      <member refid="classfnm_1_1Aperture_1a5a2beeb4beb4cdac3ee643598eb43421" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>AreaGet</name></member>
+      <member refid="classfnm_1_1Aperture_1a10975da23ed3050191c892cd54b7e3f3" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>CalcAsa</name></member>
+      <member refid="classfnm_1_1Aperture_1affc58ecd7f649cbeab23b676f308f185" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>CalcCwFast</name></member>
+      <member refid="classfnm_1_1Aperture_1ac02ec8b45ead743c15fd64127a9cff67" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>CalcCwField</name></member>
+      <member refid="classfnm_1_1Aperture_1a00d23fa1c2a6c6547606702a72d71aa1" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>CalcCwField2</name></member>
+      <member refid="classfnm_1_1Aperture_1aa12e26aae03e1310de3b419d6eda061c" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>CalcCwFieldRef</name></member>
+      <member refid="classfnm_1_1Aperture_1ae444d6880874358be9f4f31dccd603e9" prot="private" virt="non-virtual"><scope>fnm::Aperture</scope><name>CalcCwFocus</name></member>
+      <member refid="classfnm_1_1Aperture_1a18e49e20481aa364589fcc9446be3cea" prot="private" virt="non-virtual"><scope>fnm::Aperture</scope><name>CalcThreaded</name></member>
+      <member refid="classfnm_1_1Aperture_1a315ccdf731ff56729bfa8f5a1305a345" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>CGet</name></member>
+      <member refid="classfnm_1_1Aperture_1a49d9268feca025de3dc648abf6a8b3e1" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>CSet</name></member>
+      <member refid="classfnm_1_1Aperture_1a4af91355130ec0fe184a9ccd380b8ba1" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>DelaysGet</name></member>
+      <member refid="classfnm_1_1Aperture_1a8bab384e28c3bb00f9e0a521c30ef64c" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>ElementsGet</name></member>
+      <member refid="classfnm_1_1Aperture_1a907987dd1686d882fdd35fd677d9c56d" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>ElementsSet</name></member>
+      <member refid="classfnm_1_1Aperture_1a63d391bb8c52d45c1ba48f765ce1943c" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>ExtentGet</name></member>
+      <member refid="classfnm_1_1Aperture_1afd19e2ba296df82e56e58ebd151c7a71" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>F0Get</name></member>
+      <member refid="classfnm_1_1Aperture_1a67f51a08d98cc368cc4c4a6414edb3fa" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>F0Set</name></member>
+      <member refid="classfnm_1_1Aperture_1aed74195d0a3d7bb7bf42a9d97691ebbf" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>FocusGet</name></member>
+      <member refid="classfnm_1_1Aperture_1a77d8cd829340ff37dfdd502b1b47f5fe" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>FocusingTypeGet</name></member>
+      <member refid="classfnm_1_1Aperture_1a7ec287084c79fb733e2ff5a471387f5f" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>FocusingTypeSet</name></member>
+      <member refid="classfnm_1_1Aperture_1aa2a0b49036000182665d4218489bf2e4" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>FocusSet</name></member>
+      <member refid="classfnm_1_1Aperture_1a9508a8d8cebc92f46019929e14f288b3" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>FocusUpdate</name></member>
+      <member refid="classfnm_1_1Aperture_1aeba68ad214d4eb5ef51b3f3763d099dd" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>fs</name></member>
+      <member refid="classfnm_1_1Aperture_1aaed1a8deb647bf6ffb6d6b5727f02811" prot="private" virt="non-virtual"><scope>fnm::Aperture</scope><name>initElements</name></member>
+      <member refid="classfnm_1_1Aperture_1a4fd259d5d0c9ac1d74b82c4bfdab8a9e" prot="private" virt="non-virtual"><scope>fnm::Aperture</scope><name>m_data</name></member>
+      <member refid="classfnm_1_1Aperture_1a4cdcfc0353f149e1ea28e297a943ea4a" prot="private" virt="non-virtual"><scope>fnm::Aperture</scope><name>m_pbar</name></member>
+      <member refid="classfnm_1_1Aperture_1afcdc6eaf9f636bac45c70bfd48df6c90" prot="private" virt="non-virtual"><scope>fnm::Aperture</scope><name>ManagedAllocation</name></member>
+      <member refid="classfnm_1_1Aperture_1a60d4b397ce55604848f2b8b92ce23f51" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>NDivHGet</name></member>
+      <member refid="classfnm_1_1Aperture_1aa01cd8acfe2f084f20172afb68c2983a" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>NDivHSet</name></member>
+      <member refid="classfnm_1_1Aperture_1a67496fa5642e3becc2531aa0bee54041" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>NDivWGet</name></member>
+      <member refid="classfnm_1_1Aperture_1a85ddb5a2c36e41d4b2b4714372abe931" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>NDivWSet</name></member>
+      <member refid="classfnm_1_1Aperture_1adaffd7c31c339cecbb613daa7eae4f64" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>nElementPosParameters</name></member>
+      <member refid="classfnm_1_1Aperture_1ab0d91160f41e515aa56b4a961c528e32" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>NElementsGet</name></member>
+      <member refid="classfnm_1_1Aperture_1a5c28c71c5172cfe9ecce41f112297073" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>NSubElementsGet</name></member>
+      <member refid="classfnm_1_1Aperture_1a66a588988a3bc62a9ba92966365696f2" prot="private" virt="non-virtual"><scope>fnm::Aperture</scope><name>nthreads</name></member>
+      <member refid="classfnm_1_1Aperture_1a6697d507490040a87dbd4a3d67a13fc7" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>NThreadsGet</name></member>
+      <member refid="classfnm_1_1Aperture_1a4cfa8bc49387e8ab7d2ac23ed1b1ccf6" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>NThreadsSet</name></member>
+      <member refid="classfnm_1_1Aperture_1ac08006cf2e1c77856e2332b6d98ca861" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>nVerticesPerElement</name></member>
+      <member refid="classfnm_1_1Aperture_1a7f1c68283a50419ef55a3af3a2da7a18" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>PhasesGet</name></member>
+      <member refid="classfnm_1_1Aperture_1ad5917a3f2f62df8cf44a9a8db7fd6fde" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>PositionsGet</name></member>
+      <member refid="classfnm_1_1Aperture_1ab10c2efc99c80b25caa3abab50b14856" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>PositionsSet</name></member>
+      <member refid="classfnm_1_1Aperture_1af409f86faed17c9b7f2cf098ec4ba9e8" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>ProgressBarSet</name></member>
+      <member refid="classfnm_1_1Aperture_1a109e4080fa678b8ae57cfc4da2c9e364" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>RectanglesGet</name></member>
+      <member refid="classfnm_1_1Aperture_1abaa41240b00a74b090b718872a44fac8" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>SubElementsGet</name></member>
+      <member refid="classfnm_1_1Aperture_1abeee1842f9d811720380ee3ba3f059f5" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>SubElementsSet</name></member>
+      <member refid="classfnm_1_1Aperture_1adffaa1f7cab073f40c532fc58cf6e55c" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>SysParmSet</name></member>
+      <member refid="classfnm_1_1Aperture_1acf8f763505318fa40717d41620560d3b" prot="public" virt="non-virtual"><scope>fnm::Aperture</scope><name>~Aperture</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

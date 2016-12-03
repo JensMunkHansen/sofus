@@ -1,0 +1,71 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.8">
+  <compounddef id="gl_8hpp" kind="file">
+    <compoundname>gl.hpp</compoundname>
+    <includes local="no">gl/gl_export.h</includes>
+    <includes local="no">gl/config.h</includes>
+    <includes local="no">stddef.h</includes>
+    <incdepgraph>
+      <node id="244">
+        <label>gl/config.h</label>
+      </node>
+      <node id="245">
+        <label>stddef.h</label>
+      </node>
+      <node id="243">
+        <label>gl/gl_export.h</label>
+      </node>
+      <node id="242">
+        <label>gl/gl.hpp</label>
+        <link refid="gl.hpp"/>
+        <childnode refid="243" relation="include">
+        </childnode>
+        <childnode refid="244" relation="include">
+        </childnode>
+        <childnode refid="245" relation="include">
+        </childnode>
+      </node>
+    </incdepgraph>
+    <innerclass refid="structgl_1_1GLNode" prot="public">gl::GLNode</innerclass>
+    <innernamespace refid="namespacegl">gl</innernamespace>
+    <briefdescription>
+<para>Gauss-Legendre integration library. </para>    </briefdescription>
+    <detaileddescription>
+<para><simplesect kind="author"><para>Jens Munk Hansen <ulink url="mailto:jens.munk.hansen@gmail.com">jens.munk.hansen@gmail.com</ulink> </para></simplesect>
+<simplesect kind="date"><para>Mon Jun 20 21:11:40 2016 </para></simplesect>
+</para>    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"></codeline>
+<codeline lineno="11"><highlight class="preprocessor">#pragma<sp/>once</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="12"><highlight class="normal"></highlight></codeline>
+<codeline lineno="13"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gl/gl_export.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="14"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gl/config.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="15"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stddef.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="16"><highlight class="normal"></highlight></codeline>
+<codeline lineno="108"></codeline>
+<codeline lineno="110"><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespacegl" kindref="compound">gl</ref><sp/>{</highlight></codeline>
+<codeline lineno="111"><highlight class="normal"></highlight></codeline>
+<codeline lineno="115" refid="structgl_1_1GLNode" refkind="compound"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">GL_EXPORT<sp/><ref refid="structgl_1_1GLNode" kindref="compound">GLNode</ref><sp/>{</highlight></codeline>
+<codeline lineno="117" refid="structgl_1_1GLNode_1aee90379adb0307effb138f4871edbc5c" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/><ref refid="structgl_1_1GLNode_1aee90379adb0307effb138f4871edbc5c" kindref="member">value</ref>;</highlight></codeline>
+<codeline lineno="119" refid="structgl_1_1GLNode_1a99108733d00274978a4979dc072bd513" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/><ref refid="structgl_1_1GLNode_1a99108733d00274978a4979dc072bd513" kindref="member">weight</ref>;</highlight></codeline>
+<codeline lineno="120"><highlight class="normal"><sp/><sp/>};</highlight></codeline>
+<codeline lineno="121"><highlight class="normal"></highlight></codeline>
+<codeline lineno="134"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>GL_EXPORT<sp/><ref refid="namespacegl_1a8dfc38fe28db34846c60086d6ecf508c" kindref="member">GLQuad</ref>(</highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>n,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>(*f)(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal">,</highlight><highlight class="keywordtype">void</highlight><highlight class="normal">*),<sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal">*<sp/>data,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>a,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>b);</highlight></codeline>
+<codeline lineno="135"><highlight class="normal"></highlight></codeline>
+<codeline lineno="168"><highlight class="normal"><sp/><sp/><ref refid="structgl_1_1GLNode" kindref="compound">gl::GLNode</ref><sp/>GL_EXPORT<sp/><ref refid="namespacegl_1aa2fa29b0a69c2eeb23b4e0b9613e7fc5" kindref="member">GL</ref>(</highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>l,<sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>k);</highlight></codeline>
+<codeline lineno="169"><highlight class="normal"></highlight></codeline>
+<codeline lineno="186"><highlight class="normal"><sp/><sp/><ref refid="structgl_1_1GLNode" kindref="compound">gl::GLNode</ref><sp/>GL_EXPORT<sp/><ref refid="namespacegl_1a7f251958ee6d2c65e37b0f9e61a9fe30" kindref="member">GLS</ref>(</highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>n,<sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>k);</highlight></codeline>
+<codeline lineno="187"><highlight class="normal"></highlight></codeline>
+<codeline lineno="195"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>GL_EXPORT<sp/><ref refid="namespacegl_1a516dc08710fc7a9d7f455203bcd9a358" kindref="member">besseljzero</ref>(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>k);</highlight></codeline>
+<codeline lineno="196"><highlight class="normal"></highlight></codeline>
+<codeline lineno="204"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>GL_EXPORT<sp/><ref refid="namespacegl_1a8a87a797409c579a3658648f68de3d8a" kindref="member">besselj1squared</ref>(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>k);</highlight></codeline>
+<codeline lineno="205"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="208"><highlight class="comment">/*<sp/>Local<sp/>variables:<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="209"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>indent-tabs-mode:<sp/>nil<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="210"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>tab-width:<sp/>2<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="211"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>c-basic-offset:<sp/>2<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="212"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>End:<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+    </programlisting>
+    <location file="/home/jmh/github/sofus/gl/gl.hpp"/>
+  </compounddef>
+</doxygen>

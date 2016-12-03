@@ -1,0 +1,279 @@
+\hypertarget{singletonfnm_1_1ApertureData}{\section{Aperture\+Data$<$ T $>$ Struct Template Reference}
+\label{singletonfnm_1_1ApertureData}\index{Aperture\+Data$<$ T $>$@{Aperture\+Data$<$ T $>$}}
+}
+
+
+Forward-\/declare \hyperlink{singletonfnm_1_1ApertureData}{Aperture\+Data}.  
+
+
+
+
+{\ttfamily \#include $<$fnm\+\_\+data.\+hpp$>$}
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{singletonfnm_1_1ApertureData_a0475f185fc298554a7f24b0c919e2e72}{Aperture\+Data} ()
+\begin{DoxyCompactList}\small\item\em Ctor. \end{DoxyCompactList}\item 
+void \hyperlink{singletonfnm_1_1ApertureData_afc99a3f0eb0c1255976b8a422a1aa4c5}{Elements\+Set} (sps\+::deleted\+\_\+aligned\+\_\+multi\+\_\+array$<$ sps\+::element\+\_\+t$<$ T $>$, 2 $>$ \&\&elements, const size\+\_\+t \&n\+Rows, const size\+\_\+t \&n\+Cols)
+\item 
+std\+::vector$<$ std\+::vector\\*
+$<$ sps\+::element\+\_\+t$<$ T $>$ $>$ $>$ \hyperlink{singletonfnm_1_1ApertureData_af4d860345419b7eb270a0277281fa557}{Elements\+Vector\+Get} () const 
+\item 
+void \hyperlink{singletonfnm_1_1ApertureData_ac459bb07eae2d1cc9468bde090282467}{init\+Vectors} ()
+\item 
+void \hyperlink{singletonfnm_1_1ApertureData_aaed1a8deb647bf6ffb6d6b5727f02811}{init\+Elements} ()
+\item 
+void \hyperlink{singletonfnm_1_1ApertureData_ad5ffcad99b14536d418142d8eaa99e50}{init\+Rectangles} ()
+\item 
+void \hyperlink{singletonfnm_1_1ApertureData_a47622b69bb7046911e7ce1e3d3022ea2}{Extent\+Get} (sps\+::bbox\+\_\+t$<$ T $>$ \&bbox) const 
+\item 
+T \hyperlink{singletonfnm_1_1ApertureData_a5a2beeb4beb4cdac3ee643598eb43421}{Area\+Get} () const 
+\item 
+\hyperlink{singletonfnm_1_1ApertureData_afe001570c0e0fd80f0cad1064f216980}{$\sim$\+Aperture\+Data} ()
+\begin{DoxyCompactList}\small\item\em Dtor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+size\+\_\+t \hyperlink{singletonfnm_1_1ApertureData_abdbdad71db1171b8094096d729baba0d}{m\+\_\+nelements}
+\begin{DoxyCompactList}\small\item\em Number of elements. \end{DoxyCompactList}\item 
+size\+\_\+t \hyperlink{singletonfnm_1_1ApertureData_a3536d0df01270d92f8ccc3623a2d06a0}{m\+\_\+nsubelements}
+\begin{DoxyCompactList}\small\item\em Number of sub-\/elements per element. \end{DoxyCompactList}\item 
+size\+\_\+t \hyperlink{singletonfnm_1_1ApertureData_ae07b6e86eb090f4c39fc425c78d91416}{m\+\_\+npos}
+\begin{DoxyCompactList}\small\item\em Number of positions, equals number of elements. \end{DoxyCompactList}\item 
+sps\+::deleted\+\_\+aligned\+\_\+multi\+\_\+array\\*
+$<$ sps\+::element\+\_\+t$<$ T $>$, 2\+U $>$ \hyperlink{singletonfnm_1_1ApertureData_a53616cedfa7ae60a83e12ab990d2cd66}{m\+\_\+elements}
+\begin{DoxyCompactList}\small\item\em Elements. \end{DoxyCompactList}\item 
+sps\+::deleted\+\_\+aligned\+\_\+array\\*
+$<$ sps\+::point\+\_\+t$<$ T $>$ $>$ \hyperlink{singletonfnm_1_1ApertureData_aa1b289835c0e222f6b8f70e2fafc6769}{m\+\_\+pos}
+\begin{DoxyCompactList}\small\item\em Positions. \end{DoxyCompactList}\item 
+sps\+::deleted\+\_\+aligned\+\_\+array$<$ T $>$ \hyperlink{singletonfnm_1_1ApertureData_af488bbf393fcd49e6698dcf3ce028041}{m\+\_\+apodizations}
+\begin{DoxyCompactList}\small\item\em Apodization values. \end{DoxyCompactList}\item 
+sps\+::deleted\+\_\+aligned\+\_\+array$<$ T $>$ \hyperlink{singletonfnm_1_1ApertureData_a2939401ddbdafbc9797a8ac8f2a2bda1}{m\+\_\+phases}
+\begin{DoxyCompactList}\small\item\em Phases, range is (-\/pi;pi\mbox{]}. \end{DoxyCompactList}\item 
+sps\+::deleted\+\_\+aligned\+\_\+array$<$ T $>$ \hyperlink{singletonfnm_1_1ApertureData_ac769b07e6f634757ef28e556a1a47dc2}{m\+\_\+delays}
+\begin{DoxyCompactList}\small\item\em Delays. \end{DoxyCompactList}\item 
+sps\+::deleted\+\_\+aligned\+\_\+array\\*
+$<$ sps\+::rect\+\_\+t$<$ T $>$ $>$ \hyperlink{singletonfnm_1_1ApertureData_a95dab395f62c1f3c1243d645a5179d4d}{m\+\_\+rectangles}
+\begin{DoxyCompactList}\small\item\em Rectangles. \end{DoxyCompactList}\item 
+T \hyperlink{singletonfnm_1_1ApertureData_a628c4a5cd9324cca318c700cf441b9c8}{m\+\_\+f0}
+\begin{DoxyCompactList}\small\item\em Center frequency. \end{DoxyCompactList}\item 
+sps\+::point\+\_\+t$<$ T $>$ \hyperlink{singletonfnm_1_1ApertureData_abbeae260606697441a45507f847876ef}{m\+\_\+focus}
+\begin{DoxyCompactList}\small\item\em Focus point. \end{DoxyCompactList}\item 
+int \hyperlink{singletonfnm_1_1ApertureData_a6fed2f515d85db14127cadaa8ebe014b}{m\+\_\+focus\+\_\+type}
+\begin{DoxyCompactList}\small\item\em Focusing Type, Rayleigh or Pythagorean. \end{DoxyCompactList}\end{DoxyCompactItemize}
+{\bf }\par
+\begin{DoxyCompactItemize}
+\item 
+int \hyperlink{singletonfnm_1_1ApertureData_a93049b6e21b2069a9fe41469c3705cf4}{m\+\_\+focus\+\_\+valid}
+\begin{DoxyCompactList}\small\item\em Validity of focus, if equal m\+\_\+focus\+\_\+type, phases are valid. \end{DoxyCompactList}\item 
+size\+\_\+t \hyperlink{singletonfnm_1_1ApertureData_ad7c4acb1bca84f83f3072e0a9888818b}{m\+\_\+id}
+\begin{DoxyCompactList}\small\item\em Unique identifier. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+static size\+\_\+t \hyperlink{singletonfnm_1_1ApertureData_a52f7f46dd8600d6c7f736234eff59da8}{next\+I\+D}
+\begin{DoxyCompactList}\small\item\em Next unique identifier to use. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\subsubsection*{template$<$class T$>$struct fnm\+::\+Aperture\+Data$<$ T $>$}
+
+Forward-\/declare \hyperlink{singletonfnm_1_1ApertureData}{Aperture\+Data}. 
+
+\hyperlink{classfnm_1_1Aperture}{Aperture} data structure.
+
+A struct containing data of the aperture 
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{singletonfnm_1_1ApertureData_a0475f185fc298554a7f24b0c919e2e72}{\index{fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}!Aperture\+Data@{Aperture\+Data}}
+\index{Aperture\+Data@{Aperture\+Data}!fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}}
+\subsubsection[{Aperture\+Data}]{\setlength{\rightskip}{0pt plus 5cm}{\bf Aperture\+Data} (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{singletonfnm_1_1ApertureData_a0475f185fc298554a7f24b0c919e2e72}
+
+
+Ctor. 
+
+\hypertarget{singletonfnm_1_1ApertureData_afe001570c0e0fd80f0cad1064f216980}{\index{fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}!````~Aperture\+Data@{$\sim$\+Aperture\+Data}}
+\index{````~Aperture\+Data@{$\sim$\+Aperture\+Data}!fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}}
+\subsubsection[{$\sim$\+Aperture\+Data}]{\setlength{\rightskip}{0pt plus 5cm}$\sim${\bf Aperture\+Data} (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{singletonfnm_1_1ApertureData_afe001570c0e0fd80f0cad1064f216980}
+
+
+Dtor. 
+
+
+
+\subsection{Member Function Documentation}
+\hypertarget{singletonfnm_1_1ApertureData_a5a2beeb4beb4cdac3ee643598eb43421}{\index{fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}!Area\+Get@{Area\+Get}}
+\index{Area\+Get@{Area\+Get}!fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}}
+\subsubsection[{Area\+Get}]{\setlength{\rightskip}{0pt plus 5cm}T Area\+Get (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const}}\label{singletonfnm_1_1ApertureData_a5a2beeb4beb4cdac3ee643598eb43421}
+\hypertarget{singletonfnm_1_1ApertureData_afc99a3f0eb0c1255976b8a422a1aa4c5}{\index{fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}!Elements\+Set@{Elements\+Set}}
+\index{Elements\+Set@{Elements\+Set}!fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}}
+\subsubsection[{Elements\+Set}]{\setlength{\rightskip}{0pt plus 5cm}void Elements\+Set (
+\begin{DoxyParamCaption}
+\item[{sps\+::deleted\+\_\+aligned\+\_\+multi\+\_\+array$<$ sps\+::element\+\_\+t$<$ T $>$, 2 $>$ \&\&}]{elements, }
+\item[{const size\+\_\+t \&}]{n\+Rows, }
+\item[{const size\+\_\+t \&}]{n\+Cols}
+\end{DoxyParamCaption}
+)}}\label{singletonfnm_1_1ApertureData_afc99a3f0eb0c1255976b8a422a1aa4c5}
+\hypertarget{singletonfnm_1_1ApertureData_af4d860345419b7eb270a0277281fa557}{\index{fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}!Elements\+Vector\+Get@{Elements\+Vector\+Get}}
+\index{Elements\+Vector\+Get@{Elements\+Vector\+Get}!fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}}
+\subsubsection[{Elements\+Vector\+Get}]{\setlength{\rightskip}{0pt plus 5cm}std\+::vector$<$std\+::vector$<$sps\+::element\+\_\+t$<$T$>$ $>$ $>$ Elements\+Vector\+Get (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const}}\label{singletonfnm_1_1ApertureData_af4d860345419b7eb270a0277281fa557}
+\hypertarget{singletonfnm_1_1ApertureData_a47622b69bb7046911e7ce1e3d3022ea2}{\index{fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}!Extent\+Get@{Extent\+Get}}
+\index{Extent\+Get@{Extent\+Get}!fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}}
+\subsubsection[{Extent\+Get}]{\setlength{\rightskip}{0pt plus 5cm}void Extent\+Get (
+\begin{DoxyParamCaption}
+\item[{sps\+::bbox\+\_\+t$<$ T $>$ \&}]{bbox}
+\end{DoxyParamCaption}
+) const}}\label{singletonfnm_1_1ApertureData_a47622b69bb7046911e7ce1e3d3022ea2}
+\hypertarget{singletonfnm_1_1ApertureData_aaed1a8deb647bf6ffb6d6b5727f02811}{\index{fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}!init\+Elements@{init\+Elements}}
+\index{init\+Elements@{init\+Elements}!fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}}
+\subsubsection[{init\+Elements}]{\setlength{\rightskip}{0pt plus 5cm}void init\+Elements (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{singletonfnm_1_1ApertureData_aaed1a8deb647bf6ffb6d6b5727f02811}
+\hypertarget{singletonfnm_1_1ApertureData_ad5ffcad99b14536d418142d8eaa99e50}{\index{fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}!init\+Rectangles@{init\+Rectangles}}
+\index{init\+Rectangles@{init\+Rectangles}!fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}}
+\subsubsection[{init\+Rectangles}]{\setlength{\rightskip}{0pt plus 5cm}void init\+Rectangles (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{singletonfnm_1_1ApertureData_ad5ffcad99b14536d418142d8eaa99e50}
+\hypertarget{singletonfnm_1_1ApertureData_ac459bb07eae2d1cc9468bde090282467}{\index{fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}!init\+Vectors@{init\+Vectors}}
+\index{init\+Vectors@{init\+Vectors}!fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}}
+\subsubsection[{init\+Vectors}]{\setlength{\rightskip}{0pt plus 5cm}void init\+Vectors (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{singletonfnm_1_1ApertureData_ac459bb07eae2d1cc9468bde090282467}
+
+
+\subsection{Member Data Documentation}
+\hypertarget{singletonfnm_1_1ApertureData_af488bbf393fcd49e6698dcf3ce028041}{\index{fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}!m\+\_\+apodizations@{m\+\_\+apodizations}}
+\index{m\+\_\+apodizations@{m\+\_\+apodizations}!fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}}
+\subsubsection[{m\+\_\+apodizations}]{\setlength{\rightskip}{0pt plus 5cm}sps\+::deleted\+\_\+aligned\+\_\+array$<$T$>$ m\+\_\+apodizations}}\label{singletonfnm_1_1ApertureData_af488bbf393fcd49e6698dcf3ce028041}
+
+
+Apodization values. 
+
+\hypertarget{singletonfnm_1_1ApertureData_ac769b07e6f634757ef28e556a1a47dc2}{\index{fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}!m\+\_\+delays@{m\+\_\+delays}}
+\index{m\+\_\+delays@{m\+\_\+delays}!fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}}
+\subsubsection[{m\+\_\+delays}]{\setlength{\rightskip}{0pt plus 5cm}sps\+::deleted\+\_\+aligned\+\_\+array$<$T$>$ m\+\_\+delays}}\label{singletonfnm_1_1ApertureData_ac769b07e6f634757ef28e556a1a47dc2}
+
+
+Delays. 
+
+\hypertarget{singletonfnm_1_1ApertureData_a53616cedfa7ae60a83e12ab990d2cd66}{\index{fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}!m\+\_\+elements@{m\+\_\+elements}}
+\index{m\+\_\+elements@{m\+\_\+elements}!fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}}
+\subsubsection[{m\+\_\+elements}]{\setlength{\rightskip}{0pt plus 5cm}sps\+::deleted\+\_\+aligned\+\_\+multi\+\_\+array$<$sps\+::element\+\_\+t$<$T$>$, 2\+U$>$ m\+\_\+elements}}\label{singletonfnm_1_1ApertureData_a53616cedfa7ae60a83e12ab990d2cd66}
+
+
+Elements. 
+
+\hypertarget{singletonfnm_1_1ApertureData_a628c4a5cd9324cca318c700cf441b9c8}{\index{fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}!m\+\_\+f0@{m\+\_\+f0}}
+\index{m\+\_\+f0@{m\+\_\+f0}!fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}}
+\subsubsection[{m\+\_\+f0}]{\setlength{\rightskip}{0pt plus 5cm}T m\+\_\+f0}}\label{singletonfnm_1_1ApertureData_a628c4a5cd9324cca318c700cf441b9c8}
+
+
+Center frequency. 
+
+\hypertarget{singletonfnm_1_1ApertureData_abbeae260606697441a45507f847876ef}{\index{fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}!m\+\_\+focus@{m\+\_\+focus}}
+\index{m\+\_\+focus@{m\+\_\+focus}!fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}}
+\subsubsection[{m\+\_\+focus}]{\setlength{\rightskip}{0pt plus 5cm}sps\+::point\+\_\+t$<$T$>$ m\+\_\+focus}}\label{singletonfnm_1_1ApertureData_abbeae260606697441a45507f847876ef}
+
+
+Focus point. 
+
+\hypertarget{singletonfnm_1_1ApertureData_a6fed2f515d85db14127cadaa8ebe014b}{\index{fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}!m\+\_\+focus\+\_\+type@{m\+\_\+focus\+\_\+type}}
+\index{m\+\_\+focus\+\_\+type@{m\+\_\+focus\+\_\+type}!fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}}
+\subsubsection[{m\+\_\+focus\+\_\+type}]{\setlength{\rightskip}{0pt plus 5cm}int m\+\_\+focus\+\_\+type}}\label{singletonfnm_1_1ApertureData_a6fed2f515d85db14127cadaa8ebe014b}
+
+
+Focusing Type, Rayleigh or Pythagorean. 
+
+\hypertarget{singletonfnm_1_1ApertureData_a93049b6e21b2069a9fe41469c3705cf4}{\index{fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}!m\+\_\+focus\+\_\+valid@{m\+\_\+focus\+\_\+valid}}
+\index{m\+\_\+focus\+\_\+valid@{m\+\_\+focus\+\_\+valid}!fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}}
+\subsubsection[{m\+\_\+focus\+\_\+valid}]{\setlength{\rightskip}{0pt plus 5cm}int m\+\_\+focus\+\_\+valid}}\label{singletonfnm_1_1ApertureData_a93049b6e21b2069a9fe41469c3705cf4}
+
+
+Validity of focus, if equal m\+\_\+focus\+\_\+type, phases are valid. 
+
+\hypertarget{singletonfnm_1_1ApertureData_ad7c4acb1bca84f83f3072e0a9888818b}{\index{fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}!m\+\_\+id@{m\+\_\+id}}
+\index{m\+\_\+id@{m\+\_\+id}!fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}}
+\subsubsection[{m\+\_\+id}]{\setlength{\rightskip}{0pt plus 5cm}size\+\_\+t m\+\_\+id}}\label{singletonfnm_1_1ApertureData_ad7c4acb1bca84f83f3072e0a9888818b}
+
+
+Unique identifier. 
+
+\hypertarget{singletonfnm_1_1ApertureData_abdbdad71db1171b8094096d729baba0d}{\index{fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}!m\+\_\+nelements@{m\+\_\+nelements}}
+\index{m\+\_\+nelements@{m\+\_\+nelements}!fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}}
+\subsubsection[{m\+\_\+nelements}]{\setlength{\rightskip}{0pt plus 5cm}size\+\_\+t m\+\_\+nelements}}\label{singletonfnm_1_1ApertureData_abdbdad71db1171b8094096d729baba0d}
+
+
+Number of elements. 
+
+\hypertarget{singletonfnm_1_1ApertureData_ae07b6e86eb090f4c39fc425c78d91416}{\index{fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}!m\+\_\+npos@{m\+\_\+npos}}
+\index{m\+\_\+npos@{m\+\_\+npos}!fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}}
+\subsubsection[{m\+\_\+npos}]{\setlength{\rightskip}{0pt plus 5cm}size\+\_\+t m\+\_\+npos}}\label{singletonfnm_1_1ApertureData_ae07b6e86eb090f4c39fc425c78d91416}
+
+
+Number of positions, equals number of elements. 
+
+\hypertarget{singletonfnm_1_1ApertureData_a3536d0df01270d92f8ccc3623a2d06a0}{\index{fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}!m\+\_\+nsubelements@{m\+\_\+nsubelements}}
+\index{m\+\_\+nsubelements@{m\+\_\+nsubelements}!fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}}
+\subsubsection[{m\+\_\+nsubelements}]{\setlength{\rightskip}{0pt plus 5cm}size\+\_\+t m\+\_\+nsubelements}}\label{singletonfnm_1_1ApertureData_a3536d0df01270d92f8ccc3623a2d06a0}
+
+
+Number of sub-\/elements per element. 
+
+\hypertarget{singletonfnm_1_1ApertureData_a2939401ddbdafbc9797a8ac8f2a2bda1}{\index{fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}!m\+\_\+phases@{m\+\_\+phases}}
+\index{m\+\_\+phases@{m\+\_\+phases}!fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}}
+\subsubsection[{m\+\_\+phases}]{\setlength{\rightskip}{0pt plus 5cm}sps\+::deleted\+\_\+aligned\+\_\+array$<$T$>$ m\+\_\+phases}}\label{singletonfnm_1_1ApertureData_a2939401ddbdafbc9797a8ac8f2a2bda1}
+
+
+Phases, range is (-\/pi;pi\mbox{]}. 
+
+\hypertarget{singletonfnm_1_1ApertureData_aa1b289835c0e222f6b8f70e2fafc6769}{\index{fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}!m\+\_\+pos@{m\+\_\+pos}}
+\index{m\+\_\+pos@{m\+\_\+pos}!fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}}
+\subsubsection[{m\+\_\+pos}]{\setlength{\rightskip}{0pt plus 5cm}sps\+::deleted\+\_\+aligned\+\_\+array$<$sps\+::point\+\_\+t$<$T$>$ $>$ m\+\_\+pos}}\label{singletonfnm_1_1ApertureData_aa1b289835c0e222f6b8f70e2fafc6769}
+
+
+Positions. 
+
+\hypertarget{singletonfnm_1_1ApertureData_a95dab395f62c1f3c1243d645a5179d4d}{\index{fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}!m\+\_\+rectangles@{m\+\_\+rectangles}}
+\index{m\+\_\+rectangles@{m\+\_\+rectangles}!fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}}
+\subsubsection[{m\+\_\+rectangles}]{\setlength{\rightskip}{0pt plus 5cm}sps\+::deleted\+\_\+aligned\+\_\+array$<$sps\+::rect\+\_\+t$<$T$>$ $>$ m\+\_\+rectangles}}\label{singletonfnm_1_1ApertureData_a95dab395f62c1f3c1243d645a5179d4d}
+
+
+Rectangles. 
+
+\hypertarget{singletonfnm_1_1ApertureData_a52f7f46dd8600d6c7f736234eff59da8}{\index{fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}!next\+I\+D@{next\+I\+D}}
+\index{next\+I\+D@{next\+I\+D}!fnm\+::\+Aperture\+Data@{fnm\+::\+Aperture\+Data}}
+\subsubsection[{next\+I\+D}]{\setlength{\rightskip}{0pt plus 5cm}size\+\_\+t next\+I\+D\hspace{0.3cm}{\ttfamily [static]}}}\label{singletonfnm_1_1ApertureData_a52f7f46dd8600d6c7f736234eff59da8}
+
+
+Next unique identifier to use. 
+
+
+
+The documentation for this struct was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+fnm/\hyperlink{fnm_8hpp}{fnm.\+hpp}\item 
+fnm/\hyperlink{fnm__data_8hpp}{fnm\+\_\+data.\+hpp}\end{DoxyCompactItemize}

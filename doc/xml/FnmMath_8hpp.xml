@@ -1,0 +1,87 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.8">
+  <compounddef id="FnmMath_8hpp" kind="file">
+    <compoundname>FnmMath.hpp</compoundname>
+    <includes refid="smath_8hpp" local="no">sps/smath.hpp</includes>
+    <includes refid="fnm__export_8h" local="no">fnm/fnm_export.h</includes>
+    <incdepgraph>
+      <node id="220">
+        <label>fnm/fnm_export.h</label>
+        <link refid="fnm__export_8h"/>
+      </node>
+      <node id="215">
+        <label>sps/cenv.h</label>
+      </node>
+      <node id="214">
+        <label>sps/smath.hpp</label>
+        <link refid="smath_8hpp"/>
+        <childnode refid="215" relation="include">
+        </childnode>
+        <childnode refid="216" relation="include">
+        </childnode>
+        <childnode refid="217" relation="include">
+        </childnode>
+        <childnode refid="218" relation="include">
+        </childnode>
+        <childnode refid="219" relation="include">
+        </childnode>
+      </node>
+      <node id="218">
+        <label>sps/smath_types.hpp</label>
+      </node>
+      <node id="219">
+        <label>iostream</label>
+      </node>
+      <node id="213">
+        <label>fnm/FnmMath.hpp</label>
+        <link refid="FnmMath.hpp"/>
+        <childnode refid="214" relation="include">
+        </childnode>
+        <childnode refid="220" relation="include">
+        </childnode>
+      </node>
+      <node id="216">
+        <label>sps/sps_export.h</label>
+      </node>
+      <node id="217">
+        <label>sps/math.h</label>
+      </node>
+    </incdepgraph>
+    <innerclass refid="structfnm_1_1element__t" prot="public">fnm::element_t</innerclass>
+    <innernamespace refid="namespacefnm">fnm</innernamespace>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para><simplesect kind="author"><para>Jens Munk Hansen <ulink url="mailto:jens.munk.hansen@gmail.com">jens.munk.hansen@gmail.com</ulink> </para></simplesect>
+<simplesect kind="date"><para>Thu Jun 9 06:00:01 2016 </para></simplesect>
+</para>    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"></codeline>
+<codeline lineno="10"><highlight class="preprocessor">#pragma<sp/>once</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="11"><highlight class="normal"></highlight></codeline>
+<codeline lineno="12"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;<ref refid="smath_8hpp" kindref="compound">sps/smath.hpp</ref>&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="13"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;<ref refid="fnm__export_8h" kindref="compound">fnm/fnm_export.h</ref>&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="14"><highlight class="normal"></highlight></codeline>
+<codeline lineno="15"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespacefnm" kindref="compound">fnm</ref><sp/>{</highlight></codeline>
+<codeline lineno="22"><highlight class="preprocessor">#if<sp/>defined(_WIN32)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="23"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Not<sp/>aligned</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="24"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">template</highlight><highlight class="normal"><sp/>&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>T&gt;</highlight></codeline>
+<codeline lineno="25"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal"><ref refid="fnm__export_8h_1a3ff7f8e85834af476dd033ada79d8790" kindref="member">FNM_EXPORT</ref><sp/>element_t</highlight></codeline>
+<codeline lineno="26"><highlight class="normal">#else</highlight></codeline>
+<codeline lineno="27"><highlight class="normal"></highlight><highlight class="comment">//<sp/>There<sp/>is<sp/>no<sp/>explicit<sp/>requirement<sp/>for<sp/>alignment<sp/>of<sp/>the<sp/>object</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="28"><highlight class="normal"><sp/><sp/>template<sp/>&lt;typename<sp/>T&gt;</highlight></codeline>
+<codeline lineno="29" refid="structfnm_1_1element__t" refkind="compound"><highlight class="normal"><sp/><sp/>ALIGN16_BEGIN<sp/>struct<sp/>ALIGN16_END<sp/><ref refid="structfnm_1_1element__t" kindref="compound">element_t</ref></highlight></codeline>
+<codeline lineno="30"><highlight class="normal">#endif</highlight></codeline>
+<codeline lineno="31"><highlight class="normal"><sp/><sp/>{</highlight></codeline>
+<codeline lineno="32"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>There<sp/>is<sp/>no<sp/>explicit<sp/>requirement<sp/>for<sp/>alignment<sp/>of<sp/>the<sp/>members</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="33" refid="structfnm_1_1element__t_1a1320f8d1d8db5d6492829bb545e52819" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>ALIGN16_BEGIN<sp/>sps::point_t&lt;T&gt;<sp/>center<sp/><ref refid="structfnm_1_1element__t_1a1320f8d1d8db5d6492829bb545e52819" kindref="member">ALIGN16_END</ref>;</highlight></codeline>
+<codeline lineno="34" refid="structfnm_1_1element__t_1abb6cbad93f868c1374b91cbef203e31a" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>ALIGN16_BEGIN<sp/>sps::euler_t&lt;T&gt;<sp/>euler<sp/><ref refid="structfnm_1_1element__t_1abb6cbad93f868c1374b91cbef203e31a" kindref="member">ALIGN16_END</ref>;</highlight></codeline>
+<codeline lineno="35" refid="structfnm_1_1element__t_1ab091fbc55910c6b961a1dd5c69b7076a" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>ALIGN16_BEGIN<sp/>T<sp/>hw<sp/><ref refid="structfnm_1_1element__t_1ab091fbc55910c6b961a1dd5c69b7076a" kindref="member">ALIGN16_END</ref>;<sp/><sp/></highlight></codeline>
+<codeline lineno="36" refid="structfnm_1_1element__t_1a089b2ab5959eb8478e45d4ab106327ef" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>ALIGN16_BEGIN<sp/>T<sp/>hh<sp/><ref refid="structfnm_1_1element__t_1a089b2ab5959eb8478e45d4ab106327ef" kindref="member">ALIGN16_END</ref>;<sp/><sp/></highlight></codeline>
+<codeline lineno="37" refid="structfnm_1_1element__t_1a1452d7d19d990f8a131fb5b8b613d188" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>ALIGN16_BEGIN<sp/>T<sp/>dummy[2]<sp/><ref refid="structfnm_1_1element__t_1a1452d7d19d990f8a131fb5b8b613d188" kindref="member">ALIGN16_END</ref>;</highlight></codeline>
+<codeline lineno="38"><highlight class="normal"><sp/><sp/>};</highlight></codeline>
+<codeline lineno="39"><highlight class="normal">}</highlight></codeline>
+    </programlisting>
+    <location file="/home/jmh/github/sofus/fnm/FnmMath.hpp"/>
+  </compounddef>
+</doxygen>

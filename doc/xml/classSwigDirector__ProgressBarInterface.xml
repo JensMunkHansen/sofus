@@ -1,0 +1,156 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.8">
+  <compounddef id="classSwigDirector__ProgressBarInterface" kind="class" prot="public">
+    <compoundname>SwigDirector_ProgressBarInterface</compoundname>
+    <basecompoundref prot="public" virt="non-virtual">ProgressBarInterface</basecompoundref>
+    <basecompoundref prot="public" virt="non-virtual">Director</basecompoundref>
+    <includes local="no">swig_fnmPYTHON_wrap.h</includes>
+      <sectiondef kind="private-attrib">
+      <memberdef kind="variable" id="classSwigDirector__ProgressBarInterface_1a35e0ad2799d84c93fb42a99aa6938775" prot="private" static="no" mutable="yes">
+        <type>std::map&lt; std::string, bool &gt;</type>
+        <definition>std::map&lt;std::string, bool&gt; swig_inner</definition>
+        <argsstring></argsstring>
+        <name>swig_inner</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/build/fnm/swig_fnmPYTHON_wrap.h" line="35" column="1" bodyfile="/home/jmh/github/sofus/build/fnm/swig_fnmPYTHON_wrap.h" bodystart="35" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="classSwigDirector__ProgressBarInterface_1a24add52bac381bb2d0b2a01b09bd2a4f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>SwigDirector_ProgressBarInterface</definition>
+        <argsstring>(PyObject *self)</argsstring>
+        <name>SwigDirector_ProgressBarInterface</name>
+        <param>
+          <type>PyObject *</type>
+          <declname>self</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/build/fnm/swig_fnmPYTHON_wrap.h" line="21" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classSwigDirector__ProgressBarInterface_1a50f5d7778022e27d2f9dfa0b79e84dce" prot="public" static="no" const="no" explicit="no" inline="no" virt="virtual">
+        <type>void</type>
+        <definition>virtual void show</definition>
+        <argsstring>(float percent)</argsstring>
+        <name>show</name>
+        <param>
+          <type>float</type>
+          <declname>percent</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/build/fnm/swig_fnmPYTHON_wrap.h" line="22" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classSwigDirector__ProgressBarInterface_1a98e8dbc1e4b81ad2c0b8ea1ac2006dc3" prot="public" static="no" const="no" explicit="no" inline="no" virt="virtual">
+        <type></type>
+        <definition>virtual ~SwigDirector_ProgressBarInterface</definition>
+        <argsstring>()</argsstring>
+        <name>~SwigDirector_ProgressBarInterface</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/build/fnm/swig_fnmPYTHON_wrap.h" line="23" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classSwigDirector__ProgressBarInterface_1aca008c5d9c4dafd39fd494c6e060a5e4" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool swig_get_inner</definition>
+        <argsstring>(const char *swig_protected_method_name) const </argsstring>
+        <name>swig_get_inner</name>
+        <param>
+          <type>const char *</type>
+          <declname>swig_protected_method_name</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/build/fnm/swig_fnmPYTHON_wrap.h" line="27" column="1" bodyfile="/home/jmh/github/sofus/build/fnm/swig_fnmPYTHON_wrap.h" bodystart="27" bodyend="30"/>
+      </memberdef>
+      <memberdef kind="function" id="classSwigDirector__ProgressBarInterface_1a9efd6adb1d3e2286ea9e4ac6487b5e79" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void swig_set_inner</definition>
+        <argsstring>(const char *swig_protected_method_name, bool val) const </argsstring>
+        <name>swig_set_inner</name>
+        <param>
+          <type>const char *</type>
+          <declname>swig_protected_method_name</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>val</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/jmh/github/sofus/build/fnm/swig_fnmPYTHON_wrap.h" line="31" column="1" bodyfile="/home/jmh/github/sofus/build/fnm/swig_fnmPYTHON_wrap.h" bodystart="31" bodyend="33"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <inheritancegraph>
+      <node id="29">
+        <label>ProgressBarInterface</label>
+      </node>
+      <node id="28">
+        <label>SwigDirector_ProgressBarInterface</label>
+        <link refid="classSwigDirector__ProgressBarInterface"/>
+        <childnode refid="29" relation="public-inheritance">
+        </childnode>
+        <childnode refid="30" relation="public-inheritance">
+        </childnode>
+      </node>
+      <node id="30">
+        <label>Director</label>
+      </node>
+    </inheritancegraph>
+    <collaborationgraph>
+      <node id="32">
+        <label>ProgressBarInterface</label>
+      </node>
+      <node id="31">
+        <label>SwigDirector_ProgressBarInterface</label>
+        <link refid="classSwigDirector__ProgressBarInterface"/>
+        <childnode refid="32" relation="public-inheritance">
+        </childnode>
+        <childnode refid="33" relation="public-inheritance">
+        </childnode>
+      </node>
+      <node id="33">
+        <label>Director</label>
+      </node>
+    </collaborationgraph>
+    <location file="/home/jmh/github/sofus/build/fnm/swig_fnmPYTHON_wrap.h" line="18" column="1" bodyfile="/home/jmh/github/sofus/build/fnm/swig_fnmPYTHON_wrap.h" bodystart="18" bodyend="57"/>
+    <listofallmembers>
+      <member refid="classSwigDirector__ProgressBarInterface_1a50f5d7778022e27d2f9dfa0b79e84dce" prot="public" virt="virtual"><scope>SwigDirector_ProgressBarInterface</scope><name>show</name></member>
+      <member refid="classSwigDirector__ProgressBarInterface_1aca008c5d9c4dafd39fd494c6e060a5e4" prot="public" virt="non-virtual"><scope>SwigDirector_ProgressBarInterface</scope><name>swig_get_inner</name></member>
+      <member refid="classSwigDirector__ProgressBarInterface_1a35e0ad2799d84c93fb42a99aa6938775" prot="private" virt="non-virtual"><scope>SwigDirector_ProgressBarInterface</scope><name>swig_inner</name></member>
+      <member refid="classSwigDirector__ProgressBarInterface_1a9efd6adb1d3e2286ea9e4ac6487b5e79" prot="public" virt="non-virtual"><scope>SwigDirector_ProgressBarInterface</scope><name>swig_set_inner</name></member>
+      <member refid="classSwigDirector__ProgressBarInterface_1a24add52bac381bb2d0b2a01b09bd2a4f" prot="public" virt="non-virtual"><scope>SwigDirector_ProgressBarInterface</scope><name>SwigDirector_ProgressBarInterface</name></member>
+      <member refid="classSwigDirector__ProgressBarInterface_1a98e8dbc1e4b81ad2c0b8ea1ac2006dc3" prot="public" virt="virtual"><scope>SwigDirector_ProgressBarInterface</scope><name>~SwigDirector_ProgressBarInterface</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

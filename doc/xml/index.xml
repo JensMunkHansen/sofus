@@ -1,0 +1,244 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygenindex xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="index.xsd" version="1.8.8">
+  <compound refid="classfnm_1_1Aperture" kind="class"><name>fnm::Aperture</name>
+    <member refid="classfnm_1_1Aperture_1aa12e26aae03e1310de3b419d6eda061c" kind="function"><name>CalcCwFieldRef</name></member>
+    <member refid="classfnm_1_1Aperture_1affc58ecd7f649cbeab23b676f308f185" kind="function"><name>CalcCwFast</name></member>
+    <member refid="classfnm_1_1Aperture_1ac02ec8b45ead743c15fd64127a9cff67" kind="function"><name>CalcCwField</name></member>
+    <member refid="classfnm_1_1Aperture_1a00d23fa1c2a6c6547606702a72d71aa1" kind="function"><name>CalcCwField2</name></member>
+    <member refid="classfnm_1_1Aperture_1ac08006cf2e1c77856e2332b6d98ca861" kind="variable"><name>nVerticesPerElement</name></member>
+    <member refid="classfnm_1_1Aperture_1adaffd7c31c339cecbb613daa7eae4f64" kind="variable"><name>nElementPosParameters</name></member>
+    <member refid="classfnm_1_1Aperture_1a7f24436369eec62f8d62cd18fc1eda03" kind="variable"><name>_sysparm</name></member>
+    <member refid="classfnm_1_1Aperture_1aeba68ad214d4eb5ef51b3f3763d099dd" kind="variable"><name>fs</name></member>
+    <member refid="classfnm_1_1Aperture_1a66a588988a3bc62a9ba92966365696f2" kind="variable"><name>nthreads</name></member>
+    <member refid="classfnm_1_1Aperture_1a4fd259d5d0c9ac1d74b82c4bfdab8a9e" kind="variable"><name>m_data</name></member>
+    <member refid="classfnm_1_1Aperture_1a4cdcfc0353f149e1ea28e297a943ea4a" kind="variable"><name>m_pbar</name></member>
+    <member refid="classfnm_1_1Aperture_1a3990298bb3b2d0cd9275a039d6bd8319" kind="function"><name>Aperture</name></member>
+    <member refid="classfnm_1_1Aperture_1a48761e9fd3f7270c9de20abce9a8bad5" kind="function"><name>Aperture</name></member>
+    <member refid="classfnm_1_1Aperture_1acf8f763505318fa40717d41620560d3b" kind="function"><name>~Aperture</name></member>
+    <member refid="classfnm_1_1Aperture_1ab0d91160f41e515aa56b4a961c528e32" kind="function"><name>NElementsGet</name></member>
+    <member refid="classfnm_1_1Aperture_1a5c28c71c5172cfe9ecce41f112297073" kind="function"><name>NSubElementsGet</name></member>
+    <member refid="classfnm_1_1Aperture_1a63d391bb8c52d45c1ba48f765ce1943c" kind="function"><name>ExtentGet</name></member>
+    <member refid="classfnm_1_1Aperture_1a5a2beeb4beb4cdac3ee643598eb43421" kind="function"><name>AreaGet</name></member>
+    <member refid="classfnm_1_1Aperture_1a7f1c68283a50419ef55a3af3a2da7a18" kind="function"><name>PhasesGet</name></member>
+    <member refid="classfnm_1_1Aperture_1a4af91355130ec0fe184a9ccd380b8ba1" kind="function"><name>DelaysGet</name></member>
+    <member refid="classfnm_1_1Aperture_1a109e4080fa678b8ae57cfc4da2c9e364" kind="function"><name>RectanglesGet</name></member>
+    <member refid="classfnm_1_1Aperture_1ad5917a3f2f62df8cf44a9a8db7fd6fde" kind="function"><name>PositionsGet</name></member>
+    <member refid="classfnm_1_1Aperture_1ab10c2efc99c80b25caa3abab50b14856" kind="function"><name>PositionsSet</name></member>
+    <member refid="classfnm_1_1Aperture_1aed74195d0a3d7bb7bf42a9d97691ebbf" kind="function"><name>FocusGet</name></member>
+    <member refid="classfnm_1_1Aperture_1aa2a0b49036000182665d4218489bf2e4" kind="function"><name>FocusSet</name></member>
+    <member refid="classfnm_1_1Aperture_1a77d8cd829340ff37dfdd502b1b47f5fe" kind="function"><name>FocusingTypeGet</name></member>
+    <member refid="classfnm_1_1Aperture_1a7ec287084c79fb733e2ff5a471387f5f" kind="function"><name>FocusingTypeSet</name></member>
+    <member refid="classfnm_1_1Aperture_1a6697d507490040a87dbd4a3d67a13fc7" kind="function"><name>NThreadsGet</name></member>
+    <member refid="classfnm_1_1Aperture_1a4cfa8bc49387e8ab7d2ac23ed1b1ccf6" kind="function"><name>NThreadsSet</name></member>
+    <member refid="classfnm_1_1Aperture_1afd19e2ba296df82e56e58ebd151c7a71" kind="function"><name>F0Get</name></member>
+    <member refid="classfnm_1_1Aperture_1a67f51a08d98cc368cc4c4a6414edb3fa" kind="function"><name>F0Set</name></member>
+    <member refid="classfnm_1_1Aperture_1adffaa1f7cab073f40c532fc58cf6e55c" kind="function"><name>SysParmSet</name></member>
+    <member refid="classfnm_1_1Aperture_1a315ccdf731ff56729bfa8f5a1305a345" kind="function"><name>CGet</name></member>
+    <member refid="classfnm_1_1Aperture_1a49d9268feca025de3dc648abf6a8b3e1" kind="function"><name>CSet</name></member>
+    <member refid="classfnm_1_1Aperture_1a8bab384e28c3bb00f9e0a521c30ef64c" kind="function"><name>ElementsGet</name></member>
+    <member refid="classfnm_1_1Aperture_1a907987dd1686d882fdd35fd677d9c56d" kind="function"><name>ElementsSet</name></member>
+    <member refid="classfnm_1_1Aperture_1abaa41240b00a74b090b718872a44fac8" kind="function"><name>SubElementsGet</name></member>
+    <member refid="classfnm_1_1Aperture_1abeee1842f9d811720380ee3ba3f059f5" kind="function"><name>SubElementsSet</name></member>
+    <member refid="classfnm_1_1Aperture_1a67496fa5642e3becc2531aa0bee54041" kind="function"><name>NDivWGet</name></member>
+    <member refid="classfnm_1_1Aperture_1a85ddb5a2c36e41d4b2b4714372abe931" kind="function"><name>NDivWSet</name></member>
+    <member refid="classfnm_1_1Aperture_1a60d4b397ce55604848f2b8b92ce23f51" kind="function"><name>NDivHGet</name></member>
+    <member refid="classfnm_1_1Aperture_1aa01cd8acfe2f084f20172afb68c2983a" kind="function"><name>NDivHSet</name></member>
+    <member refid="classfnm_1_1Aperture_1a289829b660a5ef3e4cdf4bbbae5d9dbf" kind="function"><name>ApodizationGet</name></member>
+    <member refid="classfnm_1_1Aperture_1a6ec932bbf0a8cc4d51df50f54f9dced0" kind="function"><name>ApodizationSet</name></member>
+    <member refid="classfnm_1_1Aperture_1af409f86faed17c9b7f2cf098ec4ba9e8" kind="function"><name>ProgressBarSet</name></member>
+    <member refid="classfnm_1_1Aperture_1a9508a8d8cebc92f46019929e14f288b3" kind="function"><name>FocusUpdate</name></member>
+    <member refid="classfnm_1_1Aperture_1a10975da23ed3050191c892cd54b7e3f3" kind="function"><name>CalcAsa</name></member>
+    <member refid="classfnm_1_1Aperture_1afcdc6eaf9f636bac45c70bfd48df6c90" kind="function"><name>ManagedAllocation</name></member>
+    <member refid="classfnm_1_1Aperture_1ae444d6880874358be9f4f31dccd603e9" kind="function"><name>CalcCwFocus</name></member>
+    <member refid="classfnm_1_1Aperture_1aaed1a8deb647bf6ffb6d6b5727f02811" kind="function"><name>initElements</name></member>
+    <member refid="classfnm_1_1Aperture_1a18e49e20481aa364589fcc9446be3cea" kind="function"><name>CalcThreaded</name></member>
+  </compound>
+  <compound refid="singletonfnm_1_1ApertureData" kind="struct"><name>fnm::ApertureData</name>
+    <member refid="singletonfnm_1_1ApertureData_1a93049b6e21b2069a9fe41469c3705cf4" kind="variable"><name>m_focus_valid</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1ad7c4acb1bca84f83f3072e0a9888818b" kind="variable"><name>m_id</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1a52f7f46dd8600d6c7f736234eff59da8" kind="variable"><name>nextID</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1abdbdad71db1171b8094096d729baba0d" kind="variable"><name>m_nelements</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1a3536d0df01270d92f8ccc3623a2d06a0" kind="variable"><name>m_nsubelements</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1ae07b6e86eb090f4c39fc425c78d91416" kind="variable"><name>m_npos</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1a53616cedfa7ae60a83e12ab990d2cd66" kind="variable"><name>m_elements</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1aa1b289835c0e222f6b8f70e2fafc6769" kind="variable"><name>m_pos</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1af488bbf393fcd49e6698dcf3ce028041" kind="variable"><name>m_apodizations</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1a2939401ddbdafbc9797a8ac8f2a2bda1" kind="variable"><name>m_phases</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1ac769b07e6f634757ef28e556a1a47dc2" kind="variable"><name>m_delays</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1a95dab395f62c1f3c1243d645a5179d4d" kind="variable"><name>m_rectangles</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1a628c4a5cd9324cca318c700cf441b9c8" kind="variable"><name>m_f0</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1abbeae260606697441a45507f847876ef" kind="variable"><name>m_focus</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1a6fed2f515d85db14127cadaa8ebe014b" kind="variable"><name>m_focus_type</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1a0475f185fc298554a7f24b0c919e2e72" kind="function"><name>ApertureData</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1afc99a3f0eb0c1255976b8a422a1aa4c5" kind="function"><name>ElementsSet</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1af4d860345419b7eb270a0277281fa557" kind="function"><name>ElementsVectorGet</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1ac459bb07eae2d1cc9468bde090282467" kind="function"><name>initVectors</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1aaed1a8deb647bf6ffb6d6b5727f02811" kind="function"><name>initElements</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1ad5ffcad99b14536d418142d8eaa99e50" kind="function"><name>initRectangles</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1a47622b69bb7046911e7ce1e3d3022ea2" kind="function"><name>ExtentGet</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1a5a2beeb4beb4cdac3ee643598eb43421" kind="function"><name>AreaGet</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1afe001570c0e0fd80f0cad1064f216980" kind="function"><name>~ApertureData</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1a27f4710e3cd1993dfd5a77ba2682d0a1" kind="function"><name>ApertureData</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1a8b4c57b733ed71e45dd8c7e50f47e8f8" kind="function"><name>operator=</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1a7c56c3aabf459d6bc872e41e254c466e" kind="function"><name>ApertureData</name></member>
+    <member refid="singletonfnm_1_1ApertureData_1a176abfe5ceaafb472f6da7a1824e7e95" kind="function"><name>operator=</name></member>
+  </compound>
+  <compound refid="structfnm_1_1element__t" kind="struct"><name>fnm::element_t</name>
+    <member refid="structfnm_1_1element__t_1a1320f8d1d8db5d6492829bb545e52819" kind="variable"><name>ALIGN16_END</name></member>
+    <member refid="structfnm_1_1element__t_1abb6cbad93f868c1374b91cbef203e31a" kind="variable"><name>ALIGN16_END</name></member>
+    <member refid="structfnm_1_1element__t_1ab091fbc55910c6b961a1dd5c69b7076a" kind="variable"><name>ALIGN16_END</name></member>
+    <member refid="structfnm_1_1element__t_1a089b2ab5959eb8478e45d4ab106327ef" kind="variable"><name>ALIGN16_END</name></member>
+    <member refid="structfnm_1_1element__t_1a1452d7d19d990f8a131fb5b8b613d188" kind="variable"><name>ALIGN16_END</name></member>
+  </compound>
+  <compound refid="structfnm_1_1FocusingTypeNS" kind="struct"><name>fnm::FocusingTypeNS</name>
+    <member refid="structfnm_1_1FocusingTypeNS_1a896c037a32087c5c20d97e64a1786880" kind="enum"><name>Value</name></member>
+    <member refid="structfnm_1_1FocusingTypeNS_1a896c037a32087c5c20d97e64a1786880a0195cdd3cb4c40ddf163a3782d48936f" kind="enumvalue"><name>Rayleigh</name></member>
+    <member refid="structfnm_1_1FocusingTypeNS_1a896c037a32087c5c20d97e64a1786880a072ba1096c769c0c70e56a63a8d93416" kind="enumvalue"><name>Pythagorean</name></member>
+    <member refid="structfnm_1_1FocusingTypeNS_1a896c037a32087c5c20d97e64a1786880aca1b9feb4a36651bdd9f16eb92675052" kind="enumvalue"><name>FocusingTypeCount</name></member>
+  </compound>
+  <compound refid="structgl_1_1GLNode" kind="struct"><name>gl::GLNode</name>
+    <member refid="structgl_1_1GLNode_1aee90379adb0307effb138f4871edbc5c" kind="variable"><name>value</name></member>
+    <member refid="structgl_1_1GLNode_1a99108733d00274978a4979dc072bd513" kind="variable"><name>weight</name></member>
+  </compound>
+  <compound refid="classSwigDirector__ProgressBarInterface" kind="class"><name>SwigDirector_ProgressBarInterface</name>
+    <member refid="classSwigDirector__ProgressBarInterface_1a35e0ad2799d84c93fb42a99aa6938775" kind="variable"><name>swig_inner</name></member>
+    <member refid="classSwigDirector__ProgressBarInterface_1a24add52bac381bb2d0b2a01b09bd2a4f" kind="function"><name>SwigDirector_ProgressBarInterface</name></member>
+    <member refid="classSwigDirector__ProgressBarInterface_1a50f5d7778022e27d2f9dfa0b79e84dce" kind="function"><name>show</name></member>
+    <member refid="classSwigDirector__ProgressBarInterface_1a98e8dbc1e4b81ad2c0b8ea1ac2006dc3" kind="function"><name>~SwigDirector_ProgressBarInterface</name></member>
+    <member refid="classSwigDirector__ProgressBarInterface_1aca008c5d9c4dafd39fd494c6e060a5e4" kind="function"><name>swig_get_inner</name></member>
+    <member refid="classSwigDirector__ProgressBarInterface_1a9efd6adb1d3e2286ea9e4ac6487b5e79" kind="function"><name>swig_set_inner</name></member>
+  </compound>
+  <compound refid="structfnm_1_1sysparm__t" kind="struct"><name>fnm::sysparm_t</name>
+    <member refid="structfnm_1_1sysparm__t_1a169228264adc1071b8585ae0c7f390cd" kind="variable"><name>c</name></member>
+    <member refid="structfnm_1_1sysparm__t_1a676de84ecc719ad3223182fb136690af" kind="variable"><name>nDivW</name></member>
+    <member refid="structfnm_1_1sysparm__t_1a26cce015a626b46108d07cdbab336011" kind="variable"><name>nDivH</name></member>
+  </compound>
+  <compound refid="namespacefnm" kind="namespace"><name>fnm</name>
+    <member refid="namespacefnm_1ac5c8ed1b3501db991ccb6065c89c3b54" kind="typedef"><name>FocusingType</name></member>
+    <member refid="namespacefnm_1a1486ec1da93598ab2d37b17cf9f62252" kind="function"><name>CalcHz</name></member>
+    <member refid="namespacefnm_1a563d8aee788257300131ed9a7af75f64" kind="function"><name>CalcCwFieldRef</name></member>
+    <member refid="namespacefnm_1a262768119606bb7e361e68564ba88829" kind="function"><name>CalcCwField</name></member>
+  </compound>
+  <compound refid="namespacegl" kind="namespace"><name>gl</name>
+    <member refid="namespacegl_1af3f8ce6ef90f2939af71d4dcd7f7300b" kind="variable"><name>JZ</name></member>
+    <member refid="namespacegl_1a3f45d860f72d97fe1d1fb1e5fa4749ff" kind="variable"><name>J1</name></member>
+    <member refid="namespacegl_1af4c9c0a0468b7e8a4a075d536afd6f65" kind="variable"><name>weights</name></member>
+    <member refid="namespacegl_1a8fd2242d1215dfb011d971d994f6aea5" kind="variable"><name>abcissas</name></member>
+    <member refid="namespacegl_1a8dfc38fe28db34846c60086d6ecf508c" kind="function"><name>GLQuad</name></member>
+    <member refid="namespacegl_1aa2fa29b0a69c2eeb23b4e0b9613e7fc5" kind="function"><name>GL</name></member>
+    <member refid="namespacegl_1a7f251958ee6d2c65e37b0f9e61a9fe30" kind="function"><name>GLS</name></member>
+    <member refid="namespacegl_1a516dc08710fc7a9d7f455203bcd9a358" kind="function"><name>besseljzero</name></member>
+    <member refid="namespacegl_1a8a87a797409c579a3658648f68de3d8a" kind="function"><name>besselj1squared</name></member>
+  </compound>
+  <compound refid="namespacesps" kind="namespace"><name>sps</name>
+    <member refid="namespacesps_1a5ec8f80252d9d984138f014c822d27d0" kind="function"><name>dist_point_to_point</name></member>
+    <member refid="namespacesps_1a49b7bc999932466978a16485e1c6a98b" kind="function"><name>dot</name></member>
+    <member refid="namespacesps_1a634cb0a93cc6f57c45c79f7df04c8752" kind="function"><name>operator-</name></member>
+    <member refid="namespacesps_1abcd3fabeb60a10d9ad05fc027c789e9e" kind="function"><name>operator+</name></member>
+    <member refid="namespacesps_1a04c7b1f1585fda60325b43c35937ee96" kind="function"><name>cross</name></member>
+    <member refid="namespacesps_1a22175b6c56edce28e060aaddb0443215" kind="function"><name>operator*</name></member>
+    <member refid="namespacesps_1ac8e58e03b1ed250e4dd83774401fb670" kind="function"><name>norm</name></member>
+    <member refid="namespacesps_1a55c6fe1c1fdf3c5a3e7b354dae205840" kind="function"><name>dist_to_line</name></member>
+    <member refid="namespacesps_1a6d00662f3287276d877ae3e1e10b9c6e" kind="function"><name>sgn_dist_to_plane</name></member>
+    <member refid="namespacesps_1a4cbe6332a0c07b3bb2e80bb8048d6f9e" kind="function"><name>clamp_vector</name></member>
+    <member refid="namespacesps_1a49f2545f74f9a6cf30e04d428badaf27" kind="function"><name>nearest_point_on_bbox</name></member>
+    <member refid="namespacesps_1a5ba962916e1ba5c3114e45f153d80081" kind="function"><name>farthest_point_on_bbox</name></member>
+    <member refid="namespacesps_1a00bcbe34e177c2a5ac0ec59f89998db2" kind="function"><name>dists_most_distant_and_closest</name></member>
+    <member refid="namespacesps_1af6fa4d5ae05cae25226c8f79d864a722" kind="function"><name>basis_vectors</name></member>
+    <member refid="namespacesps_1a1f2f198c4ef4cd43756c6d07dfcbd790" kind="function"><name>basis_vectors</name></member>
+    <member refid="namespacesps_1a1f6bfb41fd1c17ffbe559cb6c9838487" kind="function"><name>operator&lt;&lt;</name></member>
+  </compound>
+  <compound refid="namespacestd" kind="namespace"><name>std</name>
+  </compound>
+  <compound refid="config_8h" kind="file"><name>config.h</name>
+    <member refid="config_8h_1acf71b36fdd29bd9ef6709cecac0536d2" kind="define"><name>HAVE_PTHREAD_H</name></member>
+    <member refid="config_8h_1aeab812b8a5539800d906e8c66fdeff07" kind="define"><name>HAVE_THREAD</name></member>
+    <member refid="config_8h_1aa2b4ec58d136b55d98135c44a4420bad" kind="define"><name>N_MAX_THREADS</name></member>
+  </compound>
+  <compound refid="fnm__export_8h" kind="file"><name>fnm_export.h</name>
+    <member refid="fnm__export_8h_1a3ff7f8e85834af476dd033ada79d8790" kind="define"><name>FNM_EXPORT</name></member>
+    <member refid="fnm__export_8h_1affaa1420e4dc887bc24274ff1c58ef82" kind="define"><name>FNM_NO_EXPORT</name></member>
+    <member refid="fnm__export_8h_1a36319a0b3f1bc150fc609be352d27341" kind="define"><name>FNM_DEPRECATED</name></member>
+    <member refid="fnm__export_8h_1a562b6bb35ffd4e3d7bacb2a38df7bf90" kind="define"><name>FNM_DEPRECATED_EXPORT</name></member>
+    <member refid="fnm__export_8h_1a8d0febf1f1658885b17af62a4bd4bc1c" kind="define"><name>FNM_DEPRECATED_NO_EXPORT</name></member>
+    <member refid="fnm__export_8h_1ad1bbfc048f115ce6acd8245fa2466eb3" kind="define"><name>DEFINE_NO_DEPRECATED</name></member>
+  </compound>
+  <compound refid="swig__fnmPYTHON__wrap_8h" kind="file"><name>swig_fnmPYTHON_wrap.h</name>
+  </compound>
+  <compound refid="VersionInfo__Fnm_8h" kind="file"><name>VersionInfo_Fnm.h</name>
+    <member refid="VersionInfo__Fnm_8h_1a7dddbf944927a0b568923b796544b741" kind="define"><name>PRODUCT_VERSION_MAJOR</name></member>
+    <member refid="VersionInfo__Fnm_8h_1a8b5c6dbae27886f06160455309d6783e" kind="define"><name>PRODUCT_VERSION_MINOR</name></member>
+    <member refid="VersionInfo__Fnm_8h_1acf6ca1bf587683c06f7e8d8bca654165" kind="define"><name>PRODUCT_VERSION_PATCH</name></member>
+    <member refid="VersionInfo__Fnm_8h_1a966f8186761e4df19d4c448b48334f66" kind="define"><name>PRODUCT_VERSION_BUILD</name></member>
+    <member refid="VersionInfo__Fnm_8h_1ada233e5218c8390ac9aabdfe5c4ace6c" kind="define"><name>FILE_VERSION_MAJOR</name></member>
+    <member refid="VersionInfo__Fnm_8h_1a4154d27e45371f29e70856f8e964b3a8" kind="define"><name>FILE_VERSION_MINOR</name></member>
+    <member refid="VersionInfo__Fnm_8h_1a21e59bc19f3a5135d3c2695d80310c49" kind="define"><name>FILE_VERSION_PATCH</name></member>
+    <member refid="VersionInfo__Fnm_8h_1a6e7becbd875795024785a0488b44c039" kind="define"><name>FILE_VERSION_BUILD</name></member>
+    <member refid="VersionInfo__Fnm_8h_1a5f9559eb94e5c47578772d064fe473aa" kind="define"><name>__TO_STRING_IMPL</name></member>
+    <member refid="VersionInfo__Fnm_8h_1a10ed390ab06d6472da1d49adfaa9d4ee" kind="define"><name>__TO_STRING</name></member>
+    <member refid="VersionInfo__Fnm_8h_1a5244bf34593e1efc482243c06194eb5b" kind="define"><name>PRODUCT_VERSION_MAJOR_MINOR_STR</name></member>
+    <member refid="VersionInfo__Fnm_8h_1aed4f512b403d4365493d28abae5c26fe" kind="define"><name>PRODUCT_VERSION_MAJOR_MINOR_PATCH_STR</name></member>
+    <member refid="VersionInfo__Fnm_8h_1a5e8203c1ca2075773af587228a6eb77a" kind="define"><name>PRODUCT_VERSION_FULL_STR</name></member>
+    <member refid="VersionInfo__Fnm_8h_1a7b62d663a09c73a380a6dc82a713d828" kind="define"><name>PRODUCT_VERSION_RESOURCE</name></member>
+    <member refid="VersionInfo__Fnm_8h_1a57959092117790b22a118b662fbf72a8" kind="define"><name>PRODUCT_VERSION_RESOURCE_STR</name></member>
+    <member refid="VersionInfo__Fnm_8h_1a0d2250d51ca862cae226e45d7101f2b4" kind="define"><name>FILE_VERSION_MAJOR_MINOR_STR</name></member>
+    <member refid="VersionInfo__Fnm_8h_1a6de204d2a6754b3a0205d9fbc0370170" kind="define"><name>FILE_VERSION_MAJOR_MINOR_PATCH_STR</name></member>
+    <member refid="VersionInfo__Fnm_8h_1a84db7867f2aafba92def27b60c094f56" kind="define"><name>FILE_VERSION_FULL_STR</name></member>
+    <member refid="VersionInfo__Fnm_8h_1ae56cfce950d59353f8e67f0a869efb72" kind="define"><name>FILE_VERSION_RESOURCE</name></member>
+    <member refid="VersionInfo__Fnm_8h_1a93e5f89011381f51471951bb4ab75b61" kind="define"><name>FILE_VERSION_RESOURCE_STR</name></member>
+    <member refid="VersionInfo__Fnm_8h_1aea1c4c3fd221563d7c147d69f0aa4b7e" kind="define"><name>PRODUCT_ICON</name></member>
+    <member refid="VersionInfo__Fnm_8h_1a2e4f1ae08b2ac2308b22060428c98365" kind="define"><name>PRODUCT_COMMENTS</name></member>
+    <member refid="VersionInfo__Fnm_8h_1a000a2fee862fab28140b6face0c12f8a" kind="define"><name>PRODUCT_COMPANY_NAME</name></member>
+    <member refid="VersionInfo__Fnm_8h_1a605560dc4b96a63a8ad22c7e87abc3be" kind="define"><name>PRODUCT_COMPANY_COPYRIGHT</name></member>
+    <member refid="VersionInfo__Fnm_8h_1a337015d4c3f0a26d70924bc14743f683" kind="define"><name>PRODUCT_FILE_DESCRIPTION</name></member>
+    <member refid="VersionInfo__Fnm_8h_1a6b70c088a3a41ee19acc34a285ac2940" kind="define"><name>PRODUCT_INTERNAL_NAME</name></member>
+    <member refid="VersionInfo__Fnm_8h_1ac04eff0a6312fcf0f9d8f317f3c5382b" kind="define"><name>PRODUCT_ORIGINAL_FILENAME</name></member>
+    <member refid="VersionInfo__Fnm_8h_1a62b539974094d0751b680791b74bdbf0" kind="define"><name>PRODUCT_BUNDLE</name></member>
+  </compound>
+  <compound refid="fnm_8hpp" kind="file"><name>fnm.hpp</name>
+  </compound>
+  <compound refid="fnm__calc_8hpp" kind="file"><name>fnm_calc.hpp</name>
+  </compound>
+  <compound refid="fnm__data_8hpp" kind="file"><name>fnm_data.hpp</name>
+  </compound>
+  <compound refid="fnm__types_8hpp" kind="file"><name>fnm_types.hpp</name>
+  </compound>
+  <compound refid="FnmMath_8hpp" kind="file"><name>FnmMath.hpp</name>
+  </compound>
+  <compound refid="FnmSIMD_8hpp" kind="file"><name>FnmSIMD.hpp</name>
+    <member refid="FnmSIMD_8hpp_1aaf68820097524bc6a39eb9b5c95836e4" kind="function"><name>CalcHzVecGL</name></member>
+    <member refid="FnmSIMD_8hpp_1a15656136d30b6df89250c4d3ed1c3914" kind="function"><name>CalcHzAll</name></member>
+    <member refid="FnmSIMD_8hpp_1a8c2f4b3432e306eb19be78d6e8636199" kind="function"><name>CalcHzFast</name></member>
+    <member refid="FnmSIMD_8hpp_1ada7ae13154936fbf393215429b6a8e67" kind="function"><name>CalcHzVecGL</name></member>
+    <member refid="FnmSIMD_8hpp_1a2afa33d436256506e69d6afd35552e58" kind="function"><name>CalcHzAll</name></member>
+    <member refid="FnmSIMD_8hpp_1af714277fdda0c36cc35b950fc5178bc6" kind="function"><name>CalcHzFast</name></member>
+    <member refid="FnmSIMD_8hpp_1ad78992ef7c633408569afdc5bf9c1959" kind="function"><name>CalcHzFast</name></member>
+    <member refid="FnmSIMD_8hpp_1a483b42c4d0c798ba9bde31c0be682edd" kind="function"><name>CalcHzVecGL</name></member>
+    <member refid="FnmSIMD_8hpp_1a703837733eadf893395370bc38b77060" kind="function"><name>CalcHzAll</name></member>
+  </compound>
+  <compound refid="swig__system_8h" kind="file"><name>swig_system.h</name>
+  </compound>
+  <compound refid="bessel__lut_8hpp" kind="file"><name>bessel_lut.hpp</name>
+  </compound>
+  <compound refid="gl_8hpp" kind="file"><name>gl.hpp</name>
+  </compound>
+  <compound refid="gl__lut_8hpp" kind="file"><name>gl_lut.hpp</name>
+  </compound>
+  <compound refid="smath_8hpp" kind="file"><name>smath.hpp</name>
+    <member refid="smath_8hpp_1ab50269cb12c04295c021f7ce24108750" kind="function"><name>signum</name></member>
+    <member refid="smath_8hpp_1a6ad435c3cf741e6cf8d6c2ed5c272210" kind="function"><name>signum</name></member>
+    <member refid="smath_8hpp_1a4761435ab54306df78fcba4fd156e3fd" kind="function"><name>signum</name></member>
+  </compound>
+  <compound refid="group__GL" kind="group"><name>GL</name>
+  </compound>
+  <compound refid="group__FNM" kind="group"><name>FNM</name>
+  </compound>
+  <compound refid="group__SPS" kind="group"><name>SPS</name>
+  </compound>
+  <compound refid="dir_cd41f1afc10ad4605c1fed3e638b0021" kind="dir"><name>fnm</name>
+  </compound>
+  <compound refid="dir_ffe10d808f3b8401de5bc52b90a9fa35" kind="dir"><name>gl</name>
+  </compound>
+  <compound refid="dir_cfce9dac0691c6553fd4b07cff0c723e" kind="dir"><name>sps</name>
+  </compound>
+</doxygenindex>

@@ -1,0 +1,185 @@
+\hypertarget{namespacegl}{\section{gl Namespace Reference}
+\label{namespacegl}\index{gl@{gl}}
+}
+
+
+Gauss-\/\+Legendre interfaces and implementations.  
+
+
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \hyperlink{structgl_1_1GLNode}{G\+L\+Node}
+\begin{DoxyCompactList}\small\item\em Container for weight and nodes. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+double G\+L\+\_\+\+E\+X\+P\+O\+R\+T \hyperlink{namespacegl_a8dfc38fe28db34846c60086d6ecf508c}{G\+L\+Quad} (size\+\_\+t n, double($\ast$f)(double, void $\ast$), void $\ast$data, double a, double b)
+\item 
+\hyperlink{structgl_1_1GLNode}{gl\+::\+G\+L\+Node} G\+L\+\_\+\+E\+X\+P\+O\+R\+T \hyperlink{namespacegl_aa2fa29b0a69c2eeb23b4e0b9613e7fc5}{G\+L} (size\+\_\+t l, size\+\_\+t k)
+\item 
+\hyperlink{structgl_1_1GLNode}{gl\+::\+G\+L\+Node} G\+L\+\_\+\+E\+X\+P\+O\+R\+T \hyperlink{namespacegl_a7f251958ee6d2c65e37b0f9e61a9fe30}{G\+L\+S} (size\+\_\+t n, size\+\_\+t k)
+\item 
+double G\+L\+\_\+\+E\+X\+P\+O\+R\+T \hyperlink{namespacegl_a516dc08710fc7a9d7f455203bcd9a358}{besseljzero} (int k)
+\item 
+double G\+L\+\_\+\+E\+X\+P\+O\+R\+T \hyperlink{namespacegl_a8a87a797409c579a3658648f68de3d8a}{besselj1squared} (int k)
+\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+double \hyperlink{namespacegl_af3f8ce6ef90f2939af71d4dcd7f7300b}{J\+Z} \mbox{[}\+\_\+\+B\+E\+S\+S\+E\+L\+J\+Z\+E\+R\+O\+\_\+\+L\+U\+T\+\_\+\+T\+A\+B\+L\+E\+\_\+\+S\+I\+Z\+E\mbox{]}
+\item 
+double \hyperlink{namespacegl_a3f45d860f72d97fe1d1fb1e5fa4749ff}{J1} \mbox{[}\+\_\+\+B\+E\+S\+S\+E\+L\+J\+\_\+1\+\_\+\+S\+Q\+U\+A\+R\+E\+D\+\_\+\+L\+U\+T\+\_\+\+T\+A\+B\+L\+E\+\_\+\+S\+I\+Z\+E\mbox{]}
+\item 
+const double $\ast$ \hyperlink{namespacegl_af4c9c0a0468b7e8a4a075d536afd6f65}{weights} \mbox{[}\+\_\+\+G\+L\+\_\+\+L\+U\+T\+\_\+\+T\+A\+B\+L\+E\+\_\+\+S\+I\+Z\+E\mbox{]}
+\item 
+const double $\ast$ \hyperlink{namespacegl_a8fd2242d1215dfb011d971d994f6aea5}{abcissas} \mbox{[}\+\_\+\+G\+L\+\_\+\+L\+U\+T\+\_\+\+T\+A\+B\+L\+E\+\_\+\+S\+I\+Z\+E\mbox{]}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Gauss-\/\+Legendre interfaces and implementations. 
+
+\subsection{Function Documentation}
+\hypertarget{namespacegl_a8a87a797409c579a3658648f68de3d8a}{\index{gl@{gl}!besselj1squared@{besselj1squared}}
+\index{besselj1squared@{besselj1squared}!gl@{gl}}
+\subsubsection[{besselj1squared}]{\setlength{\rightskip}{0pt plus 5cm}double G\+L\+\_\+\+E\+X\+P\+O\+R\+T gl\+::besselj1squared (
+\begin{DoxyParamCaption}
+\item[{int}]{k}
+\end{DoxyParamCaption}
+)}}\label{namespacegl_a8a87a797409c579a3658648f68de3d8a}
+This function computes the square of Bessel\+J(1, Bessel\+Zero(0,k))
+
+
+\begin{DoxyParams}{Parameters}
+{\em k} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+
+\end{DoxyReturn}
+\hypertarget{namespacegl_a516dc08710fc7a9d7f455203bcd9a358}{\index{gl@{gl}!besseljzero@{besseljzero}}
+\index{besseljzero@{besseljzero}!gl@{gl}}
+\subsubsection[{besseljzero}]{\setlength{\rightskip}{0pt plus 5cm}double G\+L\+\_\+\+E\+X\+P\+O\+R\+T gl\+::besseljzero (
+\begin{DoxyParamCaption}
+\item[{int}]{k}
+\end{DoxyParamCaption}
+)}}\label{namespacegl_a516dc08710fc7a9d7f455203bcd9a358}
+This function computes the k'th zero of the Bessel\+J(0,x)
+
+
+\begin{DoxyParams}{Parameters}
+{\em k} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+
+\end{DoxyReturn}
+\hypertarget{namespacegl_aa2fa29b0a69c2eeb23b4e0b9613e7fc5}{\index{gl@{gl}!G\+L@{G\+L}}
+\index{G\+L@{G\+L}!gl@{gl}}
+\subsubsection[{G\+L}]{\setlength{\rightskip}{0pt plus 5cm}{\bf gl\+::\+G\+L\+Node} G\+L\+\_\+\+E\+X\+P\+O\+R\+T gl\+::\+G\+L (
+\begin{DoxyParamCaption}
+\item[{size\+\_\+t}]{l, }
+\item[{size\+\_\+t}]{k}
+\end{DoxyParamCaption}
+)}}\label{namespacegl_aa2fa29b0a69c2eeb23b4e0b9613e7fc5}
+Purpose\+:
+
+G\+L computes the kth G\+L pair of an n-\/point rule. It uses look-\/up tables for the n $<$ 101.
+
+Licensing\+:
+
+This code is distributed under the B\+S\+D license.
+
+Modified\+:
+
+22 December 2015
+
+Author\+:
+
+Ignace Bogaert
+
+Reference\+:
+
+Ignace Bogaert, Iteration-\/free computation of Gauss-\/\+Legendre quadrature nodes and weights, S\+I\+A\+M Journal on Scientific Computing, Volume 36, Number 3, 2014, pages A1008-\/1026.
+
+The only function that needs to be public
+
+
+\begin{DoxyParams}{Parameters}
+{\em l} & The number of points in the given rule \\
+\hline
+{\em k} & The index of the point to be returned\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The location and weight of the point 
+\end{DoxyReturn}
+\hypertarget{namespacegl_a8dfc38fe28db34846c60086d6ecf508c}{\index{gl@{gl}!G\+L\+Quad@{G\+L\+Quad}}
+\index{G\+L\+Quad@{G\+L\+Quad}!gl@{gl}}
+\subsubsection[{G\+L\+Quad}]{\setlength{\rightskip}{0pt plus 5cm}double G\+L\+\_\+\+E\+X\+P\+O\+R\+T gl\+::\+G\+L\+Quad (
+\begin{DoxyParamCaption}
+\item[{size\+\_\+t}]{n, }
+\item[{double($\ast$)(double, void $\ast$)}]{f, }
+\item[{void $\ast$}]{data, }
+\item[{double}]{a, }
+\item[{double}]{b}
+\end{DoxyParamCaption}
+)}}\label{namespacegl_a8dfc38fe28db34846c60086d6ecf508c}
+Gauss-\/\+Legendre quadrature using an n-\/point rule.
+
+
+\begin{DoxyParams}{Parameters}
+{\em n} & Quadrature order \\
+\hline
+{\em f} & Integrand \\
+\hline
+{\em data} & Pointer to user-\/defined data which will be passed to {\ttfamily f} every time it is called (as second parameter). \\
+\hline
+{\em a} & Lower integration limit \\
+\hline
+{\em b} & Upper integration limit\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+
+\end{DoxyReturn}
+\hypertarget{namespacegl_a7f251958ee6d2c65e37b0f9e61a9fe30}{\index{gl@{gl}!G\+L\+S@{G\+L\+S}}
+\index{G\+L\+S@{G\+L\+S}!gl@{gl}}
+\subsubsection[{G\+L\+S}]{\setlength{\rightskip}{0pt plus 5cm}{\bf gl\+::\+G\+L\+Node} G\+L\+\_\+\+E\+X\+P\+O\+R\+T gl\+::\+G\+L\+S (
+\begin{DoxyParamCaption}
+\item[{size\+\_\+t}]{n, }
+\item[{size\+\_\+t}]{k}
+\end{DoxyParamCaption}
+)}}\label{namespacegl_a7f251958ee6d2c65e37b0f9e61a9fe30}
+G\+L\+S computes the kth G\+L pair of an n-\/point rule using the formula rather than look-\/up tables.
+
+Reference\+:
+
+Ignace Bogaert, Iteration-\/free computation of Gauss-\/\+Legendre quadrature nodes and weights, S\+I\+A\+M Journal on Scientific Computing, Volume 36, Number 3, 2014, pages A1008-\/1026.
+
+
+\begin{DoxyParams}{Parameters}
+{\em n} & The number of points in the given rule \\
+\hline
+{\em k} & The index of the point to be returned\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+
+\end{DoxyReturn}
+
+
+\subsection{Variable Documentation}
+\hypertarget{namespacegl_a8fd2242d1215dfb011d971d994f6aea5}{\index{gl@{gl}!abcissas@{abcissas}}
+\index{abcissas@{abcissas}!gl@{gl}}
+\subsubsection[{abcissas}]{\setlength{\rightskip}{0pt plus 5cm}const double$\ast$ abcissas\mbox{[}\+\_\+\+G\+L\+\_\+\+L\+U\+T\+\_\+\+T\+A\+B\+L\+E\+\_\+\+S\+I\+Z\+E\mbox{]}}}\label{namespacegl_a8fd2242d1215dfb011d971d994f6aea5}
+\hypertarget{namespacegl_a3f45d860f72d97fe1d1fb1e5fa4749ff}{\index{gl@{gl}!J1@{J1}}
+\index{J1@{J1}!gl@{gl}}
+\subsubsection[{J1}]{\setlength{\rightskip}{0pt plus 5cm}double J1\mbox{[}\+\_\+\+B\+E\+S\+S\+E\+L\+J\+\_\+1\+\_\+\+S\+Q\+U\+A\+R\+E\+D\+\_\+\+L\+U\+T\+\_\+\+T\+A\+B\+L\+E\+\_\+\+S\+I\+Z\+E\mbox{]}}}\label{namespacegl_a3f45d860f72d97fe1d1fb1e5fa4749ff}
+\hypertarget{namespacegl_af3f8ce6ef90f2939af71d4dcd7f7300b}{\index{gl@{gl}!J\+Z@{J\+Z}}
+\index{J\+Z@{J\+Z}!gl@{gl}}
+\subsubsection[{J\+Z}]{\setlength{\rightskip}{0pt plus 5cm}double J\+Z\mbox{[}\+\_\+\+B\+E\+S\+S\+E\+L\+J\+Z\+E\+R\+O\+\_\+\+L\+U\+T\+\_\+\+T\+A\+B\+L\+E\+\_\+\+S\+I\+Z\+E\mbox{]}}}\label{namespacegl_af3f8ce6ef90f2939af71d4dcd7f7300b}
+\hypertarget{namespacegl_af4c9c0a0468b7e8a4a075d536afd6f65}{\index{gl@{gl}!weights@{weights}}
+\index{weights@{weights}!gl@{gl}}
+\subsubsection[{weights}]{\setlength{\rightskip}{0pt plus 5cm}const double$\ast$ weights\mbox{[}\+\_\+\+G\+L\+\_\+\+L\+U\+T\+\_\+\+T\+A\+B\+L\+E\+\_\+\+S\+I\+Z\+E\mbox{]}}}\label{namespacegl_af4c9c0a0468b7e8a4a075d536afd6f65}

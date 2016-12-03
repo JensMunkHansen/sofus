@@ -1,0 +1,217 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.8">
+  <compounddef id="fnm__data_8hpp" kind="file">
+    <compoundname>fnm_data.hpp</compoundname>
+    <includes refid="fnm__export_8h" local="no">fnm/fnm_export.h</includes>
+    <includes refid="config_8h" local="no">fnm/config.h</includes>
+    <includes local="no">sps/cenv.h</includes>
+    <includes local="no">sps/memory</includes>
+    <includes refid="fnm__types_8hpp" local="no">fnm/fnm_types.hpp</includes>
+    <includes local="no">vector</includes>
+    <includedby refid="fnm__calc_8hpp" local="no">fnm/fnm_calc.hpp</includedby>
+    <incdepgraph>
+      <node id="185">
+        <label>fnm/fnm_export.h</label>
+        <link refid="fnm__export_8h"/>
+      </node>
+      <node id="187">
+        <label>sps/cenv.h</label>
+      </node>
+      <node id="184">
+        <label>fnm/fnm_data.hpp</label>
+        <link refid="fnm_data.hpp"/>
+        <childnode refid="185" relation="include">
+        </childnode>
+        <childnode refid="186" relation="include">
+        </childnode>
+        <childnode refid="187" relation="include">
+        </childnode>
+        <childnode refid="188" relation="include">
+        </childnode>
+        <childnode refid="189" relation="include">
+        </childnode>
+        <childnode refid="195" relation="include">
+        </childnode>
+      </node>
+      <node id="190">
+        <label>sps/smath.hpp</label>
+        <link refid="smath_8hpp"/>
+        <childnode refid="187" relation="include">
+        </childnode>
+        <childnode refid="191" relation="include">
+        </childnode>
+        <childnode refid="192" relation="include">
+        </childnode>
+        <childnode refid="193" relation="include">
+        </childnode>
+        <childnode refid="194" relation="include">
+        </childnode>
+      </node>
+      <node id="188">
+        <label>sps/memory</label>
+      </node>
+      <node id="193">
+        <label>sps/smath_types.hpp</label>
+      </node>
+      <node id="195">
+        <label>vector</label>
+      </node>
+      <node id="186">
+        <label>fnm/config.h</label>
+        <link refid="config_8h"/>
+      </node>
+      <node id="194">
+        <label>iostream</label>
+      </node>
+      <node id="191">
+        <label>sps/sps_export.h</label>
+      </node>
+      <node id="192">
+        <label>sps/math.h</label>
+      </node>
+      <node id="189">
+        <label>fnm/fnm_types.hpp</label>
+        <link refid="fnm__types_8hpp"/>
+        <childnode refid="186" relation="include">
+        </childnode>
+        <childnode refid="185" relation="include">
+        </childnode>
+        <childnode refid="187" relation="include">
+        </childnode>
+        <childnode refid="188" relation="include">
+        </childnode>
+        <childnode refid="190" relation="include">
+        </childnode>
+      </node>
+    </incdepgraph>
+    <invincdepgraph>
+      <node id="196">
+        <label>fnm/fnm_data.hpp</label>
+        <link refid="fnm_data.hpp"/>
+        <childnode refid="197" relation="include">
+        </childnode>
+      </node>
+      <node id="197">
+        <label>fnm/fnm_calc.hpp</label>
+        <link refid="fnm__calc_8hpp"/>
+      </node>
+    </invincdepgraph>
+    <innerclass refid="singletonfnm_1_1ApertureData" prot="public">fnm::ApertureData</innerclass>
+    <innernamespace refid="namespacefnm">fnm</innernamespace>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para><simplesect kind="author"><para>Jens Munk Hansen <ulink url="mailto:jens.munk.hansen@gmail.com">jens.munk.hansen@gmail.com</ulink> </para></simplesect>
+<simplesect kind="date"><para>Thu Jun 9 06:12:31 2016 </para></simplesect>
+</para>    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"></codeline>
+<codeline lineno="10"><highlight class="preprocessor">#pragma<sp/>once</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="11"><highlight class="normal"></highlight></codeline>
+<codeline lineno="12"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;<ref refid="fnm__export_8h" kindref="compound">fnm/fnm_export.h</ref>&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="13"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;<ref refid="config_8h" kindref="compound">fnm/config.h</ref>&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="14"><highlight class="normal"></highlight></codeline>
+<codeline lineno="15"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sps/cenv.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="16"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sps/memory&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="17"><highlight class="normal"></highlight></codeline>
+<codeline lineno="18"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;<ref refid="fnm__types_8hpp" kindref="compound">fnm/fnm_types.hpp</ref>&gt;</highlight><highlight class="normal"><sp/></highlight><highlight class="comment">//<sp/>FocusingType,<sp/>element_t</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="19"><highlight class="normal"></highlight></codeline>
+<codeline lineno="20"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;vector&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="21"><highlight class="normal"></highlight></codeline>
+<codeline lineno="22"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespacefnm" kindref="compound">fnm</ref><sp/>{</highlight></codeline>
+<codeline lineno="23"><highlight class="normal"></highlight></codeline>
+<codeline lineno="29"><highlight class="preprocessor">#ifdef<sp/>_MSC_VER</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="30"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">template</highlight><highlight class="normal"><sp/>&lt;</highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>T&gt;</highlight></codeline>
+<codeline lineno="31"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="fnm__export_8h_1a3ff7f8e85834af476dd033ada79d8790" kindref="member">FNM_EXPORT</ref><sp/>ApertureData</highlight></codeline>
+<codeline lineno="32"><highlight class="normal">#else</highlight></codeline>
+<codeline lineno="33"><highlight class="normal"><sp/><sp/>template<sp/>&lt;class<sp/>T&gt;</highlight></codeline>
+<codeline lineno="34"><highlight class="normal"><sp/><sp/>ALIGN16_BEGIN<sp/>struct<sp/>ALIGN16_END<sp/><ref refid="fnm__export_8h_1a3ff7f8e85834af476dd033ada79d8790" kindref="member">FNM_EXPORT</ref><sp/>ApertureData</highlight></codeline>
+<codeline lineno="35"><highlight class="normal">#endif</highlight></codeline>
+<codeline lineno="36"><highlight class="normal"><sp/><sp/>{</highlight></codeline>
+<codeline lineno="37"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">public</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="39" refid="singletonfnm_1_1ApertureData_1a52f7f46dd8600d6c7f736234eff59da8" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/><ref refid="singletonfnm_1_1ApertureData_1a52f7f46dd8600d6c7f736234eff59da8" kindref="member">nextID</ref>;</highlight></codeline>
+<codeline lineno="40"><highlight class="normal"></highlight></codeline>
+<codeline lineno="42" refid="singletonfnm_1_1ApertureData_1abdbdad71db1171b8094096d729baba0d" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/><ref refid="singletonfnm_1_1ApertureData_1abdbdad71db1171b8094096d729baba0d" kindref="member">m_nelements</ref>;</highlight></codeline>
+<codeline lineno="43"><highlight class="normal"></highlight></codeline>
+<codeline lineno="45" refid="singletonfnm_1_1ApertureData_1a3536d0df01270d92f8ccc3623a2d06a0" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/><ref refid="singletonfnm_1_1ApertureData_1a3536d0df01270d92f8ccc3623a2d06a0" kindref="member">m_nsubelements</ref>;</highlight></codeline>
+<codeline lineno="46"><highlight class="normal"></highlight></codeline>
+<codeline lineno="48" refid="singletonfnm_1_1ApertureData_1ae07b6e86eb090f4c39fc425c78d91416" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/><ref refid="singletonfnm_1_1ApertureData_1ae07b6e86eb090f4c39fc425c78d91416" kindref="member">m_npos</ref>;</highlight></codeline>
+<codeline lineno="49"><highlight class="normal"></highlight></codeline>
+<codeline lineno="51" refid="singletonfnm_1_1ApertureData_1a53616cedfa7ae60a83e12ab990d2cd66" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>sps::deleted_aligned_multi_array&lt;sps::element_t&lt;T&gt;,<sp/>2U&gt;<sp/><ref refid="singletonfnm_1_1ApertureData_1a53616cedfa7ae60a83e12ab990d2cd66" kindref="member">m_elements</ref>;</highlight></codeline>
+<codeline lineno="52"><highlight class="normal"></highlight></codeline>
+<codeline lineno="54" refid="singletonfnm_1_1ApertureData_1aa1b289835c0e222f6b8f70e2fafc6769" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>sps::deleted_aligned_array&lt;sps::point_t&lt;T&gt;<sp/>&gt;<sp/><ref refid="singletonfnm_1_1ApertureData_1aa1b289835c0e222f6b8f70e2fafc6769" kindref="member">m_pos</ref>;</highlight></codeline>
+<codeline lineno="55"><highlight class="normal"></highlight></codeline>
+<codeline lineno="57" refid="singletonfnm_1_1ApertureData_1af488bbf393fcd49e6698dcf3ce028041" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>sps::deleted_aligned_array&lt;T&gt;<sp/><ref refid="singletonfnm_1_1ApertureData_1af488bbf393fcd49e6698dcf3ce028041" kindref="member">m_apodizations</ref>;</highlight></codeline>
+<codeline lineno="58"><highlight class="normal"></highlight></codeline>
+<codeline lineno="60" refid="singletonfnm_1_1ApertureData_1a2939401ddbdafbc9797a8ac8f2a2bda1" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>sps::deleted_aligned_array&lt;T&gt;<sp/><ref refid="singletonfnm_1_1ApertureData_1a2939401ddbdafbc9797a8ac8f2a2bda1" kindref="member">m_phases</ref>;</highlight></codeline>
+<codeline lineno="61"><highlight class="normal"></highlight></codeline>
+<codeline lineno="63" refid="singletonfnm_1_1ApertureData_1ac769b07e6f634757ef28e556a1a47dc2" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>sps::deleted_aligned_array&lt;T&gt;<sp/><ref refid="singletonfnm_1_1ApertureData_1ac769b07e6f634757ef28e556a1a47dc2" kindref="member">m_delays</ref>;</highlight></codeline>
+<codeline lineno="64"><highlight class="normal"></highlight></codeline>
+<codeline lineno="66" refid="singletonfnm_1_1ApertureData_1a95dab395f62c1f3c1243d645a5179d4d" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>sps::deleted_aligned_array&lt;sps::rect_t&lt;T&gt;<sp/>&gt;<sp/><ref refid="singletonfnm_1_1ApertureData_1a95dab395f62c1f3c1243d645a5179d4d" kindref="member">m_rectangles</ref>;</highlight></codeline>
+<codeline lineno="67"><highlight class="normal"></highlight></codeline>
+<codeline lineno="69" refid="singletonfnm_1_1ApertureData_1a628c4a5cd9324cca318c700cf441b9c8" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>T<sp/><ref refid="singletonfnm_1_1ApertureData_1a628c4a5cd9324cca318c700cf441b9c8" kindref="member">m_f0</ref>;</highlight></codeline>
+<codeline lineno="70"><highlight class="normal"></highlight></codeline>
+<codeline lineno="72" refid="singletonfnm_1_1ApertureData_1abbeae260606697441a45507f847876ef" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>sps::point_t&lt;T&gt;<sp/><ref refid="singletonfnm_1_1ApertureData_1abbeae260606697441a45507f847876ef" kindref="member">m_focus</ref>;</highlight></codeline>
+<codeline lineno="73"><highlight class="normal"></highlight></codeline>
+<codeline lineno="75" refid="singletonfnm_1_1ApertureData_1a6fed2f515d85db14127cadaa8ebe014b" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="singletonfnm_1_1ApertureData_1a6fed2f515d85db14127cadaa8ebe014b" kindref="member">m_focus_type</ref>;</highlight></codeline>
+<codeline lineno="76"><highlight class="normal"></highlight></codeline>
+<codeline lineno="78"></codeline>
+<codeline lineno="80" refid="singletonfnm_1_1ApertureData_1a93049b6e21b2069a9fe41469c3705cf4" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="singletonfnm_1_1ApertureData_1a93049b6e21b2069a9fe41469c3705cf4" kindref="member">m_focus_valid</ref>;</highlight></codeline>
+<codeline lineno="81"><highlight class="normal"></highlight></codeline>
+<codeline lineno="83" refid="singletonfnm_1_1ApertureData_1ad7c4acb1bca84f83f3072e0a9888818b" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/><ref refid="singletonfnm_1_1ApertureData_1ad7c4acb1bca84f83f3072e0a9888818b" kindref="member">m_id</ref>;</highlight></codeline>
+<codeline lineno="84"><highlight class="normal"></highlight></codeline>
+<codeline lineno="86"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="singletonfnm_1_1ApertureData" kindref="compound">ApertureData</ref>();</highlight></codeline>
+<codeline lineno="88"><highlight class="normal"></highlight></codeline>
+<codeline lineno="89"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>ElementsSet(sps::deleted_aligned_multi_array&lt;sps::element_t&lt;T&gt;,2&gt;<sp/>&amp;&amp;elements,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal">&amp;<sp/>nRows,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal">&amp;<sp/>nCols);</highlight></codeline>
+<codeline lineno="90"><highlight class="normal"></highlight></codeline>
+<codeline lineno="91"><highlight class="normal"><sp/><sp/><sp/><sp/>std::vector&lt;std::vector&lt;sps::element_t&lt;T&gt;<sp/>&gt;<sp/>&gt;<sp/>ElementsVectorGet()<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="92"><highlight class="normal"></highlight></codeline>
+<codeline lineno="93"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>initVectors();</highlight></codeline>
+<codeline lineno="94"><highlight class="normal"></highlight></codeline>
+<codeline lineno="95"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>initElements();</highlight></codeline>
+<codeline lineno="96"><highlight class="normal"></highlight></codeline>
+<codeline lineno="97"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>initRectangles();</highlight></codeline>
+<codeline lineno="98"><highlight class="normal"></highlight></codeline>
+<codeline lineno="99"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>ExtentGet(sps::bbox_t&lt;T&gt;&amp;<sp/>bbox)<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="100"><highlight class="normal"></highlight></codeline>
+<codeline lineno="101"><highlight class="normal"><sp/><sp/><sp/><sp/>T<sp/>AreaGet()<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="102"><highlight class="normal"></highlight></codeline>
+<codeline lineno="104"><highlight class="normal"><sp/><sp/><sp/><sp/>~<ref refid="singletonfnm_1_1ApertureData" kindref="compound">ApertureData</ref>();</highlight></codeline>
+<codeline lineno="105"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">private</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="106"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="singletonfnm_1_1ApertureData" kindref="compound">ApertureData</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="singletonfnm_1_1ApertureData" kindref="compound">ApertureData</ref>&amp;<sp/>other)<sp/>=<sp/></highlight><highlight class="keyword">delete</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="107"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="singletonfnm_1_1ApertureData" kindref="compound">ApertureData</ref>&amp;<sp/>operator=(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="singletonfnm_1_1ApertureData" kindref="compound">ApertureData</ref>&amp;<sp/>other)<sp/>=<sp/></highlight><highlight class="keyword">delete</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="108"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="singletonfnm_1_1ApertureData" kindref="compound">ApertureData</ref>(<ref refid="singletonfnm_1_1ApertureData" kindref="compound">ApertureData</ref>&amp;&amp;<sp/>other)<sp/>=<sp/></highlight><highlight class="keyword">delete</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="109"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="singletonfnm_1_1ApertureData" kindref="compound">ApertureData</ref>&amp;<sp/>operator=(<ref refid="singletonfnm_1_1ApertureData" kindref="compound">ApertureData</ref>&amp;&amp;<sp/>other)<sp/>=<sp/></highlight><highlight class="keyword">delete</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="110"><highlight class="normal"></highlight></codeline>
+<codeline lineno="111"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Deep<sp/>copy<sp/>is<sp/>needed,<sp/>if<sp/>it<sp/>is<sp/>made<sp/>copyable.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="112"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*</highlight></codeline>
+<codeline lineno="113"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/><sp/>ApertureData(const<sp/>ApertureData&amp;<sp/>other)</highlight></codeline>
+<codeline lineno="114"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/><sp/>:<sp/>m_pos((point_t&lt;T&gt;*)_mm_malloc(other.m_npos*sizeof(point_t&lt;T&gt;),16),<sp/>[](point_t&lt;T&gt;*<sp/>f)-&gt;void<sp/>{<sp/>_mm_free(f);}),</highlight></codeline>
+<codeline lineno="115"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>m_apodizations((T*)_mm_malloc(other.m_npos*sizeof(T),16),<sp/>[](T*<sp/>f)-&gt;void<sp/>{<sp/>_mm_free(f);}),</highlight></codeline>
+<codeline lineno="116"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>m_phases((T*)_mm_malloc(other.m_npos*sizeof(T),16),<sp/>[](T*<sp/>f)-&gt;void<sp/>{<sp/>_mm_free(f);}),</highlight></codeline>
+<codeline lineno="117"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>m_rectangles((rect_t&lt;T&gt;*)_mm_malloc(other.m_npos*sizeof(rect_t&lt;T&gt;),16),<sp/>[](rect_t&lt;T&gt;*<sp/>f)-&gt;void<sp/>{<sp/>_mm_free(f);})</highlight></codeline>
+<codeline lineno="118"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="119"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>memcpy(m_pos.get(),other.m_pos.get(),m_npos*sizeof(T));</highlight></codeline>
+<codeline lineno="120"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>//<sp/>etc</highlight></codeline>
+<codeline lineno="121"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>return<sp/>*this;</highlight></codeline>
+<codeline lineno="122"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="123"><highlight class="comment"></highlight></codeline>
+<codeline lineno="124"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/><sp/>and<sp/>std::move<sp/>is<sp/>needed,<sp/>if<sp/>it<sp/>is<sp/>made<sp/>moveable</highlight></codeline>
+<codeline lineno="125"><highlight class="comment"></highlight></codeline>
+<codeline lineno="126"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/><sp/>ApertureData(ApertureData&amp;&amp;<sp/>other)<sp/>:<sp/>m_pos(std::move(other.m_pos))</highlight></codeline>
+<codeline lineno="127"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="128"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>return<sp/>*this;</highlight></codeline>
+<codeline lineno="129"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="130"><highlight class="comment"><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="131"><highlight class="normal"><sp/><sp/>};</highlight></codeline>
+<codeline lineno="132"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="133"><highlight class="normal"></highlight></codeline>
+<codeline lineno="134"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>Local<sp/>variables:<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="135"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>indent-tabs-mode:<sp/>nil<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="136"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>tab-width:<sp/>2<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="137"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>c-basic-offset:<sp/>2<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="138"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>End:<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+    </programlisting>
+    <location file="/home/jmh/github/sofus/fnm/fnm_data.hpp"/>
+  </compounddef>
+</doxygen>

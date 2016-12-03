@@ -1,0 +1,52 @@
+\hypertarget{gl_8hpp}{\section{gl/gl.hpp File Reference}
+\label{gl_8hpp}\index{gl/gl.\+hpp@{gl/gl.\+hpp}}
+}
+
+
+Gauss-\/\+Legendre integration library.  
+
+
+{\ttfamily \#include $<$gl/gl\+\_\+export.\+h$>$}\\*
+{\ttfamily \#include $<$gl/config.\+h$>$}\\*
+{\ttfamily \#include $<$stddef.\+h$>$}\\*
+Include dependency graph for gl.\+hpp\+:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=305pt]{gl_8hpp__incl}
+\end{center}
+\end{figure}
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \hyperlink{structgl_1_1GLNode}{G\+L\+Node}
+\begin{DoxyCompactList}\small\item\em Container for weight and nodes. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+ \hyperlink{namespacegl}{gl}
+\begin{DoxyCompactList}\small\item\em Gauss-\/\+Legendre interfaces and implementations. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+double G\+L\+\_\+\+E\+X\+P\+O\+R\+T \hyperlink{namespacegl_a8dfc38fe28db34846c60086d6ecf508c}{G\+L\+Quad} (size\+\_\+t n, double($\ast$f)(double, void $\ast$), void $\ast$data, double a, double b)
+\item 
+\hyperlink{structgl_1_1GLNode}{gl\+::\+G\+L\+Node} G\+L\+\_\+\+E\+X\+P\+O\+R\+T \hyperlink{namespacegl_aa2fa29b0a69c2eeb23b4e0b9613e7fc5}{G\+L} (size\+\_\+t l, size\+\_\+t k)
+\item 
+\hyperlink{structgl_1_1GLNode}{gl\+::\+G\+L\+Node} G\+L\+\_\+\+E\+X\+P\+O\+R\+T \hyperlink{namespacegl_a7f251958ee6d2c65e37b0f9e61a9fe30}{G\+L\+S} (size\+\_\+t n, size\+\_\+t k)
+\item 
+double G\+L\+\_\+\+E\+X\+P\+O\+R\+T \hyperlink{namespacegl_a516dc08710fc7a9d7f455203bcd9a358}{besseljzero} (int k)
+\item 
+double G\+L\+\_\+\+E\+X\+P\+O\+R\+T \hyperlink{namespacegl_a8a87a797409c579a3658648f68de3d8a}{besselj1squared} (int k)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Gauss-\/\+Legendre integration library. 
+
+\begin{DoxyAuthor}{Author}
+Jens Munk Hansen \href{mailto:jens.munk.hansen@gmail.com}{\tt jens.\+munk.\+hansen@gmail.\+com} 
+\end{DoxyAuthor}
+\begin{DoxyDate}{Date}
+Mon Jun 20 21\+:11\+:40 2016 
+\end{DoxyDate}

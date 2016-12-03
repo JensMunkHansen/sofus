@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.8">
+  <compounddef id="bessel__lut_8hpp" kind="file">
+    <compoundname>bessel_lut.hpp</compoundname>
+    <includes local="no">gl/config.h</includes>
+    <includes local="no">gl/gl_export.h</includes>
+    <incdepgraph>
+      <node id="239">
+        <label>gl/config.h</label>
+      </node>
+      <node id="240">
+        <label>gl/gl_export.h</label>
+      </node>
+      <node id="238">
+        <label>gl/bessel_lut.hpp</label>
+        <link refid="bessel_lut.hpp"/>
+        <childnode refid="239" relation="include">
+        </childnode>
+        <childnode refid="240" relation="include">
+        </childnode>
+      </node>
+    </incdepgraph>
+    <innernamespace refid="namespacegl">gl</innernamespace>
+    <briefdescription>
+<para>Look up tables LUTs for Bessel functions. </para>    </briefdescription>
+    <detaileddescription>
+<para><simplesect kind="author"><para>Jens Munk Hansen <ulink url="mailto:jens.munk.hansen@gmail.com">jens.munk.hansen@gmail.com</ulink> </para></simplesect>
+<simplesect kind="date"><para>Tue Jun 21 21:11:51 2016 </para></simplesect>
+</para>    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"></codeline>
+<codeline lineno="10"><highlight class="preprocessor">#pragma<sp/>once</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="11"><highlight class="normal"></highlight></codeline>
+<codeline lineno="12"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gl/config.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="13"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gl/gl_export.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="14"><highlight class="normal"></highlight></codeline>
+<codeline lineno="15" refid="namespacegl" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespacegl" kindref="compound">gl</ref><sp/>{</highlight></codeline>
+<codeline lineno="16"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">extern</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/><ref refid="namespacegl_1af3f8ce6ef90f2939af71d4dcd7f7300b" kindref="member">JZ</ref>[_BESSELJZERO_LUT_TABLE_SIZE];</highlight></codeline>
+<codeline lineno="17"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">extern</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/><ref refid="namespacegl_1a3f45d860f72d97fe1d1fb1e5fa4749ff" kindref="member">J1</ref>[_BESSELJ_1_SQUARED_LUT_TABLE_SIZE];</highlight></codeline>
+<codeline lineno="18"><highlight class="normal">}</highlight></codeline>
+    </programlisting>
+    <location file="/home/jmh/github/sofus/gl/bessel_lut.hpp"/>
+  </compounddef>
+</doxygen>
