@@ -17,7 +17,8 @@ var indexSectionsWithContent =
   7: "v",
   8: "fpr",
   9: "_dfhnp",
-  10: "fgs"
+  10: "fgs",
+  11: "f"
 };
 
 var indexSectionNames =
@@ -32,7 +33,8 @@ var indexSectionNames =
   7: "enums",
   8: "enumvalues",
   9: "defines",
-  10: "groups"
+  10: "groups",
+  11: "pages"
 };
 
 function convertToId(search)
