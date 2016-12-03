@@ -12,8 +12,8 @@ plt.ion()
 getmethods = fnm.ApertureFloat.__swig_getmethods__.keys()
 setmethods = fnm.ApertureFloat.__swig_setmethods__.keys()
 
-assert(len(getmethods)==13)
-assert(len(setmethods)==10)
+assert(len(getmethods)==18)
+assert(len(setmethods)==12)
 
 argss = [[0,0.1,0.1,0.1],[1,0.1,0.1,0.1],[100,0.1,0.1,0.1]]
 nGetSuccess = 0

@@ -37,10 +37,28 @@ option(BUILD_SWIG_INTERFACE "Build SWIG interface" ON)
 
 set(N_MAX_THREADS 8)
 set(ACCURATE_TRIGONOMETRICS 0)
+
 option (USE_Accurate_trigonometrics "Use scalar versions" OFF)
 if (USE_Accurate_trigonometrics)
   set(ACCURATE_TRIGONOMETRICS 1)
 endif()
+
+set (FNM_ENABLE_ATTENUATION 0)
+option (FNM_ENABLE_Attenuation "FNM Enable attenuation" ON)
+if (FNM_ENABLE_Attenuation)
+  set(FNM_ENABLE_ATTENUATION 1)
+else()
+  set(FNM_ENABLE_ATTENUATION 0)
+endif()
+
+set (FNM_PULSED_WAVE 0)
+option (FNM_PULSED_Wave "FNM Enable pulsed wave" OFF)
+if (FNM_PULSED_Wave)
+  set (FNM_PULSED_WAVE 1)
+else()
+  set (FNM_PULSED_WAVE 0)
+endif()
+
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
 

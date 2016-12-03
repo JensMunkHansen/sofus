@@ -120,8 +120,10 @@ namespace fnm {
   sysparm_t<T> Aperture<T>::_sysparm = {T(1500.0), size_t(16), size_t(16)};
 #endif
 
+#ifdef FNM_PULSED_WAVE
   template <class T>
   T Aperture<T>::fs = 100e6;
+#endif
 
   template <class T>
   size_t Aperture<T>::nthreads = 4;

@@ -486,7 +486,9 @@ namespace fnm {
     /// System parameters (We could make a long list of functions friends of Aperture)
     static sysparm_t<T> _sysparm;
 
+#ifdef FNM_PULSED_WAVE
     static T fs;
+#endif
     //a}
   private:
     void ManagedAllocation(std::complex<T>** outTest, size_t* nOutTest);

@@ -72,12 +72,12 @@ __swig_getmethods__["pos"]          = PositionsGet
 __swig_setmethods__["pos"]          = PositionsSet
 __swig_getmethods__["apodization"]  = ApodizationGet
 __swig_setmethods__["apodization"]  = ApodizationSet
-__swig_getmethods__["fs"]           = FsGet
-__swig_setmethods__["fs"]           = FsSet
-__swig_getmethods__["excitation"]   = ExcitationGet
-__swig_setmethods__["excitation"]   = ExcitationSet
-__swig_getmethods__["impulse"]      = ImpulseGet
-__swig_setmethods__["impulse"]      = ImpulseSet
+#__swig_getmethods__["fs"]           = FsGet
+#__swig_setmethods__["fs"]           = FsSet
+#__swig_getmethods__["excitation"]   = ExcitationGet
+#__swig_setmethods__["excitation"]   = ExcitationSet
+#__swig_getmethods__["impulse"]      = ImpulseGet
+#__swig_setmethods__["impulse"]      = ImpulseSet
 
 # Read-only properties
 __swig_getmethods__["phases"]       = PhasesGet
@@ -90,7 +90,7 @@ __swig_getmethods__["area"]         = AreaGet
 if _newclass:
     # Read-write properties
     f0       = property(F0Get, F0Set)
-    fs       = property(FsGet, FsSet)
+    #fs       = property(FsGet, FsSet)
     c        = property(CGet, CSet)
     nDivW    = property(NDivWGet, NDivWSet)
     nDivH    = property(NDivHGet, NDivHSet)
