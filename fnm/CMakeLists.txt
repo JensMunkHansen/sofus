@@ -44,6 +44,9 @@ endif()
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
 
+find_package(FFTW REQUIRED)
+include_directories(${FFTW_INCLUDES})
+
 set(fnm_HEADERS
   ../sps/progress.hpp
   fnm_types.hpp
@@ -86,12 +89,13 @@ add_library(fnm ${LIB_TYPE} ${fnm_SOURCES} ${fnm_HEADERS} ${fnm_PUBLIC_HEADERS} 
 if (WIN32)
   if (BUILD_SHARED_LIBS)
     # Works with CMake 2.4
-    target_link_libraries(fnm sps gl)
+    target_link_libraries(fnm sps gl ${FFTW_LIBRARIES})
   else()
-    link_libraries(fnm sps gl)
+    link_libraries(fnm sps gl ${FFTW_LIBRARIES})
   endif()
 else()
-  link_libraries(fnm sps gl rt)
+  link_libraries(fnm sps gl
+    rt ${FFTW_LIBRARIES})
 endif()
 
 generate_export_header(fnm)# DEFINE_NO_DEPRECATED)
