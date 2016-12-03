@@ -1,0 +1,24 @@
+/**
+ * @mainpage FNM library
+ * @author Jens Munk Hansen
+ * @date 2016
+ *
+ *
+ * @section section_toc Table of contents
+ * <ul>
+ *   <li> @ref section_intro
+ *   <ul>
+ *     <li> @ref section_req_functional
+ *   </ul>
+ *   <li> @ref section_examples
+ * </ul>
+ *
+ * @section section_intro Introduction
+ *
+ * @section section_req_functional Functional requirements
+ *
+ * @section section_examples Examples of usage
+ *
+ * Below, the continuous wave field is computed for a 128-element linear array.
+ * @snippet main.cpp LinearArray example
+ */

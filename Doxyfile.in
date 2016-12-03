@@ -573,7 +573,7 @@ WARN_LOGFILE           =
 # INPUT                  = @PROJECT_SOURCE_DIR@/doc/fnm.dox @PROJECT_SOURCE_DIR@/fnm/fnm.hpp @PROJECT_SOURCE_DIR@/sps
 
 
-INPUT                  = @PROJECT_SOURCE_DIR@/doc/fnm.dox @PROJECT_SOURCE_DIR@/gl @PROJECT_SOURCE_DIR@/fnm @PROJECT_BINARY_DIR@/fnm @PROJECT_SOURCE_DIR@/sps/smath.hpp #@PROJECT_SOURCE_DIR@/sps
+INPUT                  = @PROJECT_SOURCE_DIR@/fnm/fnm.dox @PROJECT_SOURCE_DIR@/gl @PROJECT_SOURCE_DIR@/fnm @PROJECT_BINARY_DIR@/fnm @PROJECT_SOURCE_DIR@/sps/smath.hpp #@PROJECT_SOURCE_DIR@/sps
 
 # If this is added, the dependency is revealed @PROJECT_SOURCE_DIR@/fnm/fnm.cpp 
 

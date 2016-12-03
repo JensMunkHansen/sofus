@@ -24,12 +24,10 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY
 set(gl_HEADERS
   "${CMAKE_CURRENT_BINARY_DIR}/gl_export.h"
   "${CMAKE_CURRENT_BINARY_DIR}/config.h"
-  fastgl.hpp
   gl_lut.hpp
   bessel_lut.hpp
 )
 set(gl_SOURCES
-  fastgl.cpp
   gl.cpp
 )
 
