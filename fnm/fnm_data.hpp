@@ -17,7 +17,11 @@
 
 #include <fnm/fnm_types.hpp> // FocusingType, element_t
 
-#include <vector>
+#ifdef FNM_PULSED_WAVE
+# include <vector>
+#endif
+
+// Do we need to export std::vector<std::vector<sps::element_t<float> > >
 
 namespace fnm {
 
@@ -28,10 +32,10 @@ namespace fnm {
    */
 #ifdef _MSC_VER
   template <class T>
-  class FNM_EXPORT ApertureData
+  class /*FNM_EXPORT*/ ApertureData
 #else
   template <class T>
-  ALIGN16_BEGIN struct ALIGN16_END FNM_EXPORT ApertureData
+  ALIGN16_BEGIN struct ALIGN16_END /*FNM_EXPORT*/ ApertureData
 #endif
   {
   public:
@@ -88,7 +92,15 @@ namespace fnm {
 
     void ElementsSet(sps::deleted_aligned_multi_array<sps::element_t<T>,2> &&elements, const size_t& nRows, const size_t& nCols);
 
+#ifdef FNM_PULSED_WAVE
+    /**
+     * Nasty STL-vector return type
+     *
+     *
+     * @return
+     */
     std::vector<std::vector<sps::element_t<T> > > ElementsVectorGet() const;
+#endif
 
     void initVectors();
 

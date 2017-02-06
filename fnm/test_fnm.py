@@ -86,9 +86,10 @@ if 0:
   plt.xlabel('Depth [mm]')
   plt.ylabel('Width [mm]')
 
-if 1:
+if 0:
   start = timer()
-  result2 = rect.HN(xs,ys,zs,k)
+  #result2 = rect.HN(xs,ys,zs,k)
+  result2 = rect.H_accurate(xs,ys,zs,k)
   end = timer()
 
   timeString = create_time_string(end-start)
@@ -109,9 +110,14 @@ a.f0 = f0
 a.c  = soundspeed
 a.nDivH = ndiv
 a.nDivW = ndiv*factor
+a.apodization = np.ones(1,dtype=np.float32)
 
 start = timer()
 out = a.CalcCwFast(pos)[1]
+
+#out = a.CalcCwFieldRef(pos)[1] # Wrong
+#out = a.CalcCwField2(pos)[1] # Looks okay
+#out = a.CalcCwField(pos)[1] # Looks okay
 end = timer()
 timeString = create_time_string(end-start)
 print(timeString)

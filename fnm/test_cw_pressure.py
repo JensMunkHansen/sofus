@@ -32,14 +32,12 @@ def create_time_string(seconds):
 print('This script uses the Fast Nearfield Method to calculate the CW pressure field of');
 print('a single element. The script outputs the pressure field.\n');
 
-start = timer()
-
-f0 = 1e6 # excitation frequency,Hz
+f0 = 1.0e6 # excitation frequency,Hz
 soundspeed = 1500 # m/s
 lamda = soundspeed / f0 # wavelength, m
 
 #define a transducer structure/array
-nelex = 64#128
+nelex = 128
 neley = 1
 kerf = 5.0e-4
 
@@ -55,8 +53,8 @@ ymax = 0
 zmin = 0.0
 zmax = 2*d
 
-nx = 100#170
-nz = 100#250
+nx = 170
+nz = 250
 
 dx = (xmax - xmin) / max(nx-1.0,1.0)
 dz = (zmax - zmin) / max(nz-1.0,1.0)
@@ -69,7 +67,6 @@ rect = rect(hw=width/2.0,hh=height/2.0,nAbcissa=[ndiv,ndiv])
 
 k = (2*np.pi)/lamda
 
-start = timer()
 xs,zs = np.meshgrid(xs,zs,indexing='ij')
 
 ys = 0.0*np.ones(xs.shape)
@@ -86,9 +83,14 @@ a.nthreads = 4
 
 d = nelex * (width+kerf)
 a.focus = [0,0,d]
+#a.focus_type = fnm.FocusingType.Pythagorean
+a.focus_type = fnm.FocusingType.Rayleigh
 
+start = timer()
 out = a.CalcCwFast(pos)[1]
-#out = a.CalcCwFieldRef(pos)
+#out = a.CalcCwFieldRef(pos)[1]
+#out = a.CalcCwField(pos)[1]
+#out = a.CalcCwField2(pos)[1]
 end = timer()
 timeString = create_time_string(end-start)
 print(timeString)
@@ -101,9 +103,10 @@ omega = 2*np.pi*f0
 pressure = -1j * omega * rho * np.exp(1j * omega * 0) * result3
 # -j omega rho v exp(jwt)
 
-logp = log_compress(np.abs(pressure))
+pressure = np.abs(pressure)
+logp = log_compress(pressure)
 
-plt.imshow(logp,aspect='auto',extent=np.round(1000*np.r_[0,2*d,-1.5*d/2,1.5*d/2]),interpolation='none')
+plt.imshow(pressure,aspect='auto',extent=np.round(1000*np.r_[0,2*d,-1.5*d/2,1.5*d/2]),interpolation='none')
 plt.xlabel('Depth [mm]')
 plt.ylabel('Width [mm]')
 
@@ -128,3 +131,6 @@ if 0:
   plt.figure()
   plt.imshow(logp1,aspect='auto',extent=np.round(1000*np.r_[0,2*d,-1.5*d/2,1.5*d/2]),interpolation='none')
 
+
+  
+# TODO: Use np.unwrap( , np.pi, axis=1)

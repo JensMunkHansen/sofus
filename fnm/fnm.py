@@ -93,10 +93,15 @@ class rect(dotdict):
       return result
 
     def H_single(self,u1,u2,v,z,k,us,ws):
+      # Is multiple later by length of opposite dimension
       ndiv = len(us)
       ss = (u2-u1)/2.0 * us + (u2+u1)/2.0
       ss2 = ss**2
-      return (u2-u1)/2.0 * np.sum(((np.exp(-k*np.sqrt(z**2+ss2+v**2)*1j)-np.ones(ndiv)*np.exp(-k*z*1j))/(ss2+v**2))*ws)
+      if (abs(u2-u1) < np.finfo(np.float32).eps):
+        result = 0.0
+      else:
+        result = (u2-u1)/2.0 * np.sum(((np.exp(-k*np.sqrt(z**2+ss2+v**2)*1j)-np.ones(ndiv)*np.exp(-k*z*1j))/(ss2+v**2))*ws)
+      return result 
 
     def H_ref(self,point,k):
       """ 
@@ -264,7 +269,8 @@ class rect(dotdict):
 
       ndiv1 = self.nAbcissa[1]
       us1, ws1 = np.polynomial.legendre.leggauss(ndiv1)
-      
+
+      show = False
       for ix in range(nx):
         for iz in range(nz):
           point = [xs[ix,0],ys[ix,iz],zs[0,iz]]
@@ -272,6 +278,8 @@ class rect(dotdict):
           x = np.dot(edges[0],ref2point)
           y = np.dot(edges[1],ref2point)
           z = np.dot(w,ref2point)
+          if show:
+            print('u: %f, v: %f, z: %f' % (x,y,z))
 
           s[0] = s[2] = np.abs(x)+a
           s[1] = s[3] = a - np.abs(x) # reverse and combine with s[0]
@@ -281,50 +289,121 @@ class rect(dotdict):
 
           result1 = 0
           if (np.abs(x) > a):
+            # Outside
             _l = l[0]
             # 2 integrals
-            result1 = result1 + _l * self.H_single(np.abs(x),np.abs(x)+a,_l,z,k,us1,ws1)
-            result1 = result1 + _l * self.H_single(np.abs(x)-a,np.abs(x),_l,z,k,us1,ws1)
-            _l = l[2]#np.abs(l[2]) # Sign is not needed (verify)
+            tmp = _l * self.H_single(np.abs(x),np.abs(x)+a,_l,z,k,us1,ws1)
+            result1 = result1 + tmp
+            if show:
+              tmp = tmp / (2*np.pi * k * 1j)
+              print('int_u: %f, %f' % (tmp.real, tmp.imag))
+            tmp = _l * self.H_single(np.abs(x)-a,np.abs(x),_l,z,k,us1,ws1)
+            result1 = result1 + tmp
+            if show:
+              tmp = tmp / (2*np.pi * k * 1j)
+              print('int_u: %f, %f' % (tmp.real, tmp.imag))
+            _l = l[2] # np.abs(l[2]) # Sign is not needed (verify)
             # 2 integrals
-            result1 = result1 + _l * self.H_single(np.abs(x),np.abs(x)+a,_l,z,k,us1,ws1)
-            result1 = result1 + _l * self.H_single(np.abs(x)-a,np.abs(x),_l,z,k,us1,ws1)
+            tmp = _l * self.H_single(np.abs(x),np.abs(x)+a,_l,z,k,us1,ws1)
+            if show:
+              tmp = tmp / (2*np.pi * k * 1j)
+              print('int_u: %f, %f' % (tmp.real, tmp.imag))
+            result1 = result1 + tmp
+            tmp = _l * self.H_single(np.abs(x)-a,np.abs(x),_l,z,k,us1,ws1)
+            if show:
+              tmp = tmp / (2*np.pi * k * 1j)
+              print('int_u: %f, %f' % (tmp.real, tmp.imag))
+            result1 = result1 + tmp
           else:
+            # Inside
             _s = s[0]
             _l = l[0]
-            result1 = result1 + _l * self.H_single(0,_s,_l,z,k,us1,ws1)
+            if show:
+              print("low: %f, high: %f, l: %f, z: %f, k: %f" % (0,_s,_l,z,k))
+            tmp = _l * self.H_single(0,_s,_l,z,k,us1,ws1)
+            if show:
+              tmp = tmp / (2*np.pi * k * 1j)
+              print('int_u: %f, %f' % (tmp.real, tmp.imag))
+            result1 = result1 + tmp
             _s = s[1]
             _l = l[1]
-            result1 = result1 + _l * self.H_single(0,_s,_l,z,k,us1,ws1)
+            tmp = _l * self.H_single(0,_s,_l,z,k,us1,ws1)
+            if show:
+              tmp = tmp / (2*np.pi * k * 1j)
+              print('int_u: %f, %f' % (tmp.real, tmp.imag))
+            result1 = result1 + tmp
             _s = s[2]
             _l = l[2] # Gives sign
-            result1 = result1 + _l * self.H_single(0,_s,_l,z,k,us1,ws1)
+            tmp = _l * self.H_single(0,_s,_l,z,k,us1,ws1)
+            if show:
+              tmp = tmp / (2*np.pi * k * 1j)
+              print('int_u: %f, %f' % (tmp.real, tmp.imag))
+            result1 = result1 + tmp
             _s = s[3]
             _l = l[3] # Gives sign
-            result1 = result1 + _l * self.H_single(0,_s,_l,z,k,us1,ws1)
+            tmp = _l * self.H_single(0,_s,_l,z,k,us1,ws1)
+            if show:
+              tmp = tmp / (2*np.pi * k * 1j)
+              print('int_u: %f, %f' % (tmp.real, tmp.imag))
+            result1 = result1 + tmp
+
           if (np.abs(y) > b):
+            # Outside
             _s = s[0]
             # 2 integrals, 0 and 2
-            result1 = result1 + _s * self.H_single(np.abs(y)-b,np.abs(y),_s,z,k,us0,ws0)
-            result1 = result1 + _s * self.H_single(np.abs(y),np.abs(y)+b,_s,z,k,us0,ws0)
-            _s = s[1]#np.abs(s[1]) # Sign is not needed (verify)
+            tmp = _s * self.H_single(np.abs(y)-b,np.abs(y),_s,z,k,us0,ws0)
+            if show:
+              tmp = tmp / (2*np.pi * k * 1j)
+              print('int_v: %f, %f' % (tmp.real, tmp.imag))
+            result1 = result1 + tmp
+            tmp = _s * self.H_single(np.abs(y),np.abs(y)+b,_s,z,k,us0,ws0)
+            if show:
+              tmp = tmp / (2*np.pi * k * 1j)
+              print('int_v: %f, %f' % (tmp.real, tmp.imag))
+            result1 = result1 + tmp
+            _s = s[1] #np.abs(s[1]) # Sign is not needed (verify)
             # print('s[1], abs(s[1]): %f %f' % (s[1],np.abs(s[1])))
             # 2 integrals, 1 and 3
-            result1 = result1 + _s * self.H_single(np.abs(y)-b,np.abs(y),_s,z,k,us0,ws0)
-            result1 = result1 + _s * self.H_single(np.abs(y),np.abs(y)+b,_s,z,k,us0,ws0)
+            tmp = _s * self.H_single(np.abs(y)-b,np.abs(y),_s,z,k,us0,ws0)
+            if show:
+              tmp = tmp / (2*np.pi * k * 1j)
+              print('int_v: %f, %f' % (tmp.real, tmp.imag))
+            result1 = result1 + tmp
+            tmp = _s * self.H_single(np.abs(y),np.abs(y)+b,_s,z,k,us0,ws0)
+            if show:
+              tmp = tmp / (2*np.pi * k * 1j)
+              print('int_v: %f, %f' % (tmp.real, tmp.imag))
+            result1 = result1 + tmp
           else:
+            # Inside
             _s = s[0]
             _l = l[0]
-            result1 = result1 + _s*self.H_single(0,_l,_s,z,k,us0,ws0)
+            tmp = _s*self.H_single(0,_l,_s,z,k,us0,ws0)
+            if show:
+              tmp = tmp / (2*np.pi * k * 1j)
+              print('int_v: %f, %f' % (tmp.real, tmp.imag))
+            result1 = result1 + tmp
             _s = s[1] # Gives sign
             _l = l[1]
-            result1 = result1 + _s*self.H_single(0,_l,_s,z,k,us0,ws0)
+            tmp = _s*self.H_single(0,_l,_s,z,k,us0,ws0)
+            if show:
+              tmp = tmp / (2*np.pi * k * 1j)
+              print('int_v: %f, %f' % (tmp.real, tmp.imag))
+            result1 = result1 + tmp
             _s = s[2]
             _l = l[2]
-            result1 = result1 + _s*self.H_single(0,_l,_s,z,k,us0,ws0)
+            tmp = _s*self.H_single(0,_l,_s,z,k,us0,ws0)
+            if show:
+              tmp = tmp / (2*np.pi * k * 1j)
+              print('int_v: %f, %f' % (tmp.real, tmp.imag))
+            result1 = result1 + tmp
             _s = s[3] # Gives sign
             _l = l[3]
-            result1 = result1 + _s*self.H_single(0,_l,_s,z,k,us0,ws0)
+            tmp = _s*self.H_single(0,_l,_s,z,k,us0,ws0)
+            if show:
+              tmp = tmp / (2*np.pi * k * 1j)
+              print('int_v: %f, %f' % (tmp.real, tmp.imag))
+            result1 = result1 + tmp
           results[ix,iz] = result1
 
       return results / (2*np.pi * k * 1j)
@@ -692,9 +771,11 @@ class linear_array(dotdict):
       nSubElements = len(self.rects)
       #      print('Element: %d' % 0)  
       result = self.phases[0] * self.rects[0].HN(xs,ys,zs,k)
+      #result = self.phases[0] * self.rects[0].H_accurate(xs,ys,zs,k)
       for i in range(1,nSubElements):
         # print('Element: %d' % (i))
         result = result + self.phases[i / self.nSubH] * self.rects[i].HN(xs,ys,zs,k)
+#        result = result + self.phases[i / self.nSubH] * self.rects[i].H_accurate(xs,ys,zs,k)
       end = timer()
       timeString = create_time_string(end-start)
       print(timeString)

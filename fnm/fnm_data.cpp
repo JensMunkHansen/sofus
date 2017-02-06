@@ -18,8 +18,8 @@ namespace fnm {
 
     m_pos = sps::deleted_aligned_array_create<sps::point_t<T> >(m_npos);
     m_apodizations = sps::deleted_aligned_array_create<T>(m_npos);
-    m_phases       = sps::deleted_aligned_array_create<T>(m_npos);
-    m_delays       = sps::deleted_aligned_array_create<T>(m_npos);
+    m_phases       = sps::deleted_aligned_array_create<T>(m_npos*m_nsubelements);
+    m_delays       = sps::deleted_aligned_array_create<T>(m_npos*m_nsubelements);
     m_rectangles   = sps::deleted_aligned_array_create<sps::rect_t<T>>(m_npos);
 
     m_f0 = T(1e6);
@@ -46,21 +46,26 @@ namespace fnm {
   {
   }
 
-  // Temporary function for getting elements as a std::vector of std::vector
+#ifdef FNM_PULSED_WAVE
+  // TODO: Dangerous!!!! Temporary function for getting elements as a std::vector of std::vector
   template <class T>
   std::vector<std::vector<sps::element_t<T> > > ApertureData<T>::ElementsVectorGet() const
   {
-    auto elements = std::vector< std::vector<sps::element_t<T> > >(m_nelements, std::vector<sps::element_t<T> >(1));
+    auto elements = std::vector< std::vector<sps::element_t<T> > >(m_nelements, std::vector<sps::element_t<T> >(m_nsubelements));
 
     for (size_t iElement=0 ; iElement < m_nelements ; iElement++) {
-      elements[iElement][0] = m_elements[iElement][0];
+      for (size_t jElement = 0 ; jElement < m_nsubelements ; jElement++) {
+        elements[iElement][jElement] = m_elements[iElement][jElement];
+      }
     }
     return elements;
   }
-
+#endif
 
   template <class T>
-  void ApertureData<T>::ElementsSet(sps::deleted_aligned_multi_array<sps::element_t<T>,2> &&elements, const size_t& nRows, const size_t& nCols)
+  void ApertureData<T>::ElementsSet(sps::deleted_aligned_multi_array<sps::element_t<T>,2> &&elements,
+                                    const size_t& nRows,
+                                    const size_t& nCols)
   {
     if (nRows * nCols > 0) {
       assert(nCols == elements.n);
@@ -73,7 +78,6 @@ namespace fnm {
 
       // TODO: Initialize this when needed, i.e. when using "Far field approx" or for display
       initRectangles();
-
 
       debug_print("Rectangles of first element\tx: %f %f %f %f\n", m_elements[0][0].vertices[0][0], m_elements[0][0].vertices[0][1], m_elements[0][0].vertices[0][2], m_elements[0][0].vertices[0][3]);
       debug_print("\t\t\t\t\ty: %f %f %f %f\n", m_elements[0][0].vertices[1][0], m_elements[0][0].vertices[1][1], m_elements[0][0].vertices[1][2], m_elements[0][0].vertices[1][3]);
@@ -163,7 +167,8 @@ namespace fnm {
     sps::deleted_aligned_multi_array<sps::element_t<T>,2>& elements = m_elements;
 
     // Will never fail. Consider removing m_nelements and m_nsubelements
-    debug_print("nElements: %zu, nSubElementsPerElement: %zu, m: %zu, n: %zu\n", nElements, nSubElementsPerElement, elements.m, elements.n);
+    debug_print("nElements: %zu, nSubElementsPerElement: %zu, m: %zu, n: %zu\n",
+                nElements, nSubElementsPerElement, elements.m, elements.n);
     assert(elements.m == nElements);
     assert(elements.n == nSubElementsPerElement);
 
@@ -188,15 +193,12 @@ namespace fnm {
 
     m_apodizations = sps::deleted_aligned_array_create<T>(nElements);
     m_pos          = sps::deleted_aligned_array_create<sps::point_t<T> >(nElements);
-    m_phases       = sps::deleted_aligned_array_create<T>(nElements);
+    m_phases       = sps::deleted_aligned_array_create<T>(nElements*nSubElements);
     m_delays       = sps::deleted_aligned_array_create<T>(nElements);
 
     for(size_t iElement=0 ; iElement < nElements ; iElement++) {
       // Set apodizations
       m_apodizations[iElement] = T(1.0);
-
-      // Set phases
-      m_phases[iElement] = T(0.0);
 
       // Set delays
       m_delays[iElement] = T(0.0);
@@ -208,6 +210,10 @@ namespace fnm {
       } else {
         // Even number of elements
         m_pos[iElement] = T(0.5) * (elements[iElement][nSubElements-1].center + elements[iElement][0].center);
+      }
+      for (size_t jElement = 0 ; jElement < nSubElements ; jElement++) {
+        // Set phases - do we need a phase per sub-element?
+        m_phases[iElement*nSubElements + jElement] = T(0.0);
       }
     }
   }
@@ -299,6 +305,7 @@ namespace fnm {
   template class ApertureData<float>;
 
 #ifdef FNM_DOUBLE_SUPPORT
+  template struct sps::element_t<double>;
   template class ApertureData<double>;
 #endif
 }

@@ -1,118 +1,141 @@
 #!/usr/bin/env python
-
 import sys
-import re
 import numpy as np
-
-import unittest
-import subprocess
-
 import matplotlib.pyplot as plt
 
 import addpaths
-
+from dicts import dotdict
 import swig_fnm as fnm
-
-from euler import euler2rot
-
 plt.ion()
 
-class SofusSymTest(unittest.TestCase):
-  staticData = None
-  def setUp(self):
-    width  = 1.0
-    kerf   = 0.0
-    height = 2.0
-    
-    self.a = fnm.ApertureFloat(1, width, kerf, height)
-    self.a.c          = 1.0
-    self.a.f0         = 1.0
+from fnm import rect
 
-    pos = np.r_[3,2,5]
-    self.pos = pos.reshape([1,3]).astype(np.float32)
-
-    self.a.focus = self.pos.flatten()
-    
-    retval, self.ref = self.a.CalcCwField(self.pos)
-
-  def rotate_axes(self, limits):
-    retval = True
-    maxdiff = 0.0
-    for alpha in np.r_[limits[0,0]:limits[0,1]:limits[0,2]]:
-      for beta in np.r_[limits[1,0]:limits[1,1]:limits[1,2]]:
-        for gamma in np.r_[limits[2,0]:limits[2,1]:limits[2,2]]:
-          rmat = euler2rot(alpha,beta,gamma,conv='yxy')
-          pos2 = np.dot(rmat,self.pos.T).T
-          pos2 = pos2.astype(np.float32)
-          
-          elements = self.a.elements
-          elements[0,5:8] = [alpha,beta,gamma]
-          self.a.elements = elements
-    
-          self.a.focus = pos2.flatten()
-          _, hp2 = self.a.CalcCwField(pos2)
-          hp2 = hp2.flatten()
-          diff = np.abs(self.ref-hp2) / (np.abs(self.ref)+np.abs(hp2))
-          maxdiff = max(maxdiff, diff[0])
-          retval = retval and (diff[0] < 0.05)
-    if not(retval):
-      print('max. diff: %f' % maxdiff)
-    return retval
-
-  def test_triple(self):
-    limits = np.c_[[0.0,       0.0,       0.0       ],
-                   [np.pi/2.0, np.pi/2.0, np.pi/2.0 ],
-                   [np.pi/10.0,np.pi/10.0,np.pi/10.0]]
-
-    # Fails (when gamma is included)
-    success = self.rotate_axes(limits)
-    self.assertTrue(success)
+def compareWithPython(**kwargs):
+  opt = dotdict({'show'     : False,
+                 'method'   : 'CalcCwFieldRef',
+                 'location' : 'inside'})
+  opt.update(**kwargs)
   
-  def test_double(self):
-    limits = np.c_[[0.0,       0.0,       0.0],
-                   [np.pi/2.0, np.pi/2.0, 0.2],
-                   [np.pi/20.0,np.pi/20.0,0.2]]
+  areas = [2.0,3.0,4.0,5.0]
+  widths  = np.array([areas[0],1.0,areas[2],1.0],dtype=np.float32)
+  heights = np.array([1.0,areas[1],1.0,areas[3]],dtype=np.float32)
 
-    success = self.rotate_axes(limits)
-    self.assertTrue(success)
+  xsign = np.array([1.0,-1.0,-1.0,1.0],dtype=np.float32)
+  ysign = np.array([1.0,1.0,-1.0,-1.0],dtype=np.float32)
 
-    success = self.rotate_axes(limits[[2,0,1]])
-    self.assertTrue(success)
+  show = opt.show
+  # Ensure that we either slightly inside or outside
+  scale = 40.0 * np.finfo(np.float32).eps
 
-    # Fails (when gamma is included)
-    success = self.rotate_axes(limits[[0,2,1]])
-    self.assertTrue(success)
+  epss = dict({'inside'  : -scale,
+               'outside' :  scale})
+  
+  ndiv = 2
+  iCorners = [0,1,2,3]
+
+  eps    = epss[opt.location]
+  method = opt.method
+
+  scatters = np.c_[(widths+eps)/2.0 * xsign,
+                   (heights+eps)/2.0 * ysign,
+                   np.ones(4,dtype=np.float32)]
+
+  print('Testing: %s vs %s: %s' % (opt.method,'H_accurate (Python)',opt.location))
+  for iCorner in iCorners:
+    a = fnm.ApertureFloat(1,float(widths[iCorner]),
+                          float(0.0),
+                          float(heights[iCorner]))
+    a.nthreads = 1
+    a.nDivH = ndiv
+    a.nDivW = ndiv
+    a.f0 = 1
+    a.c  = 1
+    if show:
+      a.show()
+      ax = plt.gca()
+      ax.scatter([scatters[iCorner][0]],
+                 [scatters[iCorner][1]],
+                 [scatters[iCorner][2]],color='black',marker='o',s=20)
+      
+      ax.set_xlim([-widths.max(),widths.max()])
+      ax.set_ylim([-heights.max(),heights.max()])
+      ax.set_zlim([-5,5])
+      ax.set_aspect('equal')
+      plt.show()
     
-  def test_single(self):
-    limits = np.c_[[0.0,       0.0,   0.0],
-                   [np.pi/2.0, 0.2,   0.2],
-                   [np.pi/20.0,0.2,   0.2]]
+    exec('result = a.'+method+'([scatters[iCorner]])')
 
-    success = self.rotate_axes(limits)
-    self.assertTrue(success)
+    r = rect(hw=widths[iCorner]/2.0,hh=heights[iCorner]/2.0,center=[0,0,0],nAbcissa=ndiv)
+          
+    k = 2*np.pi / (a.c / a.f0)
+  
+    xs = np.ones((1,1))*scatters[iCorner][0]
+    ys = np.ones((1,1))*scatters[iCorner][1]
+    zs = np.ones((1,1))*scatters[iCorner][2]
+  
+    reference = r.H_accurate(xs,ys,zs,k)
+    assert(np.abs(reference) - np.abs(result[1]) < np.finfo(np.float32).eps)
+    diff = np.abs(reference)-np.abs(result[1])
+    print('Relative difference: %f' % (diff / np.mean(np.abs(reference)+np.abs(result[1]))))
 
-    limits = np.c_[[0.0,   0.0,       0.0],
-                   [0.2,   np.pi/2.0, 0.2],
-                   [0.2,   np.pi/20.0,0.2]]
 
-    success = self.rotate_axes(limits)
-    self.assertTrue(success)
+def compareWithReference(**kwargs):
+  opt = dotdict({'method0'   : 'CalcCwFieldRef',
+                 'method1'   : 'CalcCwFieldRef',
+                 'location' : 'inside',
+                 'ndiv'     : 2})
 
-    limits = np.c_[[0.0,   0.0,       0.0       ],
-                   [0.2,   0.2,       np.pi/2.0 ],
-                   [0.2,   0.2,       np.pi/20.0]]
+  opt.update(**kwargs)
+  
+  areas = [2.0,3.0,4.0,5.0]
+  widths  = np.array([areas[0],1.0,areas[2],1.0],dtype=np.float32)
+  heights = np.array([1.0,areas[1],1.0,areas[3]],dtype=np.float32)
 
-    success = self.rotate_axes(limits)
-    self.assertTrue(success)
+  xsign = np.array([1.0,-1.0,-1.0,1.0],dtype=np.float32)
+  ysign = np.array([1.0,1.0,-1.0,-1.0],dtype=np.float32)
+
+  show = opt.show
+  # Ensure that we either slightly inside or outside
+  scale = 40.0 * np.finfo(np.float32).eps
+
+  epss = dict({'inside'  : -scale,
+               'outside' :  scale})
+  
+  ndiv = opt.ndiv
+  iCorners = [0,1,2,3]
+
+  eps    = epss[opt.location]
+  method0 = opt.method0
+  method1 = opt.method1
+
+  scatters = np.c_[(widths+eps)/2.0 * xsign,
+                   (heights+eps)/2.0 * ysign,
+                   np.ones(4,dtype=np.float32)]
+  
+  print('Testing: %s vs %s: %s' % (opt.method0,opt.method1, opt.location))
+  for iCorner in iCorners:
+    a = fnm.ApertureFloat(1,
+                          float(widths[iCorner]),
+                          float(0.0),
+                          float(heights[iCorner]))
+    a.nthreads = 1
+    a.nDivH = ndiv
+    a.nDivW = ndiv
+    a.f0 = 1
+    a.c  = 1
     
-if __name__ == '__main__':
-  unittest.main()
-    
-# Local variables: #
-# indent-tab-mode: nil #
-# tab-width: 2 #
-# python-indent: 2 #
-# py-indent-offset: 2 #
-# indent-tabs-mode: nil #
-# End: #
-    
+    exec('result0 = a.'+method0+'([scatters[iCorner]])[1]')
+    exec('result1 = a.'+method1+'([scatters[iCorner]])[1]')
+    diff = np.abs(result0)-np.abs(result1)
+    assert(diff < 100*np.finfo(np.float32).eps)
+    print('Relative difference: %f' % (diff / np.mean(np.abs(result0)+np.abs(result1))))
+
+if __name__ == "__main__":
+  compareWithPython(location='inside', method='CalcCwFieldRef')
+  compareWithPython(location='outside',method='CalcCwFieldRef')
+
+  # SSE with C refernece
+  compareWithReference(location='outside',method1='CalcCwFast')
+  compareWithReference(location='inside', method1='CalcCwFast')
+  # When inside the errors should be identical (they are)
+  compareWithReference(location='inside', method0='CalcCwField',method1='CalcCwField2')

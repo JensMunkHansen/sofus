@@ -124,8 +124,11 @@
     return typecode < 24 ? type_names[typecode] : type_names[24];
   }
 
-  /* Make sure input has correct numpy type.  This now just calls
+  /* 
+     Make sure input has correct numpy type.  This now just calls
      PyArray_EquivTypenums().
+   *
+   * TODO: Consider using this and allow more intelligent conversion
    */
   int type_match(int actual_type,
                  int desired_type)
@@ -137,7 +140,10 @@
   void free_cap(PyObject * cap)
   {
     void* array = (void*) PyCapsule_GetPointer(cap,SWIGPY_CAPSULE_NAME);
-    if (array != NULL) free(array);
+    if (array != NULL) {
+      /* printf("Freeing array\n"); */
+      free(array);
+    }
   }
 %#endif
 
@@ -191,6 +197,8 @@
    * typecode.  On success, return a valid PyArrayObject* with the
    * correct type.  On failure, the python error string will be set and
    * the routine returns NULL.
+   *
+   * TODO: HERE. Consider allowing conversion of double to float
    */
   PyArrayObject* obj_to_array_allow_conversion(PyObject* input,
                                                int       typecode,
@@ -210,6 +218,13 @@
       /* If NULL, PyArray_FromObject will have set python error value.*/
       ary = (PyArrayObject*) py_obj;
       *is_new_object = 1;
+      /*
+	TODO: Experiment with
+	PyArrayObject* float_array = (PyArrayObject*)PyArray_FromAny(input,PyArray_DescrFromType(NPY_FLOAT64), 0,0, flags);
+	                                             PyArray_ContiguousFromAny
+
+	See: http://docs.scipy.org/doc/numpy/reference/c-api.array.html
+       */
     }
     return ary;
   }
@@ -783,6 +798,8 @@
   (PyArrayObject* array=NULL, int is_new_object=0)
 {
   npy_intp size[2] = { -1, -1 };
+
+  /* TODO: Try to hack the possibility to convert from NPY_FLOAT64 to NPY_FLOAT32 */
   array = obj_to_array_contiguous_allow_conversion($input, DATA_TYPECODE,
                                                    &is_new_object);
   if (!array || !require_dimensions(array, 2) ||
@@ -3107,7 +3124,7 @@
 
 /* ***************************************************************
  *
- * End: Additions by Jens Munk
+ * End: Additions by Jens Munk Hansen
  *
  * ***************************************************************/
 
