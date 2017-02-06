@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.0)
 
 include(cmake/utils.cmake)
 include(cmake/simd.cmake)
+include(cmake/gtest_macros.cmake)
 include(GenerateExportHeader)
 
 set(CMAKE_MODULE_PATH
@@ -16,11 +17,10 @@ check_symbol_exists(itoa stdlib.h HAVE_ITOA)
 check_symbol_exists(utoa stdlib.h HAVE_UTOA)
 check_symbol_exists(ptoa stdlib.h HAVE_PTOA)
 
-option (SPS_Signals "Include signal processing" OFF)
+option (SPS_Signals "Include signal processing" ON)
 
 option (BUILD_SPS_TEST "Build SPS tests" OFF)
 
-  
 check_include_file(stdint.h HAVE_STDINT_H)
 check_include_file(mqueue.h HAVE_MQUEUE_H)
 
@@ -67,15 +67,26 @@ if (CYGWIN)
   set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS} -msse2 -msse3 -msse4 -mavx -pedantic -Wall")
 endif()
 
+#add_definitions(-DSPS_DEBUG)
+
 set(sps_HEADERS
   smath.hpp
+  smath_types.hpp
   sps_threads.hpp
+  multi_malloc.hpp
+  memory
 )
 
 set(sps_SOURCES
   smath.cpp
-  
+  # smath_types.cpp - clean up (it is obsolete as is)
 )
+
+if (USE_PROGRESS_BAR)
+  # Must be defined for stand-alone sps library
+  set(sps_HEADERS "${sps_HEADERS}" "progress.hpp" "progress_if.hpp")
+  set(sps_SOURCES "${sps_SOURCES}" "progress.cpp")
+endif()
 
 if (SPS_Signals)
   # Must be defined for stand-alone sps library
@@ -98,9 +109,14 @@ endif()
 
 add_library(sps ${LIB_TYPE} ${sps_HEADERS} ${sps_SOURCES})
 
+if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+  set_property(TARGET sps PROPERTY POSITION_INDEPENDENT_CODE ON)
+endif()
+
 if (SPS_Signals)
   if (WIN32)
     link_directories(${FFTW_INCLUDES})
+    # Is this necessary???
     if (BUILD_SHARED_LIBS)
       target_link_libraries(sps ${FFTW_LIBRARIES})
     else()
@@ -114,43 +130,56 @@ endif()
 generate_export_header(sps)# DEFINE_NO_DEPRECATED)
 
 if (BUILD_SPS_TEST)
-  include_directories(${GTEST_INCLUDE_DIR})
+  find_package( GoogleTest REQUIRED )
+  find_package( Threads REQUIRED )
+  
+  include_directories(${GTEST_INCLUDE_DIRS})
 
   if (UNIX)
     add_executable(indexed_types_test indexed_types_test.cpp)
+    add_gtest_dependencies(indexed_types_test)
   endif()
-  target_link_libraries(indexed_types_test rt)
-  #add_gtest_dependencies(indexed_types_test)
-  
-  if (SPS_Signals)
-    if (0)
-      add_executable(signals_test signals_test.cpp signals.cpp)
-      add_gtest_dependencies(signals_test)
-      target_link_libraries(signals_test ${FFTW_LIBRARIES})
-    endif()
-  endif()
-  
-  add_executable(trigintrin_test trigintrin_test.cpp)
-  add_gtest_dependencies(trigintrin_test)
-
   add_executable(extintrin_test extintrin_test.cpp)
   add_gtest_dependencies(extintrin_test)
 
+  add_executable(trigintrin_test trigintrin_test.cpp)
+  add_gtest_dependencies(trigintrin_test)
+
   add_executable(smath_test smath_test.cpp smath.cpp)
   add_gtest_dependencies(smath_test)
+
+  add_executable(memory_test memory_test.cpp)
+  add_gtest_dependencies(memory_test)
+
+  if (SPS_Signals)
+    add_executable(signals_test signals_test.cpp signals.cpp)
+    add_gtest_dependencies(signals_test)
+  endif()
   
   # Enable the tests
   enable_testing()
-  if (0)
-    add_test(NAME    signals_test 
-             COMMAND signals_test)
-  endif()
+  add_test(NAME    indexed_types_test
+           COMMAND indexed_types_test)
     
+  add_test(NAME    extintrin_test 
+           COMMAND extintrin_test)
+  
   add_test(NAME    trigintrin_test 
            COMMAND trigintrin_test)
 
-  add_test(NAME    extintrin_test 
-           COMMAND extintrin_test)
+  add_test(NAME    smath_test 
+           COMMAND smath_test)
+	 
+  add_test(NAME    memory_test 
+           COMMAND memory_test)
+
+  if (SPS_Signals)
+    add_test(NAME    signals_test 
+             COMMAND signals_test)
+  endif()
+  
+  # Link to threading library (general)
+  set( CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${CMAKE_THREAD_LIBS_INIT}")
 endif()
 
 # SWIG Target
@@ -169,9 +198,6 @@ if (SPS_Signals)
   find_package(PythonLibs REQUIRED)
 
   include_directories(${PYTHON_INCLUDE_PATH})
-  #must be parent path
-  #include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-  #include_directories(${CMAKE_CURRENT_BINARY_DIR}) # config.h
 
   if (MSVC)
     set(CMAKE_SWIG_FLAGS "-D_SWIG_WIN32")
@@ -188,7 +214,11 @@ if (SPS_Signals)
 
   swig_add_module(swig_signals python swig_signals.i ${swig_signals_HEADERS} ${swig_signals_SOURCES})
 
-  if (WIN32)
+  if (MSVC)
+    # Potential uninitialized variable in SWIG_AsVal_
+    set_source_files_properties( ${swig_generated_file_fullname} PROPERTIES COMPILE_FLAGS "/wd4701 /wd4127")
+
+    # Allow to debug under windows, if debug versions of Python are missing
     string(REPLACE "_d" "" PYTHON_LIBRARIES "${PYTHON_LIBRARIES}")
   endif()
 
@@ -203,6 +233,9 @@ if (SPS_Signals)
   endif()
 
 endif()
+
+# TODO: Create an "export-set" for SPS and import this in FNM and SOFUS using
+#       find_package or include(sps.cmake)
 
 if( ${PROJECT_NAME} STREQUAL "Fnm")
   install(TARGETS sps

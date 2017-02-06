@@ -1,0 +1,7 @@
+#pragma once
+#include <cstdio>
+
+#ifdef _MSC_VER
+# pragma warning( disable : 4996 ) // suppress warning: 'sprintf' was declared deprecated
+# define _CRT_SECURE_NO_WARNINGS
+#endif

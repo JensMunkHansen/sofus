@@ -128,7 +128,6 @@ TEST(fnm_test, pressure_linear_array)
 
   auto pos = sps::deleted_aligned_array_create<float>(nx*nz*3);
 
-
   const float d = (width+kerf)*nx;
 
   const float dx = (1.5f * d) / nx;
@@ -173,7 +172,7 @@ TEST(fnm_test, pressure_linear_array)
   size_t nresults = 0;
   std::complex<float>* results = NULL;
 
-  // Compute pressure (leaks)
+  // Compute pressure
   int err = a.CalcCwFast(pos.get(), nx*nz, 3, &results, &nresults);
   SPS_UNREFERENCED_PARAMETER(err);
 

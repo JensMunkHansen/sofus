@@ -1,12 +1,20 @@
 find_package( GoogleTest REQUIRED )
 find_package( Threads REQUIRED )
+find_package( FFTW REQUIRED )
 
 include_directories(${GTEST_INCLUDE_DIRS})
 
 add_executable(fnm_test main.cpp)
 
 # Targets are defined in GoogleTest.cmake
-target_link_libraries(fnm_test ${GTEST_LIBRARIES})
+target_link_libraries(fnm_test fnm sps gl gtest ${FFTW_LIBRARIES})
+if (FNM_PULSED_WAVE)
+  target_link_libraries(fnm_test sofus)
+endif()
+
+if (BUILD_SHARED_LIBS)
+  target_link_libraries(fnm_test dl)
+endif()
 
 # Link to threading library (general)
 set( CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${CMAKE_THREAD_LIBS_INIT}")

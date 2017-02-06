@@ -1,0 +1,22 @@
+#pragma once
+
+#include <typeinfo>
+using std::type_info;
+
+#if (defined(__GNUC__) && __GNUC__ >= 3)                                \
+  || (defined(_WIN32))                                                  \
+  || (defined(linux) && defined(__INTEL_COMPILER) && defined(__ICC))
+#ifndef SPS_TYPE_ID_NAME
+# define SPS_TYPE_ID_NAME
+#endif
+#endif
+
+namespace sps {
+#ifdef SPS_TYPE_ID_NAME
+  typedef char const* base_id_t;
+#else
+  typedef std::type_info const* base_id_t;
+#endif
+};
+
+// TODO: decide here whether to use std::type_info or typeid(T).name()
