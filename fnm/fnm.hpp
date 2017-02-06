@@ -290,7 +290,7 @@ namespace fnm {
      */
     void SysParmSet(const sysparm_t<T> *arg);
 
-#ifdef FNM_PULSED_WAVE
+#if FNM_PULSED_WAVE
     /**
      * Get sampling frequency
      *
@@ -583,9 +583,10 @@ namespace fnm {
     /// System parameters (We could make a long list of functions friends of Aperture)
     static sysparm_t<T> _sysparm;
 
+#if FNM_PULSED_WAVE
     /// TODO: Remove
     static T fs;
-
+#endif
     /// Number of threads
     static size_t nthreads;
 

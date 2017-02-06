@@ -104,10 +104,6 @@ __swig_getmethods__["area"]         = AreaGet
 if _newclass:
     # Read-write properties
     f0       = property(F0Get, F0Set)
-
-    if 'FNM_PULSED_WAVE' in globals():
-      fs       = property(FsGet, FsSet)
-
     c        = property(CGet, CSet)
     nDivW    = property(NDivWGet, NDivWSet)
     nDivH    = property(NDivHGet, NDivHSet)

@@ -103,9 +103,11 @@ namespace fnm {
   template <class T>
   const T Aperture<T>::dB_Neper = T(8.685889638065035);
 
+#if FNM_PULSED_WAVE
   template <class T>
   T Aperture<T>::fs = 100e6;
-
+#endif
+  
   template <class T>
   size_t Aperture<T>::nthreads = 4;
 
