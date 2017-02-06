@@ -1,38 +1,20 @@
 // TODO: Crazy constant error when including export files
 
 #define _SINGLE_LIBRARY
-%module(docstring="This is a wrapper for FNM", directors="1") swig_fnm
+%module(docstring="This is a wrapper for FNM", directors="1") swig_fnm // Gives trouble debugging
+//%module(docstring="This is a wrapper for FNM") swig_fnm
 #pragma SWIG nowarn=320
 
-#if 0
-  // Experimental stuff for setting structures 
-  %pythoncode %{
-  def StructArgs(type_name):
-    def wrap(f):
-      def _wrapper(*args, **kwargs):
-        ty=globals()[type_name]
-        arg=(ty(),) if kwargs else tuple()
-        for it in kwargs.iteritems():
-          setattr(arg[0], *it)
-        return f(*(args+arg))
-      return _wrapper
-    return wrap
-  %}
-  
-  %define %StructArgs(func, ret, type)
-  %pythoncode %{ @StructArgs(#type) %} // *very* position sensitive
-  %pythonprepend func %{ %} // Hack to workaround problem with #3
-  ret func(const type*);
-  %ignore func;
-  %enddef
-#endif
-
 %{
-
   #define SWIG_FILE_WITH_INIT
+  #include <sps/config.h>
+  #include <sps/progress_if.hpp>
   #include <sps/progress.hpp>
   #include <fnm/config.h>
   #include <sps/cenv.h>
+#if FNM_PULSED_WAVE
+  #include <sofus/sofus_types.hpp>
+#endif
   #include <fnm/fnm_types.hpp>
   #include <fnm/fnm.hpp>
   #include <gl/gl.hpp>
@@ -75,7 +57,9 @@
 // Define exports or use DEFINE_NO_DEPRECATED when calling GenerateExportHeader
 #define GL_EXPORT
 #define FNM_EXPORT
-   
+#define SOFUS_EXPORT
+#define SPS_EXPORT
+
 #ifdef SWIG_INCLUDE_DOCUMENTATION
 %import "documentation.i"
 #endif
@@ -91,22 +75,39 @@
 
 %apply (std::complex<float>** ARGOUTVIEWM_ARRAY1, size_t* DIM1) {(std::complex<float>** outTest, size_t* nOutTest)};
 
+#ifdef USE_PROGRESS_BAR
 namespace sps {
   %feature("director") ProgressBarInterface;
 }
+#endif
+
+%include <sps/config.h>
+%include <sps/progress_if.hpp>
 %include <sps/progress.hpp>
 
 // Individual modules
 %include <fnm/config.h>
 %include <sps/cenv.h>
 %include <fnm/fnm_export.h>
+
+#if FNM_PULSED_WAVE
+%include <sofus/sofus_export.h>
+#endif
+
 %include <gl/gl_export.h>
 
 %rename(FocusingType) FocusingTypeNS;
+%rename(TimeDomainCalcType) TimeDomainCalcTypeNS;
+%rename(PulsedWaveIntOrder) PulsedWaveIntOrderNS;
 
+#if FNM_PULSED_WAVE
+%include <sofus/sofus_types.hpp>
+#endif
 %include <fnm/fnm_types.hpp>
 %include <fnm/fnm.hpp>
 %include <gl/gl.hpp>
+
+
 
 namespace fnm {
   %template (ApertureFloat) Aperture<float>;

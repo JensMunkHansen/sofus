@@ -60,6 +60,12 @@ __swig_getmethods__["focus"]        = FocusGet
 __swig_setmethods__["focus"]        = FocusSet
 __swig_getmethods__["focus_type"]   = FocusingTypeGet
 __swig_setmethods__["focus_type"]   = FocusingTypeSet
+__swig_getmethods__["att_enabled"]  = AttenuationEnabledGet
+__swig_setmethods__["att_enabled"]  = AttenuationEnabledSet
+__swig_getmethods__["alpha"]        = AlphaGet
+__swig_setmethods__["alpha"]        = AlphaSet
+__swig_getmethods__["beta"]         = BetaGet
+__swig_setmethods__["beta"]         = BetaSet
 
 __swig_getmethods__["nthreads"]     = NThreadsGet
 __swig_setmethods__["nthreads"]     = NThreadsSet
@@ -72,16 +78,24 @@ __swig_getmethods__["pos"]          = PositionsGet
 __swig_setmethods__["pos"]          = PositionsSet
 __swig_getmethods__["apodization"]  = ApodizationGet
 __swig_setmethods__["apodization"]  = ApodizationSet
-#__swig_getmethods__["fs"]           = FsGet
-#__swig_setmethods__["fs"]           = FsSet
-#__swig_getmethods__["excitation"]   = ExcitationGet
-#__swig_setmethods__["excitation"]   = ExcitationSet
-#__swig_getmethods__["impulse"]      = ImpulseGet
-#__swig_setmethods__["impulse"]      = ImpulseSet
+__swig_getmethods__["delays"]       = DelaysGet
+__swig_setmethods__["delays"]       = DelaysSet
+
+# Branch in python on presence of pulsed-waves
+if 'FNM_PULSED_WAVE' in globals():
+  __swig_getmethods__["fs"]           = FsGet
+  __swig_setmethods__["fs"]           = FsSet
+  __swig_getmethods__["excitation"]   = ExcitationGet
+  __swig_setmethods__["excitation"]   = ExcitationSet
+  __swig_getmethods__["impulse"]      = ImpulseGet
+  __swig_setmethods__["impulse"]      = ImpulseSet
+  __swig_getmethods__["sysparm"]      = SysParmGet
+  __swig_setmethods__["sysparm"]      = SysParmSet
+  
 
 # Read-only properties
 __swig_getmethods__["phases"]       = PhasesGet
-__swig_getmethods__["delays"]       = DelaysGet
+__swig_getmethods__["subphases"]    = SubPhasesGet
 __swig_getmethods__["nelements"]    = NElementsGet
 __swig_getmethods__["rectangles"]   = RectanglesGet
 __swig_getmethods__["extent"]       = ExtentGet
@@ -90,7 +104,10 @@ __swig_getmethods__["area"]         = AreaGet
 if _newclass:
     # Read-write properties
     f0       = property(F0Get, F0Set)
-    #fs       = property(FsGet, FsSet)
+
+    if 'FNM_PULSED_WAVE' in globals():
+      fs       = property(FsGet, FsSet)
+
     c        = property(CGet, CSet)
     nDivW    = property(NDivWGet, NDivWSet)
     nDivH    = property(NDivHGet, NDivHSet)
@@ -156,6 +173,7 @@ def show(self,**kwargs):
   ax.set_ylabel('y')
   ax.set_zlabel('z')
   ax.set_aspect('auto')
+  #ax.set_aspect('equal')
 %}
 };
 %enddef    /* %fnm_extensions() */

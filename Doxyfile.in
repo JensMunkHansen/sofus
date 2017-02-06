@@ -38,7 +38,7 @@ PROJECT_NUMBER         = @VERSION_MAJOR@.@VERSION_MINOR@.@VERSION_PATCH@
 # If a relative path is entered, it will be relative to the location
 # where doxygen was started. If left blank the current directory will be used.
 
-OUTPUT_DIRECTORY       = @PROJECT_SOURCE_DIR@/doc
+OUTPUT_DIRECTORY       = @PROJECT_BINARY_DIR@/doc
 
 # If the CREATE_SUBDIRS tag is set to YES, then doxygen will create
 # 4096 sub-directories (in 2 levels) under the output directory of each output
@@ -570,10 +570,10 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
-# INPUT                  = @PROJECT_SOURCE_DIR@/doc/fnm.dox @PROJECT_SOURCE_DIR@/fnm/fnm.hpp @PROJECT_SOURCE_DIR@/sps
+# INPUT                  = @PROJECT_SOURCE_DIR@/fnm/fnm.dox @PROJECT_SOURCE_DIR@/fnm/fnm.hpp @PROJECT_SOURCE_DIR@/sps
 
 
-INPUT                  = @PROJECT_SOURCE_DIR@/fnm/fnm.dox @PROJECT_SOURCE_DIR@/gl @PROJECT_SOURCE_DIR@/fnm @PROJECT_BINARY_DIR@/fnm @PROJECT_SOURCE_DIR@/sps/smath.hpp #@PROJECT_SOURCE_DIR@/sps
+INPUT                  = @PROJECT_SOURCE_DIR@/doc/fnm.dox @PROJECT_SOURCE_DIR@/gl @PROJECT_SOURCE_DIR@/fnm @PROJECT_BINARY_DIR@/fnm @PROJECT_SOURCE_DIR@/sps/smath.hpp #@PROJECT_SOURCE_DIR@/sps
 
 # If this is added, the dependency is revealed @PROJECT_SOURCE_DIR@/fnm/fnm.cpp 
 

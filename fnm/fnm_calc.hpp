@@ -17,6 +17,11 @@
 
 namespace fnm {
 
+#if HAVE_PTHREAD_H
+  extern pthread_t threads[N_MAX_THREADS];
+  extern pthread_attr_t attr;
+#endif
+
   /**
    *
    *  Field above a corner of an element with dimensions \f$s\f$ and \f$l\f$ computed using Gauss-Legendre integration
@@ -82,9 +87,25 @@ namespace fnm {
    * @param pos           Positions
    * @param nPositions    # of positions
    * @param odata         complex output
+   * @return error code
    */
   template <class T>
   int CalcCwFieldRef(const ApertureData<T>& data,
+                     const T* pos, const size_t nPositions,
+                     std::complex<T>** odata);
+
+  /**
+   *
+   *
+   * @param data
+   * @param pos
+   * @param nPositions
+   * @param odata
+   *
+   * @return
+   */
+  template <class T>
+  int CalcCwThreaded(const ApertureData<T>* data,
                      const T* pos, const size_t nPositions,
                      std::complex<T>** odata);
 
@@ -101,8 +122,25 @@ namespace fnm {
                    const T* pos, const size_t nPositions,
                    std::complex<T>** odata);
 
+  /**
+   * The positions must all equal the focus point and the number
+   * should match the number of elements. By doing so, a set of
+   * phases is computed for focusing.
+   *
+   * Used by \ref FocusUpdate
+   *
+   * @param aperture data
+   * @param pos
+   * @param nPositions
+   * @param odata
+   *
+   * @return
+   */
+  template <class T>
+  int CalcCwFocus(const ApertureData<T>& data,
+                  const T* pos, const size_t nPositions,
+                  std::complex<T>** odata);
 }
-// TODO: Add function taking ApertureData<T> as argument
 
 /* Local variables: */
 /* indent-tabs-mode: nil */

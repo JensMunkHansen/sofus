@@ -37,14 +37,24 @@ if (TEST_INCLUDE_PYTHON_TESTS)
       DEPENDS $<TARGET_FILE:_swig_fnm>)
   endif()
 
-  enable_testing()	
+  enable_testing()
   
-  MESSAGE(STATUS "Python executable: ${PYTHON_EXECUTABLE}")
+  message(STATUS "Python executable: ${PYTHON_EXECUTABLE}")
 
   add_test(
-    NAME    "${CMAKE_CURRENT_SOURCE_DIR}/fnm_test.py"
-    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/fnm_test.py
+    NAME    "${CMAKE_CURRENT_SOURCE_DIR}/fnm_attr_test.py"
+    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/fnm_attr_test.py
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
+  add_test(
+    NAME    "${CMAKE_CURRENT_SOURCE_DIR}/fnm_reference_test.py"
+    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/fnm_reference_test.py
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+  add_test(
+    NAME    "${CMAKE_CURRENT_SOURCE_DIR}/fnm_simd_test.py"
+    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/fnm_simd_test.py
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  
 endif(TEST_INCLUDE_PYTHON_TESTS)
   

@@ -36,7 +36,7 @@ if (BUILD_SHARED_LIBS)
   set(LIB_TYPE SHARED)
 endif()
 
-option (BUILD_TEST "Build tests" OFF)
+option (BUILD_FNM_TEST "Build tests" OFF)
 
 option(USE_MQUEUE "Use message queues" OFF)
 
@@ -71,6 +71,18 @@ if(CMAKE_COMPILER_IS_GNUCXX)
   set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS} -msse2 -msse3 -msse4 -mavx -pedantic -Wall")
 endif()
 
+set(FNM_PULSED_WAVE 0)
+option(SOFUS_Pulsed_waves "Support pulsed waves" OFF)
+if (SOFUS_Pulsed_waves)
+  set(FNM_PULSED_WAVE 1)
+endif()
+
+set(USE_PROGRESS_BAR 0)
+option(USE_ProgressBar "Use progress bar" OFF)
+if (USE_ProgressBar)
+  set(USE_PROGRESS_BAR 1)
+endif()
+  
 # Add sub-directories
 add_subdirectory(sps)
 
@@ -78,9 +90,13 @@ add_subdirectory(gl)
 
 add_subdirectory(fnm)
 
+if (FNM_PULSED_WAVE)
+  add_subdirectory(sofus)
+endif()
+
 add_subdirectory(python)
 
-if (BUILD_TEST)
+if (BUILD_FNM_TEST)
   enable_testing()
   add_subdirectory(test)
 endif()
@@ -91,6 +107,11 @@ endif()
 # Add all targets to the build-tree export set
 export(TARGETS fnm gl sps
   FILE "${PROJECT_BINARY_DIR}/FnmTargets.cmake")
+
+if (FNM_PULSED_WAVE)
+  export(TARGETS sofus
+    FILE "${PROJECT_BINARY_DIR}/FnmTargets.cmake")
+endif()
 
 # Export the package for use from the build-tree
 export(PACKAGE Fnm)

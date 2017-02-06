@@ -18,9 +18,14 @@
 #include <fnm/config.h>
 #include <fnm/FnmSIMD.hpp> // Used by CalcCwFocus
 #include <fnm/fnm_data.hpp>
-#include <fnm/fnm_calc.hpp>
+#include <fnm/fnm_types.hpp>
 
-#ifdef FNM_PULSED_WAVE
+#include <fnm/fnm_common.hpp>
+#include <fnm/fnm_calc.hpp>
+#include <fnm/fnm_arrays.hpp>
+
+#if FNM_PULSED_WAVE
+# include <sofus/sofus_types.hpp>
 # include <sofus/sofus_calc.hpp>
 #endif
 
@@ -49,10 +54,6 @@
 
 #include <fftw3.h>
 
-#ifdef HAVE_MQUEUE_H
-# include <mqueue.h>
-#endif
-
 #ifdef _MSC_VER
 #include <BaseTsd.h>
 #endif
@@ -64,47 +65,6 @@
 namespace fnm {
 
   /////////////////////////////////////////////////
-  // Types visible for this compilation unit only
-  /////////////////////////////////////////////////
-  template <class T>
-  struct thread_arg {
-    size_t iPointBegin;
-    size_t iPointEnd;
-    const T* pos;
-    std::complex<T>* field;
-    T k;
-    T* uxs;
-    T* uweights;
-    size_t nDivU;
-    T* vxs;
-    T* vweights;
-    size_t nDivV;
-    size_t thread_id;
-    int cpu_id;
-  };
-
-#if HAVE_THREAD
-  // Specializations contain static arrays
-  template<class T>
-  struct ApertureThreadArgs {
-    static thread_arg<T> args[N_MAX_THREADS];
-  };
-#endif
-
-#ifdef HAVE_PTHREAD_H
-# ifdef HAVE_MQUEUE_H
-  template <class T>
-  struct ApertureQueue {
-    static bool threads_initialized;
-    static mqd_t mqd_master;
-    static mqd_t mqd_client;
-  };
-# endif
-  pthread_t threads[N_MAX_THREADS];
-  static pthread_attr_t attr = {{0}};
-#endif
-
-  /////////////////////////////////////////////////
   // Static content declared in interface
   /////////////////////////////////////////////////
 
@@ -113,17 +73,38 @@ namespace fnm {
   sysparm_t<T> Aperture<T>::_sysparm =
     (sysparm_t<T>)
   {
-    .c = 1500.0, .nDivW = 16, .DivH = 16
+    .c = 1500.0, .nDivW = 16, .DivH = 16,
+     .att = 0.0,
+      .beta = 0.0,
+       .use_att = false
+#if FNM_PULSED_WAVE
+                  ,
+                  .timeDomainCalcType = sofus::TimeDomainCalcType::Sphere,
+                   .pulseWaveIntOrder  = sofus::PulsedWaveIntOrder::Fourth
+#endif
   };
 #else
   template <class T>
-  sysparm_t<T> Aperture<T>::_sysparm = {T(1500.0), size_t(16), size_t(16)};
+  sysparm_t<T> Aperture<T>::_sysparm = {T(1500.0), size_t(16), size_t(16),
+                                        T(0.0),
+                                        T(0.0),
+                                        bool(false)
+#if FNM_PULSED_WAVE
+                                        ,
+                                        sofus::TimeDomainCalcType(sofus::TimeDomainCalcType::Sphere),
+                                        sofus::PulsedWaveIntOrder(sofus::PulsedWaveIntOrder::Fourth)
+#endif
+                                       };
 #endif
 
-#ifdef FNM_PULSED_WAVE
+  template <class T>
+  const T Aperture<T>::Neper_dB = T(0.11512925464970231);
+
+  template <class T>
+  const T Aperture<T>::dB_Neper = T(8.685889638065035);
+
   template <class T>
   T Aperture<T>::fs = 100e6;
-#endif
 
   template <class T>
   size_t Aperture<T>::nthreads = 4;
@@ -134,9 +115,16 @@ namespace fnm {
   template <class T>
   Aperture<T>::Aperture()
   {
+    // Aligned data segment
     m_data = (ApertureData<T>*) _mm_malloc(sizeof(ApertureData<T>),16);
     new (this->m_data) ApertureData<T>();
+
+#ifdef USE_PROGRESS_BAR
+    // Progress bar
     m_pbar = NULL;
+#endif
+
+    // Data needed for time-domain pulsed waves
 #ifdef FNM_PULSED_WAVE
     m_pulses = new sofus::AperturePulses<T>();
 #endif
@@ -174,6 +162,57 @@ namespace fnm {
   }
 
   template <class T>
+  Aperture<T>::Aperture(const size_t nElements, const T width, const T kerf, const T height,
+                        const size_t nSubH, const T focus) : Aperture<T>()
+  {
+
+    const size_t nSubW = 1;
+    const size_t nSubElements = nSubH * nSubW;
+
+    if (nElements * nSubElements > 0) {
+      auto elements = sps::deleted_aligned_multi_array<sps::element_t<T>, 2>();
+
+      T pitch = width + kerf;
+
+      FocusedLinearArray(nElements,nSubH,nSubW,
+                         pitch, kerf, height,
+                         focus,
+                         0,
+                         std::move(elements));
+
+      m_data->ElementsSet(std::forward<sps::deleted_aligned_multi_array<sps::element_t<T>,2> >(elements),
+                          nElements,
+                          nSubElements);
+    }
+  }
+
+  template <class T>
+  Aperture<T>::Aperture(const size_t nElements, const T width, const T kerf, const T height,
+                        const T radius,
+                        const size_t nSubH, const T focus) : Aperture<T>()
+  {
+
+    const size_t nSubW = 1;
+    const size_t nSubElements = nSubH * nSubW;
+
+    if (nElements * nSubElements > 0) {
+      auto elements = sps::deleted_aligned_multi_array<sps::element_t<T>, 2>();
+
+      T pitch = width + kerf;
+
+      FocusedConvexArray(nElements,nSubH,nSubW,
+                         pitch, kerf, height, radius,
+                         focus,
+                         0,
+                         std::move(elements));
+
+      m_data->ElementsSet(std::forward<sps::deleted_aligned_multi_array<sps::element_t<T>,2> >(elements),
+                          nElements,
+                          nSubElements);
+    }
+  }
+
+  template <class T>
   Aperture<T>::~Aperture()
   {
     if (m_data) {
@@ -187,37 +226,42 @@ namespace fnm {
       m_pulses = nullptr;
     }
 #endif
+  }
 
-    // Experimental stuff with queues
-#ifdef HAVE_MQUEUE_H
-    size_t i;
-    unsigned int prio = 0;
+  template <class T>
+  void Aperture<T>::AlphaSet(const T& value)
+  {
+    Aperture<T>::_sysparm.att = value;
+  }
 
-    if (ApertureQueue<T>::threads_initialized) {
-      // Signal threads to exit
-      CallErr(ApertureQueue<T>::mqd_client = mq_open,
-              ("/jmh-client", O_WRONLY | O_CREAT,
-               S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH,
-               NULL));
+  template <class T>
+  const T& Aperture<T>::AlphaGet() const
+  {
+    return Aperture<T>::_sysparm.att;
+  }
 
-      for (i=0; i<Aperture<T>::nthreads; i++) {
-        prio = i;
-        if (mq_send(ApertureQueue<T>::mqd_client,"EXIT",4,prio)==-1)
-          perror ("mq_send()");
-      }
+  template <class T>
+  void Aperture<T>::BetaSet(const T& value)
+  {
+    Aperture<T>::_sysparm.beta = value;
+  }
 
-      // Wait for threads to exit. TODO: Do we need this???
-      for (i = 0; i < Aperture<T>::nthreads; i++) {
-        CallErr(pthread_join,(threads[i],NULL));
-      }
+  template <class T>
+  const T& Aperture<T>::BetaGet() const
+  {
+    return Aperture<T>::_sysparm.beta;
+  }
 
-      mq_close(ApertureQueue<T>::mqd_client);
+  template <class T>
+  void Aperture<T>::AttenuationEnabledSet(const bool& iEnabled)
+  {
+    Aperture<T>::_sysparm.use_att = iEnabled;
+  }
 
-      ApertureQueue<T>::threads_initialized = false;
-      debug_print("Threads have exited\n");
-      CallErr(pthread_attr_destroy,(&attr));
-    }
-#endif
+  template <class T>
+  const bool& Aperture<T>::AttenuationEnabledGet() const
+  {
+    return Aperture<T>::_sysparm.use_att;
   }
 
   template <class T>
@@ -316,11 +360,14 @@ namespace fnm {
   template <class T>
   void Aperture<T>::FocusUpdate()
   {
-    if (m_data->m_focus_valid == m_data->m_focus_type) {
+
+    if ((m_data->m_focus_valid == m_data->m_focus_type)) {
+      debug_print("We cannot skip this if elements,c, or f0 are changed");
       return;
     }
 
-    const size_t nElements = m_data->m_nelements;
+    const size_t nElements    = m_data->m_nelements;
+    const size_t nSubElements = m_data->m_nsubelements;
 
     if (m_data->m_focus_type == FocusingType::Pythagorean) {
 
@@ -336,7 +383,10 @@ namespace fnm {
       for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
         // Verify if we can positive delays
         m_data->m_delays[iElement] = minDelay - delays[iElement];
-        m_data->m_phases[iElement] = T(M_2PI) * (delays[iElement] - maxDelay) * m_data->m_f0;
+
+        for (size_t jElement = 0 ; jElement < nSubElements ; jElement++) {
+          m_data->m_phases[iElement*nSubElements+jElement] = T(M_2PI) * (delays[iElement] - maxDelay) * m_data->m_f0;
+        }
       }
     } else if (m_data->m_focus_type == FocusingType::Rayleigh) {
 
@@ -352,13 +402,25 @@ namespace fnm {
       std::complex<T>* pFieldValues = NULL;
       size_t nFieldValues;
 
-      // This function allocates!!! TODO: Move CalcCwFocus to fnm_calc
-      this->CalcCwFocus(positions.get(),nPositions,3,&pFieldValues,&nFieldValues);
+      // Note, this function allocates!!!
+      this->CalcCwFocus(positions.get(),nPositions,3,
+                        &pFieldValues, &nFieldValues);
 
       for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
-        m_data->m_phases[iElement] = - std::arg<T>(pFieldValues[iElement]);
+        for (size_t jElement = 0 ; jElement < nSubElements ; jElement++) {
+          m_data->m_phases[iElement*nSubElements+jElement] =
+            - std::arg<T>(pFieldValues[iElement]);
+        }
       }
       free(pFieldValues);
+    } else if (m_data->m_focus_type == FocusingType::Delays) {
+      // Update phases using delays
+      for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
+        for (size_t jElement = 0 ; jElement < nSubElements ; jElement++) {
+          m_data->m_phases[iElement*nSubElements+jElement] =
+            std::fmod<T>(m_data->m_f0*m_data->m_delays[iElement], T(1.0))*T(M_2PI);
+        }
+      }
     }
 
     // Set validity
@@ -395,10 +457,28 @@ namespace fnm {
   {
 
     size_t nElements = m_data->m_nelements;
+    size_t nSubElements = m_data->m_nsubelements;
     *odata = (T*) malloc(nElements*sizeof(T));
     if (nElements > 0) {
-      memcpy(*odata,m_data->m_phases.get(),nElements*sizeof(T));
+      for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
+        (*odata)[iElement] = m_data->m_phases[iElement*nSubElements];
+      }
       *nData = nElements;
+    } else {
+      *nData = 0;
+    }
+  }
+
+  template <class T>
+  void Aperture<T>::SubPhasesGet(T** odata, size_t* nData)
+  {
+
+    size_t nElements = m_data->m_nelements;
+    size_t nSubElements = m_data->m_nsubelements;
+    *odata = (T*) malloc(nElements*nSubElements*sizeof(T));
+    if (nElements > 0) {
+      memcpy(*odata, m_data->m_phases.get(), nElements*nSubElements*sizeof(T));
+      *nData = nElements*nSubElements;
     } else {
       *nData = 0;
     }
@@ -415,6 +495,18 @@ namespace fnm {
       *nData = nElements;
     } else {
       *nData = 0;
+    }
+  }
+
+  template <class T>
+  void Aperture<T>::DelaysSet(const T* data, const size_t nData)
+  {
+    const size_t nElements = m_data->m_nelements;
+
+    if (nData == m_data->m_nelements) {
+      memcpy(m_data->m_delays.get(), data, sizeof(T)*nElements);
+      // Set focusing type to using delays
+      m_data->m_focus_type = FocusingType::Delays;
     }
   }
 
@@ -449,16 +541,32 @@ namespace fnm {
     const T eps = std::numeric_limits<T>::epsilon();
     assert(f0 > eps);
     if (f0 > eps) {
+      // Invalidate focus
+      m_data->m_focus_valid = FocusingType::FocusingTypeCount;
       m_data->m_f0 = f0;
     }
   }
 
   template <class T>
+  const sysparm_t<T> Aperture<T>::SysParmGet() const
+  {
+    return Aperture<T>::_sysparm;
+  }
+
+  template <class T>
   void Aperture<T>::SysParmSet(const sysparm_t<T> *arg)
   {
-    Aperture<T>::_sysparm.c = arg->c;
+    Aperture<T>::_sysparm.c     = arg->c;
     Aperture<T>::_sysparm.nDivH = arg->nDivH;
     Aperture<T>::_sysparm.nDivW = arg->nDivW;
+
+    // Time-domain parameters
+
+#if FNM_PULSED_WAVE
+    // This is propagator
+    Aperture<T>::_sysparm.timeDomainCalcType = arg->timeDomainCalcType;
+    Aperture<T>::_sysparm.pulseWaveIntOrder = arg->pulseWaveIntOrder;
+#endif
   }
 
 #ifdef FNM_PULSED_WAVE
@@ -536,6 +644,8 @@ namespace fnm {
   void Aperture<T>::CSet (const T c)
   {
     Aperture<T>::_sysparm.c = c;
+    // Invalidate focus
+    m_data->m_focus_valid = FocusingType::FocusingTypeCount;
   }
 
   template <class T>
@@ -579,7 +689,6 @@ namespace fnm {
                                   size_t* nSubElements, size_t* nParams) const
   {
 
-    // Static is needed to avoid temporaries (if a view was returned). We allocate, so this is not a temporary
     const size_t nCornerCoordinates = 12;
 
     const size_t _nElements       = m_data->m_nelements;
@@ -669,7 +778,7 @@ namespace fnm {
     if (arr) {
       memset(arr,0,arrSize);
 
-      auto& elements = m_data->m_elements;
+      const auto& elements = m_data->m_elements;
 
       for (size_t iElement = 0 ; iElement < _nElements ; iElement++) {
         for (size_t jElement = 0 ; jElement < nSubElementsPerElement ; jElement++) {
@@ -683,9 +792,12 @@ namespace fnm {
           memcpy(&arr[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams + 2],
                  &elements[iElement][jElement].center[0],
                  sizeof(sps::point_t<T>));
-          arr[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams+5] = elements[iElement][jElement].euler.alpha;
-          arr[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams+6] = elements[iElement][jElement].euler.beta;
-          arr[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams+7] = elements[iElement][jElement].euler.gamma;
+          arr[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams+5] =
+            elements[iElement][jElement].euler.alpha;
+          arr[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams+6] =
+            elements[iElement][jElement].euler.beta;
+          arr[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams+7] =
+            elements[iElement][jElement].euler.gamma;
         }
       }
 
@@ -707,16 +819,22 @@ namespace fnm {
     return retval;
   }
 
+  // Screws up or???
   template <class T>
   bool Aperture<T>::SubElementsSet(const T* pos, const size_t nElements,
                                    const size_t nSubElementsPerElement, const size_t nDim)
   {
     bool retval = true;
-    // We are allowed to set 0 elements
+
+    // We are not allowed to set 0 elements
     if ((nDim != Aperture<T>::nElementPosParameters) || (nSubElementsPerElement < 1)) {
+      // TODO: Consider throwing
       retval = false;
       return retval;
     }
+
+    // Invalidate focus
+    m_data->m_focus_valid = FocusingType::FocusingTypeCount;
 
     sps::deleted_aligned_multi_array<sps::element_t<T>, 2> elements =
       sps::deleted_aligned_multi_array_create<sps::element_t<T>, 2>(nElements,nSubElementsPerElement);
@@ -751,11 +869,13 @@ namespace fnm {
     return retval;
   }
 
+#ifdef USE_PROGRESS_BAR
   template <class T>
   void Aperture<T>::ProgressBarSet(sps::ProgressBarInterface* pbar)
   {
     this->m_pbar = pbar;
   }
+#endif
 
 #ifdef FNM_PULSED_WAVE
   // Calculations
@@ -772,22 +892,67 @@ namespace fnm {
       return T(0.0);
     }
 
+    if (m_data->m_focus_type == FocusingType::Rayleigh) {
+      fprintf(stderr, "Rayleigh focusing type is not supported for pulsed wave calculations\n");
+    }
+    this->FocusUpdate();
+
+    sofus::sysparm_t<T> sysparm;
+    sysparm.c   = Aperture<T>::_sysparm.c;
+    sysparm.fs  = Aperture<T>::fs;
+
+    sysparm.att = Aperture<T>::_sysparm.att;
+    sysparm.beta = Aperture<T>::_sysparm.beta;
+    sysparm.use_att = Aperture<T>::_sysparm.use_att;
+
+    T retval = sofus::CalcPwField(sysparm,
+                                  m_data,
+                                  m_pulses,
+                                  Aperture<T>::_sysparm.timeDomainCalcType,
+                                  Aperture<T>::_sysparm.pulseWaveIntOrder,
+                                  pos, nPositions, nDim,
+                                  odata, nSignals, nSamples,
+                                  m_pbar);
+
+    return retval;
+  }
+
+  template <class T>
+  T Aperture<T>::CalcPwFieldThreaded(const T* pos, const size_t nPositions, const size_t nDim,
+                                     T** odata, size_t* nSignals, size_t* nSamples)
+  {
+
+    assert(nDim == 3);
+    if (nDim != 3) {
+      *odata = NULL;
+      *nSignals = 0;
+      *nSamples = 0;
+      return T(0.0);
+    }
+
     if (m_data->m_focus_type != FocusingType::Pythagorean) {
       fprintf(stderr, "Focusing type must be Pythagorean for pulsed wave calculations\n");
     }
     this->FocusUpdate();
 
     sofus::sysparm_t<T> sysparm;
-    sysparm.c  = Aperture<T>::_sysparm.c;
-    sysparm.fs = Aperture<T>::fs;
+    sysparm.c        = Aperture<T>::_sysparm.c;
+    sysparm.fs       = Aperture<T>::fs;
+    sysparm.nthreads = Aperture<T>::nthreads;
+
+    sysparm.att      = Aperture<T>::_sysparm.att;
+    sysparm.beta     = Aperture<T>::_sysparm.beta;
+    sysparm.use_att  = Aperture<T>::_sysparm.use_att;
 
     // Allocates
-    T retval = sofus::CalcPwField(sysparm,
-                                  m_data,
-                                  m_pulses,
-                                  pos, nPositions, nDim,
-                                  odata, nSignals, nSamples,
-                                  m_pbar);
+    T retval = sofus::CalcPwFieldThreaded(sysparm,
+                                          m_data,
+                                          m_pulses,
+                                          Aperture<T>::_sysparm.timeDomainCalcType,
+                                          Aperture<T>::_sysparm.pulseWaveIntOrder,
+                                          pos, nPositions, nDim,
+                                          odata, nSignals, nSamples,
+                                          m_pbar);
 
     return retval;
   }
@@ -844,6 +1009,57 @@ namespace fnm {
   }
 
 #ifndef FNM_DOUBLE_SUPPORT
+
+  template <class T>
+  int Aperture<T>::CalcCwFast(const T* pos,
+                              const size_t nPositions,
+                              const size_t nDim,
+                              std::complex<T>** odata,
+                              size_t* nOutPositions)
+  {
+
+    int retval;
+    assert(nDim == 3);
+    if (nDim != 3) {
+      *odata = NULL;
+      *nOutPositions = 0;
+      retval = -1;
+      return retval;
+    }
+
+    *odata = (std::complex<T>*) malloc(nPositions*sizeof(std::complex<T>));
+    memset(*odata, 0, nPositions*sizeof(std::complex<T>));
+    *nOutPositions = nPositions;
+
+    this->FocusUpdate();
+
+    retval = fnm::CalcCwThreaded<T>(this->m_data, pos, nPositions, odata);
+
+    return retval;
+  }
+
+  template <class T>
+  int Aperture<T>::CalcCwFocus(const T* pos, const size_t nPositions, const size_t nDim,
+                               std::complex<T>** odata, size_t* nOutPositions)
+  {
+    int retval = 0;
+    assert(nDim == 3);
+    if (nDim != 3) {
+      *odata = NULL;
+      *nOutPositions = 0;
+      retval = -1;
+      return retval;
+    }
+
+    *odata = (std::complex<T>*) malloc(nPositions*sizeof(std::complex<T>));
+    memset(*odata, 0, nPositions*sizeof(std::complex<T>));
+    *nOutPositions = nPositions;
+
+    retval = fnm::CalcCwFocus<T>(*this->m_data,pos,nPositions,odata);
+
+    return retval;
+  }
+
   // Sub-optimal integration range (Old function). TODO: Remove or move to fnm_calc
   template <class T>
   int Aperture<T>::CalcCwField2(const T* pos, const size_t nPositions, const size_t nDim,
@@ -869,40 +1085,24 @@ namespace fnm {
 
     const size_t nElements = m_data->m_nelements;
 
+    const size_t nSubElements = m_data->m_nsubelements;
+
     const T* apodizations = m_data->m_apodizations.get();
 
     T apodization;
 
 
     // Need weights and abcissa values
-
     size_t nDivW = Aperture<T>::_sysparm.nDivW;
     size_t nDivH = Aperture<T>::_sysparm.nDivH;
 
-    // TODO: For FDTSD store these
-    auto uweights = sps::deleted_aligned_array_create<T>(nDivW);
-    auto vweights = sps::deleted_aligned_array_create<T>(nDivH);
-    auto uxs      = sps::deleted_aligned_array_create<T>(nDivW);
-    auto vxs      = sps::deleted_aligned_array_create<T>(nDivH);
+    auto uweights = sps::deleted_aligned_array<T>();
+    auto vweights = sps::deleted_aligned_array<T>();
+    auto uxs      = sps::deleted_aligned_array<T>();
+    auto vxs      = sps::deleted_aligned_array<T>();
 
-    memset(uxs.get(),0,sizeof(T)*nDivW);
-    memset(vxs.get(),0,sizeof(T)*nDivH);
-
-    memset(uweights.get(),0,sizeof(T)*nDivW);
-    memset(vweights.get(),0,sizeof(T)*nDivH);
-
-    // Common weights and abcissa
-    for (size_t i = 0 ; i < nDivW ; i++) {
-      gl::GLNode qp = gl::GL(nDivW,i);
-      uxs[i]        = T(qp.value);
-      uweights[i]   = T(qp.weight);
-    }
-
-    for (size_t i = 0 ; i < nDivH ; i++) {
-      gl::GLNode qp = gl::GL(nDivH, i);
-      vxs[i]      = T(qp.value);
-      vweights[i] = T(qp.weight);
-    }
+    CalcWeightsAndAbcissae(std::move(uxs),std::move(uweights),
+                           std::move(vxs),std::move(vweights));
 
     sps::deleted_aligned_multi_array<sps::element_t<T>,2>& elements = m_data->m_elements;
 
@@ -920,7 +1120,7 @@ namespace fnm {
 
         if (apodization != 0.0) {
 
-          for (size_t jElement = 0 ; jElement < this->m_data->m_nsubelements ; jElement++) {
+          for (size_t jElement = 0 ; jElement < nSubElements ; jElement++) {
 
             const sps::element_t<T>& element = elements[iElement][jElement];
 
@@ -936,658 +1136,15 @@ namespace fnm {
             result = CalcHzAll<T>(element, projection, k,
                                   uxs.get(), uweights.get(), nDivW,
                                   vxs.get(), vweights.get(), nDivH);
-            final = final + apodization * result * exp(std::complex<T>(0,m_data->m_phases[iElement]));
+            final = final + apodization *
+                    result * exp(std::complex<T>(0,m_data->m_phases[iElement*nSubElements+jElement]));
           }
         }
       }
-      (*odata)[iPoint].real(final.real());
-      (*odata)[iPoint].imag(final.imag());
+      (*odata)[iPoint] = final;
     }
     return 0;
   }
-#endif
-
-#ifndef FNM_DOUBLE_SUPPORT
-  // Reduced integral and fast (the one to use). TODO: Move to fnm_calc and use ApertureData<T>
-  template <class T>
-  int Aperture<T>::CalcCwFast(const T* pos,
-                              const size_t nPositions,
-                              const size_t nDim,
-                              std::complex<T>** odata,
-                              size_t* nOutPositions)
-  {
-
-    int retval = 0;
-
-    assert(nDim == 3);
-    if (nDim != 3) {
-      *odata = NULL;
-      *nOutPositions = 0;
-      retval = -1;
-      return retval;
-    }
-
-    *odata = (std::complex<T>*) malloc(nPositions*sizeof(std::complex<T>));
-    memset(*odata, 0, nPositions*sizeof(std::complex<T>));
-    *nOutPositions = nPositions;
-
-    // This leaks
-    this->FocusUpdate();
-
-    const T lambda = Aperture<T>::_sysparm.c / m_data->m_f0;
-    const T k = T(M_2PI)/lambda;
-
-    size_t nDivW = Aperture<T>::_sysparm.nDivW;
-    size_t nDivH = Aperture<T>::_sysparm.nDivH;
-
-    // TODO: For FDTSD store these
-    auto uweights = sps::deleted_aligned_array_create<T>(nDivW);
-    auto vweights = sps::deleted_aligned_array_create<T>(nDivH);
-    auto uxs      = sps::deleted_aligned_array_create<T>(nDivW);
-    auto vxs      = sps::deleted_aligned_array_create<T>(nDivH);
-
-    memset(uxs.get(),0,sizeof(T)*nDivW);
-    memset(vxs.get(),0,sizeof(T)*nDivH);
-
-    memset(uweights.get(),0,sizeof(T)*nDivW);
-    memset(vweights.get(),0,sizeof(T)*nDivH);
-
-    // Common weights and abcissa
-    for (size_t i = 0 ; i < nDivW ; i++) {
-      gl::GLNode qp = gl::GL(nDivW,i);
-      uxs[i]        = T(qp.value);
-      uweights[i]   = T(qp.weight);
-    }
-
-    for (size_t i = 0 ; i < nDivH ; i++) {
-      gl::GLNode qp = gl::GL(nDivH, i);
-      vxs[i]      = T(qp.value);
-      vweights[i] = T(qp.weight);
-    }
-
-    // Threaded or not
-
-#ifndef HAVE_THREAD
-    fnm::thread_arg<T> threadarg;
-    threadarg.iPointBegin = 0;
-    threadarg.iPointEnd   = nPositions;
-    threadarg.pos         = pos;
-    threadarg.field       = *odata;
-    threadarg.k           = k;
-    threadarg.uxs         = uxs.get();
-    threadarg.uweights    = uweights.get();
-    threadarg.nDivU       = nDivW; // Works for threaded
-    threadarg.vxs         = vxs.get();
-    threadarg.vweights    = vweights.get();
-    threadarg.nDivV       = nDivH;
-    threadarg.thread_id   = 0;
-    threadarg.cpu_id      = 0;
-
-# ifdef _WIN32
-    retval                = (unsigned int)CalcThreaded((void*)&threadarg);
-# else
-    void* thread_retval   = CalcThreaded((void*)&threadarg);
-    SPS_UNREFERENCED_PARAMETER(thread_retval);
-# endif
-#else
-
-    int nproc;
-
-# if defined(HAVE_PTHREAD_H)
-# elif defined(_WIN32)
-    unsigned int threadID;
-    uintptr_t threads[N_MAX_THREADS];
-# endif
-
-    nproc = getncpus();
-
-# ifdef HAVE_MQUEUE_H
-    sps::pthread_launcher<Aperture<T>,
-        &Aperture<T>::CalcThreadFunc> launcher[N_MAX_THREADS];
-# else
-    sps::pthread_launcher<Aperture<T>,
-        &Aperture<T>::CalcThreaded> launcher[N_MAX_THREADS];
-# endif
-
-    setvbuf(stdout, NULL, _IONBF, 0);
-    setvbuf(stderr, NULL, _IONBF, 0);
-
-# ifdef HAVE_PTHREAD_H
-    // TODO: Shoudl we do this over and over if using message queues???
-#  ifdef HAVE_MQUEUE_H
-    if ((!ApertureQueue<T>::threads_initialized) && !(nthreads>N_MAX_THREADS)) {
-      CallErr(pthread_attr_init,(&attr));
-      //CallErr(pthread_attr_setdetachstate, (&attr, PTHREAD_CREATE_JOINABLE));
-      CallErr(pthread_attr_setdetachstate, (&attr, PTHREAD_CREATE_DETACHED));
-    }
-#  else
-    CallErr(pthread_attr_init,(&attr));
-    CallErr(pthread_attr_setdetachstate, (&attr, PTHREAD_CREATE_JOINABLE));
-#  endif
-# endif
-
-    debug_print("nthreads: %zu\n", nthreads);
-
-    //HERE
-    // Populate structs for threads
-    for (size_t i=0 ; i < nthreads ; i++) {
-      ApertureThreadArgs<T>::args[i].iPointBegin = 0+i*(nPositions/nthreads);
-      ApertureThreadArgs<T>::args[i].iPointEnd   = (nPositions/nthreads)+i*(nPositions/nthreads);
-      ApertureThreadArgs<T>::args[i].pos         = pos;
-      ApertureThreadArgs<T>::args[i].field       = (*odata);
-      ApertureThreadArgs<T>::args[i].k           = k;
-      ApertureThreadArgs<T>::args[i].uxs         = uxs.get();
-      ApertureThreadArgs<T>::args[i].uweights    = uweights.get();
-      ApertureThreadArgs<T>::args[i].nDivU       = nDivW;
-      ApertureThreadArgs<T>::args[i].vxs         = vxs.get();
-      ApertureThreadArgs<T>::args[i].vweights    = vweights.get();
-      ApertureThreadArgs<T>::args[i].nDivV       = nDivH;
-      ApertureThreadArgs<T>::args[i].thread_id   = i;
-      ApertureThreadArgs<T>::args[i].cpu_id      = ((int) i) % nproc;
-      if (i==(nthreads-1))
-        ApertureThreadArgs<T>::args[i].iPointEnd = nPositions;
-    }
-
-# ifdef HAVE_MQUEUE_H
-    // Message queues
-    struct mq_attr qattr;
-
-    char buf[MSGMAX];
-    unsigned int prio;
-
-    // Create two message queues (could use socket_pair)
-    CallErrReturn(ApertureQueue<T>::mqd_master = mq_open,
-                  ("/jmh-master", O_RDWR | O_CREAT,
-                   S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH,
-                   NULL), EXIT_FAILURE);
-    CallErrReturn(mq_close,(ApertureQueue<T>::mqd_master), EXIT_FAILURE);
-
-    CallErrReturn(ApertureQueue<T>::mqd_client = mq_open,
-                  ("/jmh-master", O_RDWR | O_CREAT,
-                   S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH,
-                   NULL), EXIT_FAILURE);
-    CallErrReturn(mq_close,(ApertureQueue<T>::mqd_client), EXIT_FAILURE);
-
-    /* Initiate launcher, note that the threadarg are global and updated
-       in between calls to CalcThreaded */
-    for (size_t i=0 ; i < nthreads ; i++) {
-      launcher[i] =
-        sps::pthread_launcher<Aperture<T>,&Aperture<T>::CalcThreadFunc>(this,
-            &ApertureThreadArgs<T>::args[i]);
-    }
-
-    // Should only happen once
-    if ((!ApertureQueue<T>::threads_initialized) && !(nthreads>N_MAX_THREADS)) {
-
-      /* Clear message queues (and create if they don't exist), TODO: Do
-         this in two stages */
-      CallErrReturn(mq_clear,("/jmh-master"),EXIT_FAILURE);
-      CallErrReturn(mq_clear,("/jmh-client"),EXIT_FAILURE);
-      debug_print("Queues cleared:\n");
-
-      /* Initiate threads */
-      for (size_t i=0; i<nthreads; i++) {
-        CallErr(pthread_create,
-                (&threads[i], &attr,
-                 sps::launch_member_function<sps::pthread_launcher<Aperture<T>,
-                 &Aperture<T>::CalcThreadFunc> >,
-                 &launcher[i]));
-      }
-      ApertureQueue<T>::threads_initialized = true;
-    }
-
-    // ERROR HERE
-    /* Signal idling threads to run */
-    CallErrReturn(ApertureQueue<T>::mqd_client = mq_open,
-                  ("/jmh-client", O_WRONLY,
-                   S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH,
-                   NULL), false);
-
-    for (size_t i=0 ; i < nthreads ; i++) {
-      // Placed on queue with decreasing order of priority
-      prio = i;
-      if (mq_send(ApertureQueue<T>::mqd_client,"RUN",3,prio)==-1)
-        perror ("mq_send()");
-      debug_print("Send: RUN:\n");
-    }
-    mq_close(ApertureQueue<T>::mqd_client);
-
-    /* Wait for threads to finish */
-    CallErrReturn(ApertureQueue<T>::mqd_master = mq_open,
-                  ("/jmh-master", O_RDONLY,
-                   S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH,
-                   NULL), false);
-
-    mq_getattr(ApertureQueue<T>::mqd_master, &qattr);
-
-    size_t n_to_go = nthreads;
-    size_t n_idle  = 0;
-
-    /* Wait for threads to finish */
-    while (true) {
-      debug_print("Master waiting\n");
-      ssize_t len = mq_receive(ApertureQueue<T>::mqd_master, &buf[0], qattr.mq_msgsize, &prio);
-      debug_print("Master received\n");
-      buf[len] = '\0';
-      debug_print("%s\n",buf);
-      if (!strncmp(buf,"DONE",4)) {
-        n_to_go--;
-      } else if (!strncmp(buf,"READY",5)) {
-        n_idle++;
-      } else {
-        debug_print("Unexpected message: %s\n",buf);
-        retval = false;
-        break;
-      }
-      if (n_to_go==0)
-        break;
-    }
-
-    debug_print("We are done\n");
-
-    // Are we really done???
-    mq_close(ApertureQueue<T>::mqd_master);
-# else
-    /* Without message queues (slower) */
-    for (size_t i=0; i<nthreads; i++) {
-      launcher[i] =
-        sps::pthread_launcher<Aperture<T>,&Aperture<T>::CalcThreaded>(this,
-            &ApertureThreadArgs<T>::args[i]);
-    }
-    for (size_t i=0; i<nthreads; i++) {
-#  if defined(HAVE_PTHREAD_H)
-      CallErr(pthread_create,
-              (&threads[i], &attr,
-               sps::launch_member_function<sps::pthread_launcher<Aperture<T>,
-               &Aperture<T>::CalcThreaded> >,
-               &launcher[i]));
-#  elif defined(_WIN32)
-      threads[i] =
-        (uintptr_t) _beginthreadex(NULL, 0,
-                                   sps::launch_member_function<sps::pthread_launcher<Aperture<T>,
-                                   &Aperture<T>::CalcThreaded> >,
-                                   &launcher[i], 0, &threadID );
-#  endif
-    }
-
-    for (size_t i = 0; i < nthreads; i++) {
-#  if defined(HAVE_PTHREAD_H)
-      CallErr(pthread_join,(threads[i],NULL));
-#  elif defined(_WIN32)
-      WaitForSingleObject((HANDLE) threads[i], INFINITE );
-      //GetExitCodeThread(threads[i],&exitCode);
-      /*
-        The exit value specified in the ExitThread or TerminateThread function.
-        The return value from the thread function.
-        The exit value of the thread's process.
-       */
-#  endif
-    }
-    // Without message queues we destroy attributes
-#  if defined(HAVE_PTHREAD_H)
-    CallErr(pthread_attr_destroy,(&attr));
-#  endif
-# endif
-#endif
-    return retval;
-  }
-#endif
-
-  // TODO: Move to fnm_calc.cpp
-  template <class T>
-  int Aperture<T>::CalcCwFocus(const T* pos, const size_t nPositions, const size_t nDim,
-                               std::complex<T>** odata, size_t* nOutPositions)
-  {
-
-    assert(nDim == 3);
-    if (nDim != 3) {
-      *odata = NULL;
-      *nOutPositions = 0;
-      return -1;
-    }
-    *odata = (std::complex<T>*) malloc(nPositions*sizeof(std::complex<T>));
-    memset(*odata, 0, nPositions*sizeof(std::complex<T>));
-    *nOutPositions = nPositions;
-
-    const T lambda = Aperture<T>::_sysparm.c / m_data->m_f0;
-
-    const T k = T(M_2PI)/lambda;
-
-    const size_t nElements = m_data->m_nelements;
-
-    const T* apodizations = m_data->m_apodizations.get();
-
-    T apodization;
-
-    // Need weights and abcissa values
-
-    size_t nDivW = Aperture<T>::_sysparm.nDivW;
-    size_t nDivH = Aperture<T>::_sysparm.nDivH;
-
-    // TODO: For FDTSD store these
-    auto uweights = sps::deleted_aligned_array_create<T>(nDivW);
-    auto vweights = sps::deleted_aligned_array_create<T>(nDivH);
-    auto uxs      = sps::deleted_aligned_array_create<T>(nDivW);
-    auto vxs      = sps::deleted_aligned_array_create<T>(nDivH);
-
-    memset(uxs.get(),0,sizeof(T)*nDivW);
-    memset(vxs.get(),0,sizeof(T)*nDivH);
-
-    memset(uweights.get(),0,sizeof(T)*nDivW);
-    memset(vweights.get(),0,sizeof(T)*nDivH);
-
-    // Common weights and abcissa
-    for (size_t i = 0 ; i < nDivW ; i++) {
-      gl::GLNode qp = gl::GL(nDivW,i);
-      uxs[i]        = T(qp.value);
-      uweights[i]   = T(qp.weight);
-    }
-
-    for (size_t i = 0 ; i < nDivH ; i++) {
-      gl::GLNode qp = gl::GL(nDivH, i);
-      vxs[i]      = T(qp.value);
-      vweights[i] = T(qp.weight);
-    }
-
-    auto& elements = m_data->m_elements;
-
-    sps::point_t<T> projection;
-
-    // TODO: Update to work for double
-
-    // vectors, pos, output
-    for (size_t iPoint = 0 ; iPoint < nPositions ; iPoint++) {
-
-#ifdef FNM_DOUBLE_SUPPORT
-      sps::point_t<T> point;
-      memcpy(&point[0],&pos[iPoint*3],3*sizeof(T));
-#else
-      __m128 vec_point = _mm_set_ps(0.0f, float(pos[iPoint*3 + 2]),float(pos[iPoint*3 + 1]),float(pos[iPoint*3]));
-#endif
-
-      size_t iElement = iPoint % nElements;
-
-      apodization = apodizations[iElement];
-
-      std::complex<T> final = std::complex<T>(T(0.0),T(0.0));
-
-      if (apodization != 0.0) {
-
-        for (size_t jElement = 0 ; jElement < this->m_data->m_nsubelements ; jElement++) {
-
-          const sps::element_t<T>& element = elements[iElement][jElement];
-
-          std::complex<T> result;
-
-#ifdef FNM_DOUBLE_SUPPORT
-          sps::point_t<T> r2p = point - element.center;
-          sps::point_t<T> hh_dir,hw_dir,normal;
-
-          // Projection onto plane
-          projection[0] = dot(hw_dir,r2p);
-          projection[1] = dot(hh_dir,r2p);
-          projection[2] = fabs(dot(normal,r2p));
-#else
-          assert(((uintptr_t)&element.center[0] & 0x0F) == 0 && "Data must be aligned");
-          assert(((uintptr_t)&element.uvector[0] & 0x0F) == 0 && "Data must be aligned");
-          assert(((uintptr_t)&element.vvector[0] & 0x0F) == 0 && "Data must be aligned");
-          __m128 vec_r2p = _mm_sub_ps(vec_point, _mm_load_ps((float*)&element.center[0]));
-
-          // Use vectors stored with elements (not working, if not set using ElementsSet)
-          _mm_store_ss((float*)&projection[0],_mm_dp_ps(_mm_load_ps((float*)&element.uvector[0]), vec_r2p,0x71));
-          _mm_store_ss((float*)&projection[1],_mm_dp_ps(_mm_load_ps((float*)&element.vvector[0]), vec_r2p,0x71));
-          _mm_store_ss((float*)&projection[2],_mm_fabs_ps(_mm_dp_ps(_mm_load_ps((float*)&element.normal[0]), vec_r2p,0x71)));
-#endif
-          result = CalcHzFast<T>(element, projection, k,
-                                 uxs.get(), uweights.get(), nDivW,
-                                 vxs.get(), vweights.get(), nDivH);
-          T real = result.real();
-          T imag = result.imag();
-
-          T carg = cos(m_data->m_phases[iElement]);
-          T sarg = sin(m_data->m_phases[iElement]);
-          final.real(final.real() + real*carg - imag*sarg);
-          final.imag(final.imag() + real*sarg + imag*carg);
-        }
-      }
-      (*odata)[iPoint].real(final.real());
-      (*odata)[iPoint].imag(final.imag());
-    }
-    return 0;
-  }
-
-// How do we pass arguments to running thread
-#ifdef HAVE_MQUEUE_H
-  template <class T>
-  void* Aperture<T>::CalcThreadFunc(void *ptarg)
-  {
-
-    char buf[MSGMAX];
-    thread_arg* threadarg = NULL;
-    //cpu_set_t set;
-    struct mq_attr qattr;
-    unsigned int prio;
-
-    threadarg = (thread_arg*) ptarg;
-
-    int thread_id = threadarg->thread_id;
-
-    // Priority set to thread ID
-    prio = thread_id;
-
-    //setcpuid(threadarg->cpu_id);
-
-    debug_print("Queue initialized: iPointBegin: %zu\n", threadarg->iPointBegin);
-    mqd_t lmqd_master;
-    mqd_t lmqd_client;
-    CallErrReturn(lmqd_master = mq_open,
-                  ("/jmh-master",O_WRONLY,
-                   S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH,
-                   NULL), NULL);
-
-    // Post Message
-    if (mq_send(lmqd_master,"READY",5,prio)==-1)
-      perror ("mq_send(): READY");
-    debug_print("Send: READY\n");
-
-    int state = 0; // Ready
-    void* thread_retval = NULL;
-
-    CallErrReturn(lmqd_client = mq_open,
-                  ("/jmh-client",O_RDONLY,
-                   S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH,
-                   NULL), NULL);
-
-    mq_getattr (lmqd_client, &qattr);
-
-    qattr.mq_flags &= ~O_NONBLOCK;
-    mq_setattr(lmqd_client,&qattr,0);
-    int rett = 0;
-
-    //ssize_t mq_timedreceive
-
-    // TODO: Receive only with a given priority
-    while(mq_receive(lmqd_client, &buf[0], qattr.mq_msgsize, &prio) != -1) {
-      debug_print("Message received\n");
-      if (errno == EAGAIN) {
-        debug_print("Apparently non-blocking\n");
-        pthread_exit(NULL);
-      }
-
-      if (!strcmp(buf,"RESET"))
-        state = 0;
-      else if (!strncmp(buf,"RUN",3)) {
-        state = 1;
-      } else if (!strncmp(buf,"EXIT",4)) {
-        state = 3;
-        // Break while loop
-        break;
-      } else {
-        printf("Unknown message: %s", buf);
-      }
-
-      switch (state) {
-      case 0:
-      case 1:
-        debug_print("Call: CalcThreaded\n");
-
-        // TESTME (use thread ID gettid())
-        //threadarg = Aperture<float>::threadarg[
-
-        thread_retval = this->CalcThreaded((void*)threadarg);
-        state = 2;
-      case 2:
-        debug_print("Send: DONE\n");
-        rett = mq_send(lmqd_master,"DONE", 4, prio);
-        if (rett==-1) {
-          printf("Error sending DONE\n");
-          perror ("mq_send()");
-        }
-        state = 0;
-        break; // break-out of switch only
-      case 3:
-        // Should exit
-        break;
-      default:
-        break;
-      }
-    };
-
-    // TODO: Should I close the master
-    CallErrReturn(mq_close,(lmqd_client),NULL);
-    CallErrReturn(mq_close,(lmqd_master),NULL);
-    // We do not need to join, right?
-    pthread_exit(thread_retval);
-  }
-#endif
-
-
-#ifndef FNM_DOUBLE_SUPPORT
-#if defined(HAVE_PTHREAD_H)
-# ifdef HAVE_MQUEUE_H
-  template <class T>
-  void* Aperture<T>::CalcThreaded(void* ptarg) // Verify
-# else
-  template <class T>
-  void* Aperture<T>::CalcThreaded(void* ptarg)
-# endif
-#else
-  template <class T>
-  unsigned int __stdcall Aperture<T>::CalcThreaded(void *ptarg)
-#endif
-  {
-    fnm::thread_arg<T>* pThreadArg = reinterpret_cast<fnm::thread_arg<T>*>(ptarg);
-
-    const T* uxs                 = pThreadArg->uxs;
-    const T* vxs                 = pThreadArg->vxs;
-    const T* uweights            = pThreadArg->uweights;
-    const T* vweights            = pThreadArg->vweights;
-    const T* pos                 = pThreadArg->pos;
-    const size_t nDivW           = pThreadArg->nDivU;
-    const size_t nDivH           = pThreadArg->nDivV;
-    std::complex<T>* odata       = pThreadArg->field;
-
-#ifndef HAVE_MQUEUE_H
-# ifdef HAVE_THREAD
-    setcpuid(pThreadArg->cpu_id);
-# endif
-#endif
-
-    const size_t nElements = m_data->m_nelements;
-    auto& elements = m_data->m_elements;
-    T apodization;
-    T k = pThreadArg->k;
-
-    const T* apodizations = m_data->m_apodizations.get();
-
-    ALIGN16_BEGIN sps::point_t<T> projection ALIGN16_END;
-
-#ifdef _MSC_VER
-    debug_print("iPointBegin: %Iu, iPointEnd: %Iu\n", pThreadArg->iPointBegin, pThreadArg->iPointEnd);
-#else
-    debug_print("iPointBegin: %zu, iPointEnd: %zu\n", pThreadArg->iPointBegin, pThreadArg->iPointEnd);
-#endif
-
-#if FNM_ENABLE_ATTENUATION
-    T alpha = T(0.5) * T(100) / T(1e6) * m_data->m_f0 * T(0.1151);
-#endif
-
-    // vectors, pos, output
-    for (size_t iPoint = pThreadArg->iPointBegin ; iPoint < pThreadArg->iPointEnd ; iPoint++) {
-
-      __m128 vec_point =
-        _mm_set_ps(0.0f,
-                   float(pos[iPoint*3 + 2]),
-                   float(pos[iPoint*3 + 1]),
-                   float(pos[iPoint*3 + 0]));
-
-      std::complex<T> final = std::complex<T>(T(0.0),T(0.0));
-
-      for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
-
-        apodization = apodizations[iElement];
-
-        if (apodization != 0.0) {
-
-          for (size_t jElement = 0 ; jElement <  m_data->m_nsubelements ; jElement++) {
-
-            const auto& element = elements[iElement][jElement];
-            std::complex<T> result;
-            assert( ((uintptr_t)&element.center[0] & 0xF) == 0);
-            assert( ((uintptr_t)&element.uvector[0] & 0xF) == 0);
-            assert( ((uintptr_t)&element.vvector[0] & 0xF) == 0);
-            __m128 vec_r2p = _mm_sub_ps(
-                               vec_point,
-                               _mm_load_ps((float*)&element.center[0]));
-            _mm_store_ss((float*)&projection[0],
-                         _mm_dp_ps(_mm_load_ps(&element.uvector[0]),
-                                   vec_r2p,0x71));
-            _mm_store_ss((float*)&projection[1],
-                         _mm_dp_ps(_mm_load_ps(&element.vvector[0]),
-                                   vec_r2p,0x71));
-            _mm_store_ss((float*)&projection[2],
-                         _mm_fabs_ps(_mm_dp_ps(_mm_load_ps(&element.normal[0]),
-                                               vec_r2p,0x71)));
-
-            // TODO: Un-roll by a factor of 4
-            result = CalcHzFast<T>(element, projection, k,
-                                   uxs, uweights, nDivW,
-                                   vxs, vweights, nDivH);
-
-            T real = apodization * result.real();
-            T imag = apodization * result.imag();
-
-            T carg = cos(m_data->m_phases[iElement]);
-            T sarg = sin(m_data->m_phases[iElement]);
-
-            // TODO: Fix attenuation (HERE). It is not working
-#if FNM_ENABLE_ATTENUATION
-            T dist = (T) _mm_cvtss_f32(_mm_sqrt_ps(_mm_dp_ps(vec_r2p,vec_r2p,0x71)));
-            T factor = exp(-dist*alpha);
-            final.real(final.real() + factor*(real*carg - imag*sarg));
-            final.imag(final.imag() + factor*(real*sarg + imag*carg));
-#else
-            final.real(final.real() + real*carg - imag*sarg);
-            final.imag(final.imag() + real*sarg + imag*carg);
-#endif
-          }
-        }
-      }
-      odata[iPoint].real(final.real());
-      odata[iPoint].imag(final.imag());
-    }
-    debug_print("Thread done\n");
-#if HAVE_PTHREAD_H
-# ifdef HAVE_MQUEUE_H
-    return NULL;
-# else
-    pthread_exit(NULL);
-# endif
-#else
-    return 0;
-#endif
-  }
-#endif
 
   template <class T>
   void Aperture<T>::ManagedAllocation(std::complex<T>** outTest, size_t* nOutTest)
@@ -1649,7 +1206,6 @@ namespace fnm {
     return retval;
   }
 
-#ifndef FNM_DOUBLE_SUPPORT
   template <class T>
   int Aperture<T>::CalcAsa(const T* y0, const size_t nx, const size_t ny,
                            // Vector of z coordinates
@@ -1806,33 +1362,7 @@ namespace fnm {
   }
 #endif
 
-  // Specialize static variable
-  template <class T>
-  thread_arg<T> ApertureThreadArgs<T>::args[N_MAX_THREADS];
-
-#ifdef HAVE_MQUEUE_H
-  // Static variables
-  template <class T>
-  bool  ApertureQueue<T>::threads_initialized = false;
-
-  template <class T>
-  mqd_t ApertureQueue<T>::mqd_master = 0;
-
-  template <class T>
-  mqd_t ApertureQueue<T>::mqd_client = 0;
-#endif
-
-  //  template <class T>
-  //  sysparm_t<T> Aperture<float>::_sysparm;
-
-#ifdef HAVE_MQUEUE_H
-  template class ApertureQueue<float>;
-#endif
-
 #ifdef FNM_DOUBLE_SUPPORT
-# ifdef HAVE_MQUEUE_H
-  template class ApertureQueue<double>;
-# endif
   template class Aperture<double>;
 #endif
 
@@ -1840,19 +1370,7 @@ namespace fnm {
 }
 
 // Template instantiation
-#ifdef HAVE_MQUEUE_H
-template class sps::pthread_launcher<fnm::Aperture<float>,&fnm::Aperture<float>::CalcThreadFunc>;
-#endif
 
-#ifndef FNM_DOUBLE_SUPPORT
-template class sps::pthread_launcher<fnm::Aperture<float>,&fnm::Aperture<float>::CalcThreaded>;
-#endif
-
-#ifdef FNM_DOUBLE_SUPPORT
-# ifdef HAVE_MQUEUE_H
-template class sps::pthread_launcher<fnm::Aperture<double>,&fnm::Aperture<double>::CalcThreadFunc>;
-# endif
-#endif
 
 /* Local variables: */
 /* indent-tabs-mode: nil */

@@ -20,6 +20,25 @@ foreach(file ${files})
     message(STATUS "File $ENV{DESTDIR}${file} does not exist.")
   endif(IS_SYMLINK "$ENV{DESTDIR}${file}" OR EXISTS "$ENV{DESTDIR}${file}")
 endforeach(file)
+
+set(dir_list "")
+foreach(file ${files})
+  get_filename_component(dir "${file}" DIRECTORY)
+  list(FIND dir_list "${dir}" _index)
+  if (NOT ${_index} GREATER -1)
+    message(STATUS "Removing directory ${dir}")
+    exec_program(
+      "@CMAKE_COMMAND@" ARGS "-E remove_directory \"${dir}\""
+      OUTPUT_VARIABLE rm_out
+      RETURN_VALUE rm_retval
+      )
+    if(NOT "${rm_retval}" STREQUAL 0)
+      message(FATAL_ERROR "Problem when removing ${dir}")
+    endif(NOT "${rm_retval}" STREQUAL 0)
+  endif()
+  list(APPEND dir_list "${dir}") 
+endforeach(file)
+
 # IF(NOT EXISTS "@CMAKE_CURRENT_BINARY_DIR@/install_manifest.txt")
 #   MESSAGE(FATAL_ERROR "Cannot find install manifest: "@CMAKE_CURRENT_BINARY_DIR@/install_manifest.txt"")
 # ENDIF(NOT EXISTS "@CMAKE_CURRENT_BINARY_DIR@/install_manifest.txt")

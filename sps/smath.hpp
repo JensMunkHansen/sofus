@@ -45,6 +45,7 @@ int signum(T x, std::false_type is_signed)
 {
   return T(0) < x;
 }
+
 /**
  * Signum function
  *
@@ -340,6 +341,9 @@ namespace sps {
   template struct SPS_EXPORT euler_t<double>;
 #endif
 
+  template <typename T>
+  void SPS_EXPORT basis_rotate(const sps::point_t<T>& input, const euler_t<T>& euler, sps::point_t<T>& output);
+
   /**
    * Function for returning the basis vector for a given coordinate
    * system defined using 3 Euler angles according to the the z-x-z'
@@ -383,28 +387,6 @@ namespace sps {
 }
 
 /*@}*/
-
-// TODO: Consider using aligned memory (only), e.g.
-
-/*
-typedef float f4 __attribute__((vector_size(16)));
-typedef union { f4 v; float f[4]; } simdfu;
-
-void vecadd(f4 * restrict a, f4 * restrict b, f4 * restrict c);
-
-float a[16] __attribute__((aligned(16)));
-float b[16] __attribute__((aligned(16)));
-float c[16] __attribute__((aligned(16)));
-
-int main()
-{
-a = __builtin_assume_aligned (a, 8);
-
-    vecadd((f4 *) a, (f4 *) b, (f4 *) c);
-    return 0;
-}
-*/
-
 
 /* Local variables: */
 /* indent-tab-mode: nil */

@@ -8,6 +8,19 @@
 namespace sps {
 
   template <typename T>
+  void basis_rotate(const sps::point_t<T>& input, const euler_t<T>& euler, sps::point_t<T>& output)
+  {
+    sps::point_t<T> vec0, vec1, vec2;
+    basis_vectors<T>(vec0, euler, 0);
+    basis_vectors<T>(vec1, euler, 1);
+    basis_vectors<T>(vec2, euler, 2);
+
+    output[0] = vec0[0]*input[0] + vec1[0]*input[1] + vec2[0]*input[2];
+    output[1] = vec0[1]*input[0] + vec1[1]*input[1] + vec2[1]*input[2];
+    output[2] = vec0[2]*input[0] + vec1[2]*input[1] + vec2[2]*input[2];
+  }
+
+  template <typename T>
   void basis_vectors(sps::point_t<T>& output, const euler_t<T>& euler, size_t index)
   {
 
@@ -98,23 +111,35 @@ namespace sps {
     v4f c,s;
     _mm_sin_cos_ps(a,&s.v,&c.v);
 
-    // TODO: Figure out how to shuffle
     v4f* p0 = (v4f*)vec0;
+    v4f* p1 = (v4f*)vec1;
+    v4f* p2 = (v4f*)vec2;
 
+#if ROTATION_CONVENTION == ROTATION_CONVENTION_EULER_ZYZ
     p0->f32[0] =  c.f32[0]*c.f32[2]          - c.f32[2]*s.f32[0]*s.f32[2];
     p0->f32[1] = -c.f32[1]*c.f32[2]*s.f32[0] - c.f32[0]*s.f32[2];
     p0->f32[2] =  s.f32[0]*s.f32[1];
 
-    v4f* p1 = (v4f*)vec1;
     p1->f32[0] =  c.f32[2]*s.f32[0]          + c.f32[2]*c.f32[1]*s.f32[2];
     p1->f32[1] =  c.f32[0]*c.f32[1]*c.f32[2] - s.f32[0]*s.f32[2];
     p1->f32[2] = -c.f32[0]*s.f32[1];
 
-    v4f* p2 = (v4f*)vec2;
     p2->f32[0] = s.f32[1]*s.f32[2];
     p2->f32[1] = c.f32[2]*s.f32[1];
     p2->f32[2] = c.f32[1];
+#elif ROTATION_CONVENTION == ROTATION_CONVENTION_EULER_YXY
+    p0->f32[0] =  c.f32[0]*c.f32[2]          - c.f32[2]*s.f32[0]*s.f32[2];
+    p0->f32[1] =  s.f32[1]*s.f32[2];
+    p0->f32[2] = -c.f32[0]*c.f32[1]*s.f32[2] - c.f32[2]*s.f32[0];
 
+    p1->f32[0] =  s.f32[0]*s.f32[1];
+    p1->f32[1] =  c.f32[1];
+    p1->f32[2] =  c.f32[0]*s.f32[1];
+
+    p2->f32[0] = c.f32[0]*s.f32[2] + c.f32[1]*c.f32[2]*s.f32[0];
+    p2->f32[1] = -c.f32[2]*s.f32[1];
+    p2->f32[2] = c.f32[0]*c.f32[1]*c.f32[2] - s.f32[0]*s.f32[2];
+#endif
   }
 
   template <>
@@ -134,7 +159,19 @@ namespace sps {
     const double cc = cos(gamma);
 
     // Intrinsic rotations, y, x and y'
-    // Mult by (a,b,c) to get x component
+#if ROTATION_CONVENTION == ROTATION_CONVENTION_EULER_ZYZ
+    vec0[0]= ca*cc-cb*sa*sc;
+    vec0[1]=-cb*cc*sa-ca*sc;
+    vec0[2]= sa*sb;
+
+    vec1[0]= cc*sa+ca*cb*sc;
+    vec1[1]= ca*cb*cc-sa*sc;
+    vec2[2]=-ca*sb;
+
+    vec2[0]= sb*sc;
+    vec2[1]= cc*sb;
+    vec2[2]= cb;
+#elif ROTATION_CONVENTION == ROTATION_CONVENTION_EULER_YXY
     vec0[0]= ca*cc - cb*sa*sc;
     vec0[1]= sb*sc;
     vec0[2]=-ca*cb*sc - cc*sa;
@@ -146,6 +183,7 @@ namespace sps {
     vec2[0]= ca*sc + cb*cc*sa;
     vec2[1]=-cc*sb;
     vec2[2]= ca*cb*cc - sa*sc;
+#endif
   }
 
 #ifdef _WIN32
@@ -176,6 +214,9 @@ namespace sps {
   template std::ostream& operator<<(std::ostream& out, const point_t<float>& point);
   template void SPS_EXPORT basis_vectors(float* vec0, float* vec1, float* vec2, const sps::euler_t<float>& euler);
 
+  template void SPS_EXPORT basis_rotate(const sps::point_t<float>& input, const sps::euler_t<float>& euler,
+                                        sps::point_t<float>& output);
+
   template void SPS_EXPORT dists_most_distant_and_closest(const sps::bbox_t<float> &box0,
       const sps::bbox_t<float> &box1,
       float* distNear,
@@ -200,6 +241,10 @@ namespace sps {
   template void SPS_EXPORT basis_vectors(sps::point_t<double>& output, const sps::euler_t<double>& euler, size_t index);
   template std::ostream& operator<<(std::ostream& out, const point_t<double>& point);
   template void SPS_EXPORT basis_vectors(double* vec0, double* vec1, double* vec2, const sps::euler_t<double>& euler);
+
+  template void SPS_EXPORT basis_rotate(const sps::point_t<double>& input, const sps::euler_t<double>& euler,
+                                        sps::point_t<double>& output);
+
 
   template void SPS_EXPORT dists_most_distant_and_closest(const sps::bbox_t<double> &box0,
       const sps::bbox_t<double> &box1,

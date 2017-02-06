@@ -16,6 +16,7 @@
  *
  */
 
+#include <sps/config.h>
 #include <fnm/fnm_export.h>
 #include <fnm/config.h>
 #include <fnm/fnm_types.hpp>
@@ -25,6 +26,11 @@
 #endif
 
 #include <complex>
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4290)
+#endif
 
 //! Fast Nearfield Method interfaces and implementations
 namespace fnm {
@@ -37,9 +43,11 @@ namespace std {
   class runtime_error;
 }
 
+#ifdef USE_PROGRESS_BAR
 namespace sps {
   class ProgressBarInterface;
 }
+#endif
 
 /*!
  * @addtogroup FNM
@@ -47,6 +55,12 @@ namespace sps {
  */
 
 namespace fnm {
+
+#ifdef USE_PROGRESS_BAR
+  typedef sps::ProgressBarInterface ProgIF;
+#else
+  typedef void ProgIF;
+#endif
 
   /*! \brief Aperture class
    *
@@ -75,6 +89,13 @@ namespace fnm {
      */
     Aperture(const size_t nElements, const T width, const T kerf, const T height);
 
+
+    Aperture(const size_t nElements, const T width, const T kerf, const T height,
+             const size_t nSubH, const T focus);
+
+    Aperture(const size_t nElements, const T width, const T kerf, const T height,
+             const T radius,
+             const size_t nSubH, const T focus);
     /**
      * Destructor
      *
@@ -113,12 +134,22 @@ namespace fnm {
     void PhasesGet(T** data, size_t* nData);
 
     /**
+     * Get phases of elements
+     *
+     * @param data
+     * @param nData
+     */
+    void SubPhasesGet(T** data, size_t* nData);
+
+    /**
      * Get delays of elements
      *
      * @param data
      * @param nData
      */
     void DelaysGet(T** data, size_t* nData);
+
+    void DelaysSet(const T* data, const size_t nData);
 
     /**
      * Get rectangles for display
@@ -135,6 +166,46 @@ namespace fnm {
 
     //a{
     /** Read-write attributes */
+
+    /**
+     *
+     *
+     * @param iEnabled
+     */
+    void AttenuationEnabledSet(const bool& iEnabled);
+
+    /**
+     *
+     *
+     *
+     * @return
+     */
+    const bool& AttenuationEnabledGet() const;
+
+    void AlphaSet(const T& value);
+
+    /**
+     *
+     *
+     *
+     * @return
+     */
+    const T& AlphaGet() const;
+
+    /**
+     *
+     *
+     * @param value
+     */
+    void BetaSet(const T& value);
+
+    /**
+     *
+     *
+     *
+     * @return
+     */
+    const T& BetaGet() const;
 
     /**
      * Get element position data
@@ -171,14 +242,13 @@ namespace fnm {
     /**
      * Get focus type used
      *
-     * @param oFocus
      */
     int FocusingTypeGet() const;
 
     /**
      * Set focus type used
      *
-     * @param iFocus
+     * @param iFocusingType
      */
     void FocusingTypeSet(const int iFocusingType);
 
@@ -211,6 +281,13 @@ namespace fnm {
      */
     void F0Set(const T f0);
 
+    const sysparm_t<T> SysParmGet() const;
+
+    /**
+     * Set the system parameters
+     *
+     * @param arg
+     */
     void SysParmSet(const sysparm_t<T> *arg);
 
 #ifdef FNM_PULSED_WAVE
@@ -369,7 +446,14 @@ namespace fnm {
      */
     void ApodizationSet(const T* data, const size_t nData);
 
+#ifdef USE_PROGRESS_BAR
+    /**
+     * Set the progress bar used for notification
+     *
+     * @param pbar
+     */
     void ProgressBarSet(sps::ProgressBarInterface* pbar);
+#endif
     //a}
 
     /**
@@ -396,8 +480,22 @@ namespace fnm {
      */
     T CalcPwField(const T* pos, const size_t nPositions, const size_t nDim,
                   T** odata, size_t* nSignals, size_t* nSamples);
-#endif
 
+    /**
+     *
+     *
+     * @param pos
+     * @param nPositions
+     * @param nDim
+     * @param odata
+     * @param nSignals
+     * @param nSamples
+     *
+     * @return
+     */
+    T CalcPwFieldThreaded(const T* pos, const size_t nPositions, const size_t nDim,
+                          T** odata, size_t* nSignals, size_t* nSamples);
+#endif
     /**
      * Compute CW response at multiple positions. Reference
      * implementation. The ranges of integration are reduced to give
@@ -426,6 +524,23 @@ namespace fnm {
      */
     int CalcCwFast(const T* pos, const size_t nPositions, const size_t nDim,
                    std::complex<T>** odata, size_t* nOutPositions);
+
+
+    /**
+     * Same as CalcCwField, but uses SIMD.
+     *
+     * TODO: Remove when CalcCwFieldRef is fixed
+     *
+     * @param pos
+     * @param nPositions
+     * @param nDim
+     * @param odata
+     * @param nOutPositions
+     *
+     * @return
+     */
+    int CalcCwField2(const T* pos, const size_t nPositions, const size_t nDim,
+                     std::complex<T>** odata, size_t* nOutPositions);
 #endif
 
     /**
@@ -444,24 +559,6 @@ namespace fnm {
      */
     int CalcCwField(const T* pos, const size_t nPositions, const size_t nDim,
                     std::complex<T>** odata, size_t* nOutPositions);
-
-#ifndef FNM_DOUBLE_SUPPORT
-    /**
-     * Same as CalcCwField, but uses SIMD.
-     *
-     * TODO: Remove when CalcCwFieldRef is fixed
-     *
-     * @param pos
-     * @param nPositions
-     * @param nDim
-     * @param odata
-     * @param nOutPositions
-     *
-     * @return
-     */
-    int CalcCwField2(const T* pos, const size_t nPositions, const size_t nDim,
-                     std::complex<T>** odata, size_t* nOutPositions);
-#endif
 
     //@}
 
@@ -486,13 +583,24 @@ namespace fnm {
     /// System parameters (We could make a long list of functions friends of Aperture)
     static sysparm_t<T> _sysparm;
 
-#ifdef FNM_PULSED_WAVE
+    /// TODO: Remove
     static T fs;
+
+    /// Number of threads
+    static size_t nthreads;
+
+#if (defined(SWIG_VERSION) && (SWIG_VERSION > 0x030000)) && defined(__GNUG__)
+    // Supported by SWIG3.0
+    static constexpr T Neper_dB = 0.11512925464970231;
+    static constexpr T dB_Neper = 8.685889638065035;
+#else
+    static const T Neper_dB; /**< Nepers per dB, 1 / ( 20 log(e)) */
+    static const T dB_Neper;
 #endif
+
     //a}
   private:
     void ManagedAllocation(std::complex<T>** outTest, size_t* nOutTest);
-
 
     /**
      * The positions must all equal the focus point and the number
@@ -512,9 +620,7 @@ namespace fnm {
     int CalcCwFocus(const T* pos, const size_t nPositions, const size_t nDim,
                     std::complex<T>** odata, size_t* nOutPositions);
 
-    /// Number of threads
-    static size_t nthreads;
-
+  private:
     /**
      * Initialize elements. This function must be called whenever
      * elements are changed.
@@ -532,28 +638,43 @@ namespace fnm {
      *
      * @return
      */
-#if defined(HAVE_PTHREAD_H)
-# ifdef HAVE_MQUEUE_H
+# if defined(HAVE_PTHREAD_H)
+#  ifdef HAVE_MQUEUE_H
     void* CalcThreadFunc(void* ptarg);
-# endif
+#  endif
     // TODO: Invalid read of size 4
-    void* CalcThreaded(void* ptarg);
-#elif defined(_WIN32)
-    unsigned int __stdcall CalcThreaded(void *ptarg);
+    void* CalcCwThreaded(void* ptarg);
+# elif defined(_WIN32)
+    unsigned int __stdcall CalcCwThreaded(void *ptarg);
+# endif
 #endif
-#endif
+
+    /// PIMPL design (data)
 
     ///< Data
     ApertureData<T>* m_data;
 
+    // TODO: Use typedef
+#ifdef USE_PROGRESS_BAR
     sps::ProgressBarInterface* m_pbar;
+#else
+    void* m_pbar;
+#endif
+
+    // TODO: Distinguish between time- and freq- domain
 #ifdef FNM_PULSED_WAVE
     sofus::AperturePulses<T>* m_pulses;
 #endif
+
+    //sofus::m_time_domain_data;
+
   };
 }
 /*! @} End of FNM Group */
 
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 /* Local variables: */
 /* indent-tabs-mode: nil */

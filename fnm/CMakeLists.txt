@@ -14,6 +14,13 @@ if (Threads_FOUND)
   set(HAVE_THREAD 1)
 endif()
 
+# DEBUG ISSUES
+#ifndef _DEBUG
+#define _SECURE_SCL 0
+#endif
+#add_definitions( -D_SECURE_SCL=0 )
+#add_definitions(-DMS_NO_COREDLL)
+
 # On POSIX compliant systems, we would like to support asynchronous execution
 check_include_file(pthread.h HAVE_PTHREAD_H)
 check_include_file(signal.h HAVE_SIGNAL_H)
@@ -25,6 +32,8 @@ if (NOT USE_MQUEUE)
   set(HAVE_MQUEUE_H 0)
 endif()
 
+#add_definitions(-DSPS_DEBUG)
+
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   add_definitions(-DSPS_DEBUG)
 endif(CMAKE_BUILD_TYPE MATCHES Debug)
@@ -35,9 +44,10 @@ endif()
 
 option(BUILD_SWIG_INTERFACE "Build SWIG interface" ON)
 
+set(FNM_MULTI_ARRAYS 1)
+
 set(N_MAX_THREADS 8)
 set(ACCURATE_TRIGONOMETRICS 0)
-
 option (USE_Accurate_trigonometrics "Use scalar versions" OFF)
 if (USE_Accurate_trigonometrics)
   set(ACCURATE_TRIGONOMETRICS 1)
@@ -51,14 +61,11 @@ else()
   set(FNM_ENABLE_ATTENUATION 0)
 endif()
 
-set (FNM_PULSED_WAVE 0)
-option (FNM_PULSED_Wave "FNM Enable pulsed wave" OFF)
-if (FNM_PULSED_Wave)
-  set (FNM_PULSED_WAVE 1)
-else()
-  set (FNM_PULSED_WAVE 0)
+set(FNM_DOUBLE_SUPPORT 0)
+option(FNM_Double_support "Support double precision" OFF)
+if (FNM_Double_support)
+  set(FNM_DOUBLE_SUPPORT 1)
 endif()
-
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
 
@@ -71,6 +78,7 @@ set(fnm_HEADERS
   FnmSIMD.hpp
   fnm_calc.hpp
   fnm_data.hpp
+  fnm_arrays.hpp
 )
 
 set(fnm_PUBLIC_HEADERS
@@ -85,6 +93,7 @@ set(fnm_SOURCES
   fnm_data.cpp
   fnm_calc.cpp
   fnm.cpp
+  fnm_arrays.cpp
 )
 
 if (UNIX AND NOT WIN32)
@@ -108,12 +117,20 @@ if (WIN32)
   if (BUILD_SHARED_LIBS)
     # Works with CMake 2.4
     target_link_libraries(fnm sps gl ${FFTW_LIBRARIES})
+    if (FNM_PULSED_WAVE)
+      target_link_libraries(fnm sofus)
+    endif()
   else()
     link_libraries(fnm sps gl ${FFTW_LIBRARIES})
+    if (FNM_PULSED_WAVE)
+      target_link_libraries(fnm sofus)
+    endif()
   endif()
 else()
-  link_libraries(fnm sps gl
-    rt ${FFTW_LIBRARIES})
+  link_libraries(fnm sps gl rt ${FFTW_LIBRARIES})
+  if (FNM_PULSED_WAVE)
+    target_link_libraries(fnm sofus)
+  endif()
 endif()
 
 generate_export_header(fnm)# DEFINE_NO_DEPRECATED)
@@ -148,7 +165,7 @@ if (BUILD_SWIG_INTERFACE)
     add_custom_command(OUTPUT ${DOXYSWIG_OUTPUT}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       COMMAND echo 
-      COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../bin/doxy2swig.py ${PROJECT_SOURCE_DIR}/${CMAKE_DOXYGEN_OUT}/xml/index.xml ${CMAKE_CURRENT_BINARY_DIR}/documentation.i
+      COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../bin/doxy2swig.py ${PROJECT_BINARY_DIR}/${CMAKE_DOXYGEN_OUT}/xml/index.xml ${CMAKE_CURRENT_BINARY_DIR}/documentation.i
       DEPENDS fnm doc
     )
     add_definitions(-DSWIG_INCLUDE_DOCUMENTATION)
@@ -162,28 +179,36 @@ if (BUILD_SWIG_INTERFACE)
   
   set(swig_fnm_HEADERS
     fnm.hpp
-    # Move elsewhere
-#    block_match.hpp
   )
   
   set_source_files_properties(swig_fnm.i PROPERTIES OBJECT_DEPENDS "${DOXYSWIG_OUTPUT}")
 
-  # HACK to make swig_fnm.i depend on input headers
-  execute_process(COMMAND swig -M -python -c++ -I${CMAKE_CURRENT_BINARY_DIR}/.. -I${CMAKE_CURRENT_SOURCE_DIR}/.. swig_fnm.i
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    OUTPUT_VARIABLE swig_deps
-    INPUT_FILE swig_fnm.i)
-  # Match all lines except the first one until " \"
-  string(REGEX MATCHALL "\n  [^ ]+" temp ${swig_deps})
-  set(swig_deps)
-  foreach(t ${temp})
-    string(STRIP "${t}" t)
-    set(swig_deps ${swig_deps} "${t}")
-  endforeach()
-  set_property(DIRECTORY ${CMAKE_SOURCE_DIR} APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${swig_deps} swig_fnm.i)
-  
-  swig_add_module(swig_fnm python swig_fnm.i ${swig_fnm_HEADERS})
+  # TODO: Consider using swig_deps_actual here (without .i files)
+  swig_add_module(swig_fnm python swig_fnm.i ${swig_fnm_HEADERS})# ${swig_deps_actual})
 
+  if (0)
+    # HACK to make swig_fnm.i depend on input headers
+    execute_process(COMMAND swig -M -python -c++ -I${CMAKE_CURRENT_BINARY_DIR}/.. -I${CMAKE_CURRENT_SOURCE_DIR}/.. swig_fnm.i
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      OUTPUT_VARIABLE swig_deps
+      INPUT_FILE swig_fnm.i)
+    # Match all lines except the first one until " \"
+    string(REGEX MATCHALL "\n  [^ ]+" temp ${swig_deps})
+    set(swig_deps_actual)
+    foreach(t ${temp})
+      string(STRIP "${t}" t)
+      # Nasty custom targets (can we avoid this)
+      # set(_custom_target_name)
+      # string(REGEX REPLACE "/" "_" _custom_target_name "${t}")
+      # add_custom_target(${_custom_target_name} DEPENDS "${t}")
+      # add_dependencies(_swig_fnm ${_custom_target_name})
+    
+      # Dependency list
+      set(swig_deps_actual ${swig_deps_actual} "${t}")
+    endforeach()
+    # TODO: This makes configure run again, but does not regenerate the SWIG interface.
+    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${swig_deps_actual})
+  endif()
   if (MSVC)
     # Potential uninitialized variable in SWIG_AsVal_
     set_source_files_properties( ${swig_generated_file_fullname} PROPERTIES COMPILE_FLAGS "/wd4701 /wd4127")
