@@ -97,7 +97,7 @@ def euler2rot(a,b,c,conv='zxz',intrinsic=True):
                  [0,      0, 1]])
         if (intrinsic):
             R = {'xzx' : np.dot(np.dot(Rx,Rz),R3),
-                 'yxy' : np.dot(np.dot(Ry,Rx),R3),
+                 'yxy' : np.dot(np.dot(R3,Rx),Ry),
                  'zxz' : np.dot(np.dot(Rz,Rx),R3)}[conv]
         else:
             R = {'xzx' : np.dot(np.dot(R3,Rz),Rx),

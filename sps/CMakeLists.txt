@@ -17,7 +17,7 @@ check_symbol_exists(itoa stdlib.h HAVE_ITOA)
 check_symbol_exists(utoa stdlib.h HAVE_UTOA)
 check_symbol_exists(ptoa stdlib.h HAVE_PTOA)
 
-option (SPS_Signals "Include signal processing" ON)
+option (SPS_Signals "Include signal processing" OFF)
 
 option (BUILD_SPS_TEST "Build SPS tests" OFF)
 
