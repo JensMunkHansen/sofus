@@ -182,7 +182,7 @@ def linear_array(*args,**kwargs):
 
 def linear_array3(*args, **kwargs):
   """
-  Works for outer/inner radius
+  Works for outer/inner radius. Outer is crazy if efocus is 0.0
   """
   opt = dotdict({'nElements'    : 192,
                  'nSubH'        : 1,       # Elevation
@@ -418,7 +418,7 @@ def convex_array3(*args,**kwargs):
       elAngles = (np.r_[0:(opt.nSubH+1)] - opt.nSubH/2.0) * dEl
       hh = elChordLength / 2.0
 
-    hw = azTanLength / 2.0
+    hw = 0.5*(opt.pitch - opt.kerf)#azTanLength / 2.0
 
     rects = []
     for iEl in range(opt.nSubH):

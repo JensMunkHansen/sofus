@@ -9,7 +9,6 @@
  *   <li> @ref section_abstract
  *   <li> @ref section_intro
  *   <li> @ref section_background
- *   <li> @ref section_contribution
  *   <ul>
  *     <li> @ref section_req_functional
  *   </ul>
@@ -80,7 +79,7 @@
  * added as source term and the pressure at a given point \f$\vec{r}_{0}\f$
  * can be expressed as
  *
- * \f{eqnarray}{\label{eq:1}
+ * \f{eqnarray}{\label{eq:2}
  * &p(\vec{r}_{0},t) = \nonumber \\
  * &-\frac{1}{4\pi }\int_{S}dS\, \rho^{-
  * 1}(\vec{r})\left[p(\vec{r},t)\frac{\partial
@@ -97,18 +96,18 @@
  * response \f$h(\vec{r},t)\f$. For an acoustic hard boundary the solution is
  * given by 
  * 
- * \f{equation}{\label{eq:2}
+ * \f[\label{eq:4}
  * p(\vec{r}_{0},t) = \rho_{0}\dot{v}(t) \ast h(\vec{r}_{0},t),
- * \f}
+ * \f]
  * 
  * where the asterisk \f$\ast\f$ denote a time-like convolution and \f$\dot{v}\f$
  * is the derivative of the particle velocity near the surface. The spatial
- * impulse response can be derived from \f$(\ref{eq:1})\f$ by imposing a
+ * impulse response can be derived from~(\ref{eq:2}) by imposing a
  * Neumann boundary condition corresponding to an acoustic hard
- * boundary. It is given by \cite 1971_stepanishen 
+ * boundary. It is given by \cite 1971_stepanishen
  * 
  * \f[
- * h(\vec{r}_{0},t) = \int_{S}dS\frac{\delta (t - | \vec{r} - \vec{r}_{0}|/c)}{2\pi |\vec{r}-\vec{r}_{0}|}.
+ * h(\vec{r}_{0},t) = \int_{S}dS\frac{\delta (t - |\vec{r}-\vec{r}_{0}|/c)}{2\pi |\vec{r}-\vec{r}_{0}|}.
  * \f]
  * 
  * From this equation, it follows that computing the acoustic pressure is
@@ -137,7 +136,7 @@ h(\vec{r}_{0},t) = \int_{S}dS\cos{\varphi }\frac{\delta (t - |\vec{r}-\vec{r}_{0
  * surface. The easy generalization to include a soft boundary applies to
  * all geometries mentioned above.
  * 
- * When Computing transient pressure fields using eq. \f$(\ref{eq:4})\f$, the
+ * When Computing transient pressure fields using eq.~(\ref{eq:4}), the
  * time derivative of the particle velocity is evaluated from the
  * excitation pulse \f$v(t)\f$ and the convolution is evaluated using the
  * fast Fourier transform (FFT). Computation result reveal that the spatial impulse
@@ -147,13 +146,14 @@ h(\vec{r}_{0},t) = \int_{S}dS\cos{\varphi }\frac{\delta (t - |\vec{r}-\vec{r}_{0
  * impulse and compute the pressure according to \cite d1997calculation 
  * 
  * \f[
- * p(\vec{r}_{0},t) = \rho_{0}v(t) \ast \dot{h}(\vec{r}_{0},t),
+p(\vec{r}_{0},t) = \rho_{0}v(t) \ast \dot{h}(\vec{r}_{0},t),
  * \f]
  * 
  * where \f$\dot{h}\f$ is the time-derivative of the spatial impulse
  * response. In this way, a much lower sampling frequency can be used for
  * simulating the transients.
  *
+ 
  * Another much earlier attempt for reducing the complexity for
  * computing transients is the simplified trapezoidal impulse-response
  * model used by the simulation tool Field II \cite jensen1991model
@@ -185,7 +185,7 @@ h(\vec{r}_{0},t) = \int_{S}dS\cos{\varphi }\frac{\delta (t - |\vec{r}-\vec{r}_{0
  * 
  * The amplitude of the trapezoidal response is a function of piston area
  * and distance to the field point and is given by
- * \f{equation}{\label{eq:7}
+ * \f[\label{eq:7}
  * h(t) = \left\{\begin{array}{@{}l l r@{\ t\ }l}
  * \frac{(t-t_{1})^{2}}{2 \Delta t_{2}} & \mathrm{for } &
  * t_{1}\leq & \leq t_{2}\\
@@ -194,7 +194,7 @@ h(\vec{r}_{0},t) = \int_{S}dS\cos{\varphi }\frac{\delta (t - |\vec{r}-\vec{r}_{0
  * 1-\frac{(t-t_{3})^{2}}{2\Delta t_{1}\Delta t_{2}}& \mathrm{for } &
  * t_{3}\leq & \leq t_{4}\\
  * \end{array}\right\},
- * \f}
+ * \f]
  * where \f$\Delta t_{1}\f$ and
  * \f$\Delta t_{2}\f$ are given by
  * \f[
@@ -233,19 +233,17 @@ h(\vec{r}_{0},t) = \int_{S}dS\cos{\varphi }\frac{\delta (t - |\vec{r}-\vec{r}_{0
  * \f]
  * 
  * where the side lengths of the rectangle, \f$a\f$ and \f$b\f$ are selected such
- * that \f$b\geq a\f$.
- *
- * Using some algebra, the Fourier transform of this
- * equation can be written as \cite mcgough2004rapid .
+ * that \f$b\geq a\f$. Using some algebra, the Fourier transform of this
+ * equation can be written as \cite mcgough2004rapid . See equation~(\ref{eq:6}).
  * 
- * \f{equation}{\label{eq:6}
+ * \f[\label{eq:6}
  * H(z,k)=-\frac{\mathrm{i}}{2\pi
  * k}\left(a\int_{0}^{b}\frac{\exp{(-\mathrm{i}k\sqrt{z^{2}+\sigma^{2}+a^{2}})}-\exp{(-\mathrm{i}kz)}}{\sigma^{2}+a^{2}}
  * + b\int_{0}^{a}\frac{\exp{(-\mathrm{i}k\sqrt{z^{2}+\sigma^{2}+b^{2}})}-\exp{(-\mathrm{i}kz)}}{\sigma^{2}+b^{2}}
  * \right)
- * \f}
+ * \f]
  * 
- * Equation \f$(\ref{eq:6})\f$ can be used to very accurately compute the time-harmonic
+ * This equation can be used to very accurately compute the time-harmonic
  * pressure not just above the corner but at any point using the
  * principle of superposition. This method is used as a reference in this
  * work. FNM has been developed further for other
@@ -255,87 +253,24 @@ h(\vec{r}_{0},t) = \int_{S}dS\cos{\varphi }\frac{\delta (t - |\vec{r}-\vec{r}_{0
  * frequency domain signal \cite alles2012rapid . This method is very
  * fast, but for wide-band pulses, where many frequencies are needed, it
  * is beneficial to use a time-domain method instead.
- *
- * @section section_contribution Contribution
- *
- * The simulation tool Field II can be used for simulating transients
- * using the simplified far field approximation (default), a closed form
- * solution for triangles \cite 1996_jensen_jasa or a closed form
- * solution for an arbitrary polygon by specifying the transducer
- * boundaries using lines \cite jensen1999new . What motivated this work
- * was that using the accurate methods was 2 orders of magnitude slower
- * than using the far field approximation. Since modern computers are
- * extremely fast and support both instruction level parallelism as well as
- * concurrency, the bottleneck for algorithms is often memory access
- * rather than computational power. This suggests that it should be
- * possible to formulate an algorithm, which eliminates the need for
- * using the far field approximation.
- * 
- * Instead of computing the impulse response by first computing arrival
- * times, possibly followed by sorting and expensive line-sphere
- * intersections, the method described here is generic and is tailored
- * for a modern single instruction, multiple data (SIMD)
- * architecture. The algorithm is best explained by the simple drawing of
- * arc segments computed for a triangle and an rectangle in Fig.
- *
- 
- * 
- * The procedure is as follows. Project the field point \f$\vec{r}_{0} \f$
- * into a plane containing the element. For each vertex-edge pair,
- * compute 3 contributions corresponding to: 1. The projection lies in a
- * position, where the projected circle for a time \f$t\f$ intersects the
- * edge in two positions, 2. The projection lies in a position, where the
- * projected circle intersects the edge such that the continuation of the
- * circle after the intersection continues clock-wise. 3. The projection
- * lies in a position, where the circle intersects the edge such that the
- * continuation of the circle is counter clock-wise. For each
- * contribution, two angles are computed, \f$\theta_{0}\f$ and \f$\theta_{1} \f$
- * such that the arc segment is the difference between the two angles,
- * $\Delta \theta =\theta_{1}-\theta_{0}$. If the arc is passing its
- * vertex in a counter clock-wise direction, the angle \f$\theta_{0}\f$ is
- * set equal to the angle corresponding to the normal of the previous
- * edge. An example of this is the limits of outer red segments in
- * Fig.~\ref{fig:fig5a}. The outer red segments start from an angles,
- * which correspond to the normal of the cyan contribution. If the arc is
- * passing its next vertex in a clock-wise direction, the angle
- * $\theta_{1}\f$ is set equal to the angle of a normal of the current
- * edge. A simple mask constructed using the distances from the field
- * point \f$\vec{r}_{0}\f$to the vertices and signed distances from the
- * projection to lines is used for selecting one of the 3
- * contributions. This mask is needed once for each field point, but
- * there is no need to compute this for each sample. Segments are
- * computed described for all vertex-edge pairs and
- * finally, the angular contribution to the impulse response is \f$2\pi \f$
- * minus the sum of all vertex-edge segments. The neat things is that all
- * segments can be computed independently. It is in fact possible to
- * simulate a full ultrasound pressure field for a rectangular element,
- * by simulating 4 fields, a field for each of the vertices. This
- * observation is particularly useful for massive parallel computation,
- * e.g. computation using GPUs. 
- * 
- * @section section_results Results
- * 
- * Three methods were implemented. An SIMD implementation of the far
- * field approach \f$(\ref{eq:7})\f$, the proposed method illustrated in
- * Fig.  as well as the fast near method, which was used
- * for reference. Goertzel's algorithm was used for extracting the
- * time-harmonic pressure from the time-like pressure transients computed
- * using the far field approach or the proposed method. In
- * Fig., the normalized pressure using the proposed
- * algorithm is computed for 64-element focused array.
- * 
- * @section section_conclusion Conclusion
- *  
- * From the results in Table , it follows that in
- * order to achieve accurate results, the proposed method is fast enough
- * to eliminate the need for using the far field approximation.
- * 
- * It will be interesting to investigate this further for other applications,
- * e.g. imaging.
- *
+
+
+
+
+
+
+
+
+
+
+
  * @section section_req_functional Functional requirements
  *
  * @section section_examples Examples of usage
+ *
+ * @subsection section_cpp_examples C++ example
+ * Below, the continuous wave field is computed for a 128-element linear array.
+ * @snippet main.cpp LinearArray example
  *
  * @subsection section_c_examples ANSI-C example
  * Below, the continuous wave field is computed for a 128-element linear array.

@@ -36,6 +36,12 @@ if (BUILD_SHARED_LIBS)
   set(LIB_TYPE SHARED)
 endif()
 
+set(USE_PROGRESS_BAR 0)
+option(USE_ProgressBar "Use progress bar" ON)
+if (USE_ProgressBar)
+  set(USE_PROGRESS_BAR 1)
+endif()
+
 option (BUILD_FNM_TEST "Build tests" OFF)
 
 option(USE_MQUEUE "Use message queues" OFF)
@@ -78,7 +84,7 @@ if (SOFUS_Pulsed_waves)
 endif()
 
 set(USE_PROGRESS_BAR 0)
-option(USE_ProgressBar "Use progress bar" OFF)
+option(USE_ProgressBar "Use progress bar" ON)
 if (USE_ProgressBar)
   set(USE_PROGRESS_BAR 1)
 endif()

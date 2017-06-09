@@ -9,48 +9,54 @@
  */
 
 // TODO: Reuse results (skipped),
-//       Limits independent of z-coordinate (could be re-used)
-//       Prevent one thread to eat all messages (or send index of data)
-//       Support arbitrary number of threads (done)
-//       Use static or unnamed namespace to use internal linkage (done)
+// TODO: Limits independence of z-coordinate (could be re-used)
+// TODO: Prevent one thread to eat all messages (or send index of data - async implementation)
 
 #include <fnm/fnm.hpp>
 #include <fnm/config.h>
-#include <fnm/FnmSIMD.hpp> // Used by CalcCwFocus
 #include <fnm/fnm_data.hpp>
 #include <fnm/fnm_types.hpp>
 
-#include <fnm/fnm_common.hpp>
-#include <fnm/fnm_calc.hpp>
+#include <fnm/fnm_common.hpp>     // fnm::CalcWeightsAndAbcissae
+#include <fnm/fnm_calc.hpp>       // fnm::Calc routines
+#include <fnm/fnm_transient.hpp>  // fnm::CalcFd routines
 #include <fnm/fnm_arrays.hpp>
 
 #if FNM_PULSED_WAVE
 # include <sofus/sofus_types.hpp>
 # include <sofus/sofus_calc.hpp>
+# include <sofus/sofus_pulses.hpp>
 #endif
 
 #include <sps/memory>            // sps::deleted_aligned_array_create
-#include <sps/smath.hpp>
-#include <sps/sps_threads.hpp>
-#include <sps/sps_mqueue.hpp>
+#include <sps/sps_threads.hpp> // getncpus()
+
+
+// #include <sps/sps_mqueue.hpp> // TODO: Figure this out
 
 #include <sps/mm_malloc.h>
 #include <sps/cerr.h>
 #include <sps/profiler.h>
-#include <sps/extintrin.h>
+
+// Temporarily included for CalcAsa
 #include <sps/trigintrin.h>
+
 #include <sps/debug.h>
 #include <sps/multi_malloc.hpp>
+#include <sps/globals.hpp>
 
 #include <sps/progress.hpp>
 
 #include <gl/gl.hpp>
 
-#include <string.h>
 #include <new>
-#include <stdexcept>
+#include <stdexcept> // TODO: Avoid exceptions (leaks in Python)
 
 #include <assert.h>
+
+// Closure test
+#include <array>
+#include <tuple>
 
 #include <fftw3.h>
 
@@ -62,40 +68,95 @@
 # define MSGMAX 8192
 #endif
 
+// __declspec(dllimport) is recognized as a synonym for __attribute__ ((dllimport))  for CYGWIN
+
+/*
+   A way to provide static templated structures without introducing
+   singletons to the proving interface. See <sps/globals.hpp> for
+   details.
+ */
+template <typename T, template <typename> class V> V<T>* sps::globalstruct<T, V >::pVar = NULL;
+
+// Question: Can we partially specialize this using sysparm_t
+
+template <class T>
+using element_array = sps::deleted_aligned_multi_array<sps::element_t<T>, 2>;
+
+#if defined(__GNUC__)
+# if !defined(__CYGWIN__)
+#  include <sps/strace.hpp>
+# endif
+
+void SofusInit()     __attribute__ ((constructor (101)));
+void SofusDestroy () __attribute__ ((destructor (101)));
+
+#elif defined(_WIN32)
+
+void SofusInit();
+void SofusDestroy ();
+
+#endif
+
+void SofusInit ()
+{
+  printf ("\nInitializing SOFUS\n\n");
+#if defined(__GNUC__) && !defined(__CYGWIN__)
+#  if !defined(NDEBUG)
+  sps::STrace::Instance().enable();
+#  endif
+#endif
+}
+
+void SofusDestroy ()
+{
+// template <struct V> is not allowed and we would like sysparm_t<T> to remain a struct
+# ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable : 4099)
+# endif
+
+  printf ("\nFreeing SOFUS\n\n");
+  if (sps::globalstruct<float, fnm::sysparm_t>::pVar) {
+    delete sps::globalstruct<float, fnm::sysparm_t>::pVar;
+  }
+# ifdef FNM_DOUBLE_SUPPORT
+  if (sps::globalstruct<double, fnm::sysparm_t>::pVar)
+    delete sps::globalstruct<double, fnm::sysparm_t>::pVar;
+# endif
+
+# ifdef _MSC_VER
+#  pragma warning(pop)
+# endif
+}
+
+#if defined(_WIN32)
+
+BOOL APIENTRY DllMain(HANDLE hModule,
+                      DWORD  ul_reason_for_call,
+                      LPVOID lpReserved)
+{
+  SPS_UNREFERENCED_PARAMETERS( hModule, ul_reason_for_call, lpReserved);
+
+  switch (ul_reason_for_call) {
+  case DLL_PROCESS_ATTACH:
+    break;
+  case DLL_THREAD_ATTACH:
+    break;
+  case DLL_THREAD_DETACH:
+    break;
+  case DLL_PROCESS_DETACH:
+    SofusDestroy();
+    break;
+  }
+  return TRUE;
+}
+#endif
+
 namespace fnm {
 
-  /////////////////////////////////////////////////
-  // Static content declared in interface
-  /////////////////////////////////////////////////
-
-#if defined(C99) && !defined(__STRICT_ANSI__)
-  template <class T>
-  sysparm_t<T> Aperture<T>::_sysparm =
-    (sysparm_t<T>)
-  {
-    .c = 1500.0, .nDivW = 16, .DivH = 16,
-     .att = 0.0,
-      .beta = 0.0,
-       .use_att = false
-#if FNM_PULSED_WAVE
-                  ,
-                  .timeDomainCalcType = sofus::TimeDomainCalcType::Sphere,
-                   .pulseWaveIntOrder  = sofus::PulsedWaveIntOrder::Fourth
-#endif
-  };
-#else
-  template <class T>
-  sysparm_t<T> Aperture<T>::_sysparm = {T(1500.0), size_t(16), size_t(16),
-                                        T(0.0),
-                                        T(0.0),
-                                        bool(false)
-#if FNM_PULSED_WAVE
-                                        ,
-                                        sofus::TimeDomainCalcType(sofus::TimeDomainCalcType::Sphere),
-                                        sofus::PulsedWaveIntOrder(sofus::PulsedWaveIntOrder::Fourth)
-#endif
-                                       };
-#endif
+/////////////////////////////////////////////////
+// Constant content declared in interface
+/////////////////////////////////////////////////
 
   template <class T>
   const T Aperture<T>::Neper_dB = T(0.11512925464970231);
@@ -103,40 +164,51 @@ namespace fnm {
   template <class T>
   const T Aperture<T>::dB_Neper = T(8.685889638065035);
 
+/////////////////////////////////////////////////
+// Static content declared in interface
+/////////////////////////////////////////////////
+
 #if FNM_PULSED_WAVE
+// TODO: Remove
   template <class T>
   T Aperture<T>::fs = 100e6;
-#endif
-  
-  template <class T>
-  size_t Aperture<T>::nthreads = 4;
 
-  ////////////////////////////////
-  // Implementation of interface
-  ////////////////////////////////
   template <class T>
-  Aperture<T>::Aperture()
+  bool Aperture<T>::normalize = true;
+#endif
+
+  template <class T>
+  size_t Aperture<T>::nthreads = getncpus();
+
+////////////////////////////////
+// Implementation of interface
+////////////////////////////////
+  template <class T>
+  Aperture<T>::Aperture() : m_sysparm(NULL)
   {
+    // Assign pointer to global sysparm
+    this->m_sysparm = Aperture<T>::DefaultSysParmGet();
+
     // Aligned data segment
-    m_data = (ApertureData<T>*) _mm_malloc(sizeof(ApertureData<T>),16);
+    m_data = (ApertureData<T>*) _mm_malloc(sizeof(ApertureData<T>), 4*sizeof(T));
     new (this->m_data) ApertureData<T>();
 
-#ifdef USE_PROGRESS_BAR
     // Progress bar
-    m_pbar = NULL;
-#endif
+    m_pbar = nullptr;
 
     // Data needed for time-domain pulsed waves
 #ifdef FNM_PULSED_WAVE
-    m_pulses = new sofus::AperturePulses<T>();
+    m_pulses     = new sofus::AperturePulses<T>();
+    m_pulses->fs = Aperture<T>::fs;
 #endif
   }
 
   template <class T>
   Aperture<T>::Aperture(const size_t nElements, const T width, const T kerf, const T height) : Aperture<T>()
   {
-    // If I set m_data->m_elements, it works
+    // No sub-elements
     const size_t nSubElements = 1;
+    const size_t iSubElement = 0;
 
     if (nElements * nSubElements > 0) {
       auto elements = sps::deleted_aligned_multi_array<sps::element_t<T>, 2>(nElements, nSubElements);
@@ -145,69 +217,17 @@ namespace fnm {
 
       T pitch = width + kerf;
 
-      for (size_t i = 0 ; i < nElements ; i++) {
-        elements[i][0].center[0] = (T(i) - wx)*pitch;
-        elements[i][0].center[1] = T(0.0);
-        elements[i][0].center[2] = T(0.0);
-        memset((void*)&elements[i][0].euler,0,sizeof(sps::euler_t<T>));
-        elements[i][0].hh           = height/2;
-        elements[i][0].hw           = width/2;
-        elements[i][0].euler.alpha  = T(0.0);
-        elements[i][0].euler.beta   = T(0.0);
-        elements[i][0].euler.gamma  = T(0.0);
+      for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
+        elements[iElement][iSubElement].center[0]    = (T(iElement) - wx)*pitch;
+        elements[iElement][iSubElement].center[1]    = T(0.0);
+        elements[iElement][iSubElement].center[2]    = T(0.0);
+        memset((void*)&elements[iElement][iSubElement].euler,0,sizeof(sps::euler_t<T>));
+        elements[iElement][iSubElement].hh           = height/2;
+        elements[iElement][iSubElement].hw           = width/2;
+        elements[iElement][iSubElement].euler.alpha  = T(0.0);
+        elements[iElement][iSubElement].euler.beta   = T(0.0);
+        elements[iElement][iSubElement].euler.gamma  = T(0.0);
       }
-
-      m_data->ElementsSet(std::forward<sps::deleted_aligned_multi_array<sps::element_t<T>,2> >(elements),
-                          nElements,
-                          nSubElements);
-    }
-  }
-
-  template <class T>
-  Aperture<T>::Aperture(const size_t nElements, const T width, const T kerf, const T height,
-                        const size_t nSubH, const T focus) : Aperture<T>()
-  {
-
-    const size_t nSubW = 1;
-    const size_t nSubElements = nSubH * nSubW;
-
-    if (nElements * nSubElements > 0) {
-      auto elements = sps::deleted_aligned_multi_array<sps::element_t<T>, 2>();
-
-      T pitch = width + kerf;
-
-      FocusedLinearArray(nElements,nSubH,nSubW,
-                         pitch, kerf, height,
-                         focus,
-                         0,
-                         std::move(elements));
-
-      m_data->ElementsSet(std::forward<sps::deleted_aligned_multi_array<sps::element_t<T>,2> >(elements),
-                          nElements,
-                          nSubElements);
-    }
-  }
-
-  template <class T>
-  Aperture<T>::Aperture(const size_t nElements, const T width, const T kerf, const T height,
-                        const T radius,
-                        const size_t nSubH, const T focus) : Aperture<T>()
-  {
-
-    const size_t nSubW = 1;
-    const size_t nSubElements = nSubH * nSubW;
-
-    if (nElements * nSubElements > 0) {
-      auto elements = sps::deleted_aligned_multi_array<sps::element_t<T>, 2>();
-
-      T pitch = width + kerf;
-
-      FocusedConvexArray(nElements,nSubH,nSubW,
-                         pitch, kerf, height, radius,
-                         focus,
-                         0,
-                         std::move(elements));
-
       m_data->ElementsSet(std::forward<sps::deleted_aligned_multi_array<sps::element_t<T>,2> >(elements),
                           nElements,
                           nSubElements);
@@ -220,55 +240,199 @@ namespace fnm {
     if (m_data) {
       m_data->~ApertureData();
       _mm_free(m_data);
-      m_data = NULL;
+      m_data = nullptr;
     }
+    // For time-domain pulsed-wave simulation, another data object is used
 #ifdef FNM_PULSED_WAVE
     if (m_pulses) {
       delete m_pulses;
       m_pulses = nullptr;
     }
 #endif
+    // Free local system parameters if they are set
+    if (m_sysparm != Aperture<T>::DefaultSysParmGet()) {
+      delete m_sysparm;
+    }
   }
 
+  template <class T>
+  sysparm_t<T>* Aperture<T>::DefaultSysParmGet()
+  {
+    // If non-existing create system parameters
+    if (!sps::globalstruct<T, fnm::sysparm_t>::pVar) {
+      sps::globalstruct<T, fnm::sysparm_t>::pVar = new sysparm_t<T>();
+    }
+    return sps::globalstruct<T, fnm::sysparm_t>::pVar;
+  }
+
+  template <class T>
+  int
+  Aperture<T>::ArrayCreate(fnm::Aperture<T> **obj)
+  {
+    *obj = new Aperture<T>();
+    return 0;
+  }
+
+  template <class T>
+  int
+  Aperture<T>::MatrixArrayCreate(Aperture<T> **obj,
+                                 const size_t nRows,
+                                 const size_t nCols,
+                                 const T rowWidth,
+                                 const T rowKerf,
+                                 const T colWidth,
+                                 const T colKerf)
+  {
+
+    const size_t nSubElements = 1;
+    const size_t nElements = nRows*nCols;
+
+    *obj = NULL;
+
+    int retval = -1;
+
+    if (nElements * nSubElements > 0) {
+
+      *obj = new Aperture<T>();
+
+      auto elements = element_array<T>();
+
+      MatrixArray(nRows, nCols, rowWidth, rowKerf, colWidth, colKerf, std::move(elements));
+
+      (*obj)->m_data->ElementsSet(std::forward<element_array<T> >(elements),
+                                  nElements,
+                                  nSubElements);
+      retval = 0;
+    }
+
+    return retval;
+
+  }
+
+  template <class T>
+  int
+  Aperture<T>::FocusedLinearArrayCreate(fnm::Aperture<T> **obj, const size_t nElements,
+                                        const T width, const T kerf, const T height,
+                                        const size_t nSubH, const T focus)
+  {
+    // No sub-elements in azimuth (width)
+    const size_t nSubW = 1;
+    const size_t nSubElements = nSubH * nSubW;
+
+    // Null object in case of zero elements
+    *obj = NULL;
+
+    int retval = -1;
+
+    if (nElements * nSubElements > 0) {
+
+      *obj = new Aperture<T>();
+
+      auto elements = sps::deleted_aligned_multi_array<sps::element_t<T>, 2>();
+
+      T pitch = width + kerf;
+
+      FocusedLinearArray(nElements, nSubH, nSubW,
+                         pitch, kerf, height,
+                         focus,
+                         0, /* 0: Outer placement, 1: Inner placement */
+                         std::move(elements));
+
+      (*obj)->m_data->ElementsSet(std::forward<sps::deleted_aligned_multi_array<sps::element_t<T>,2> >(elements),
+                                  nElements,
+                                  nSubElements);
+      retval = 0;
+    }
+
+    return retval;
+  }
+
+  template <class T>
+  int
+  Aperture<T>::FocusedConvexArrayCreate(fnm::Aperture<T> **obj, const size_t nElements,
+                                        const T width, const T kerf, const T height,
+                                        const T radius, const size_t nSubH, const T focus)
+  {
+    // No sub-elements in azimuth (width)
+    const size_t nSubW = 1;
+    const size_t nSubElements = nSubH * nSubW;
+
+    // Null object in case of zero elements
+    *obj = NULL;
+
+    int retval = -1;
+
+    if (nElements * nSubElements > 0) {
+      *obj = new Aperture<T>();
+
+      auto elements = sps::deleted_aligned_multi_array<sps::element_t<T>, 2>();
+
+      T pitch = width + kerf;
+
+      FocusedConvexArray(nElements, nSubH, nSubW,
+                         pitch, kerf, height, radius,
+                         focus,
+                         0, /* 0: Outer placement, 1: Inner placement */
+                         std::move(elements));
+
+      (*obj)->m_data->ElementsSet(std::forward<sps::deleted_aligned_multi_array<sps::element_t<T>,2> >(elements),
+                                  nElements,
+                                  nSubElements);
+    }
+    return retval;
+  }
+
+  template <class T>
+  void Aperture<T>::InPlaceOP(T* ioData, size_t nIOdata)
+  {
+    SPS_UNREFERENCED_PARAMETER(nIOdata);
+    printf("ioData[0]: %f\n", ioData[0]);
+    ioData[0] = T(1.0);
+  }
+
+
+  // One could read back sysparm, modify and write back
   template <class T>
   void Aperture<T>::AlphaSet(const T& value)
   {
-    Aperture<T>::_sysparm.att = value;
+    this->m_sysparm->att = value;
   }
 
+  // Returning by argument also
   template <class T>
   const T& Aperture<T>::AlphaGet() const
   {
-    return Aperture<T>::_sysparm.att;
+    return this->m_sysparm->att;
   }
 
   template <class T>
   void Aperture<T>::BetaSet(const T& value)
   {
-    Aperture<T>::_sysparm.beta = value;
+    this->m_sysparm->beta = value;
   }
 
   template <class T>
   const T& Aperture<T>::BetaGet() const
   {
-    return Aperture<T>::_sysparm.beta;
+    return this->m_sysparm->beta;
   }
 
   template <class T>
   void Aperture<T>::AttenuationEnabledSet(const bool& iEnabled)
   {
-    Aperture<T>::_sysparm.use_att = iEnabled;
+    this->m_sysparm->use_att = iEnabled;
   }
 
   template <class T>
   const bool& Aperture<T>::AttenuationEnabledGet() const
   {
-    return Aperture<T>::_sysparm.use_att;
+    return this->m_sysparm->use_att;
   }
 
   template <class T>
   const size_t& Aperture<T>::NThreadsGet() const
   {
+    // TODO: Move out of class scope
     return Aperture<T>::nthreads;
   }
 
@@ -340,8 +504,8 @@ namespace fnm {
   {
     const size_t _nElements          = m_data->m_nelements;
     sps::point_t<T>* positions       = m_data->m_pos.get();
-    if (_nElements*3 == nPositions * nDim) {
-      // Consider creating and moving an unique_ptr here
+    if ((_nElements == nPositions) && (3 == nDim)) {
+      // Consider creating and moving a unique_ptr here
       for (size_t i = 0 ; i < _nElements ; i++) {
         positions[i][0] = pos[i*3 + 0];
         positions[i][1] = pos[i*3 + 1];
@@ -360,73 +524,26 @@ namespace fnm {
   }
 
   template <class T>
-  void Aperture<T>::FocusUpdate()
+  void Aperture<T>::FocusGet(T oFocus[3]) const
   {
+    memcpy(oFocus,&m_data->m_focus[0],3*sizeof(T));
+  }
 
-    if ((m_data->m_focus_valid == m_data->m_focus_type)) {
-      debug_print("We cannot skip this if elements,c, or f0 are changed");
-      return;
+  template <class T>
+  void Aperture<T>::CenterFocusSet(const T iFocus[3])
+  {
+    if ((iFocus[0] != m_data->m_center_focus[0]) ||
+        (iFocus[0] != m_data->m_center_focus[0]) ||
+        (iFocus[0] != m_data->m_center_focus[0])) {
+      m_data->m_focus_valid = FocusingType::FocusingTypeCount;
     }
+    memcpy(&m_data->m_center_focus[0],&iFocus[0],3*sizeof(T));
+  }
 
-    const size_t nElements    = m_data->m_nelements;
-    const size_t nSubElements = m_data->m_nsubelements;
-
-    if (m_data->m_focus_type == FocusingType::Pythagorean) {
-
-      // Geometric focusing - allocate here, since we consider removing m_data->m_delays
-      auto delays = sps::deleted_aligned_array_create<T>(nElements);
-      T maxDelay = T(0.0);
-      T minDelay =  std::numeric_limits<T>::max();
-      for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
-        delays[iElement] = norm(m_data->m_pos[iElement] - m_data->m_focus) / Aperture<T>::_sysparm.c;
-        maxDelay = std::max<T>(maxDelay,delays[iElement]);
-        minDelay = std::min<T>(minDelay,delays[iElement]);
-      }
-      for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
-        // Verify if we can positive delays
-        m_data->m_delays[iElement] = minDelay - delays[iElement];
-
-        for (size_t jElement = 0 ; jElement < nSubElements ; jElement++) {
-          m_data->m_phases[iElement*nSubElements+jElement] = T(M_2PI) * (delays[iElement] - maxDelay) * m_data->m_f0;
-        }
-      }
-    } else if (m_data->m_focus_type == FocusingType::Rayleigh) {
-
-      // Rayleigh focusing (CW)
-      size_t nPositions = nElements;
-      auto positions = sps::deleted_aligned_array_create<T>(3*nPositions);
-      for (size_t iPosition = 0 ; iPosition < nPositions ; iPosition++) {
-        positions[3*iPosition]   = m_data->m_focus[0];
-        positions[3*iPosition+1] = m_data->m_focus[1];
-        positions[3*iPosition+2] = m_data->m_focus[2];
-      }
-
-      std::complex<T>* pFieldValues = NULL;
-      size_t nFieldValues;
-
-      // Note, this function allocates!!!
-      this->CalcCwFocus(positions.get(),nPositions,3,
-                        &pFieldValues, &nFieldValues);
-
-      for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
-        for (size_t jElement = 0 ; jElement < nSubElements ; jElement++) {
-          m_data->m_phases[iElement*nSubElements+jElement] =
-            - std::arg<T>(pFieldValues[iElement]);
-        }
-      }
-      free(pFieldValues);
-    } else if (m_data->m_focus_type == FocusingType::Delays) {
-      // Update phases using delays
-      for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
-        for (size_t jElement = 0 ; jElement < nSubElements ; jElement++) {
-          m_data->m_phases[iElement*nSubElements+jElement] =
-            std::fmod<T>(m_data->m_f0*m_data->m_delays[iElement], T(1.0))*T(M_2PI);
-        }
-      }
-    }
-
-    // Set validity
-    m_data->m_focus_valid = m_data->m_focus_type;
+  template <class T>
+  void Aperture<T>::CenterFocusGet(T oFocus[3]) const
+  {
+    memcpy(oFocus,&m_data->m_center_focus[0],3*sizeof(T));
   }
 
   template <class T>
@@ -435,6 +552,7 @@ namespace fnm {
     const size_t nElements = m_data->m_nelements;
 
     if (nData == m_data->m_nelements) {
+      // Consider creating and moving a unique_ptr here
       for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
         m_data->m_apodizations[iElement] = data[iElement];
       }
@@ -444,7 +562,8 @@ namespace fnm {
   template <class T>
   void Aperture<T>::ApodizationGet(T** data, size_t* nData) const
   {
-    size_t nElements = m_data->m_nelements;
+    const size_t nElements = m_data->m_nelements;
+
     *data = (T*) malloc(nElements*sizeof(T));
     if (nElements > 0) {
       memcpy(*data,m_data->m_apodizations.get(),nElements*sizeof(T));
@@ -455,11 +574,11 @@ namespace fnm {
   }
 
   template <class T>
-  void Aperture<T>::PhasesGet(T** odata, size_t* nData)
+  void Aperture<T>::PhasesGet(T** odata, size_t* nData) const
   {
+    const size_t nElements    = m_data->m_nelements;
+    const size_t nSubElements = m_data->m_nsubelements;
 
-    size_t nElements = m_data->m_nelements;
-    size_t nSubElements = m_data->m_nsubelements;
     *odata = (T*) malloc(nElements*sizeof(T));
     if (nElements > 0) {
       for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
@@ -472,11 +591,11 @@ namespace fnm {
   }
 
   template <class T>
-  void Aperture<T>::SubPhasesGet(T** odata, size_t* nData)
+  void Aperture<T>::SubPhasesGet(T** odata, size_t* nData) const
   {
+    const size_t nElements = m_data->m_nelements;
+    const size_t nSubElements = m_data->m_nsubelements;
 
-    size_t nElements = m_data->m_nelements;
-    size_t nSubElements = m_data->m_nsubelements;
     *odata = (T*) malloc(nElements*nSubElements*sizeof(T));
     if (nElements > 0) {
       memcpy(*odata, m_data->m_phases.get(), nElements*nSubElements*sizeof(T));
@@ -487,10 +606,10 @@ namespace fnm {
   }
 
   template <class T>
-  void Aperture<T>::DelaysGet(T** odata, size_t* nData)
+  void Aperture<T>::DelaysGet(T** odata, size_t* nData) const
   {
+    const size_t nElements = m_data->m_nelements;
 
-    size_t nElements = m_data->m_nelements;
     *odata = (T*) malloc(nElements*sizeof(T));
     if (nElements > 0) {
       memcpy(*odata,m_data->m_delays.get(),nElements*sizeof(T));
@@ -513,12 +632,6 @@ namespace fnm {
   }
 
   template <class T>
-  void Aperture<T>::FocusGet(T oFocus[3]) const
-  {
-    memcpy(oFocus,&m_data->m_focus[0],3*sizeof(T));
-  }
-
-  template <class T>
   int Aperture<T>::FocusingTypeGet() const
   {
     return m_data->m_focus_type;
@@ -531,13 +644,25 @@ namespace fnm {
   }
 
   template <class T>
+  const T& Aperture<T>::WGet() const
+  {
+    return m_sysparm->w;
+  }
+
+  template <class T>
+  void Aperture<T>::WSet(const T& w)
+  {
+    m_sysparm->w = w;
+  }
+
+  template <class T>
   const T& Aperture<T>::F0Get() const
   {
     return m_data->m_f0;
   }
 
   template <class T>
-  void Aperture<T>::F0Set(const T f0)
+  void Aperture<T>::F0Set(const T& f0)
   {
     // Make static variable
     const T eps = std::numeric_limits<T>::epsilon();
@@ -552,26 +677,153 @@ namespace fnm {
   template <class T>
   const sysparm_t<T> Aperture<T>::SysParmGet() const
   {
-    return Aperture<T>::_sysparm;
+    return (*this->m_sysparm);
   }
 
   template <class T>
   void Aperture<T>::SysParmSet(const sysparm_t<T> *arg)
   {
-    Aperture<T>::_sysparm.c     = arg->c;
-    Aperture<T>::_sysparm.nDivH = arg->nDivH;
-    Aperture<T>::_sysparm.nDivW = arg->nDivW;
-
-    // Time-domain parameters
-
-#if FNM_PULSED_WAVE
-    // This is propagator
-    Aperture<T>::_sysparm.timeDomainCalcType = arg->timeDomainCalcType;
-    Aperture<T>::_sysparm.pulseWaveIntOrder = arg->pulseWaveIntOrder;
-#endif
+    if (this->m_sysparm != Aperture<T>::DefaultSysParmGet()) {
+      delete this->m_sysparm;
+    }
+    this->m_sysparm = new sysparm_t<T>();
+    (*this->m_sysparm) = *arg;
   }
 
 #ifdef FNM_PULSED_WAVE
+  template <class T>
+  T Aperture<T>::CalcMatchedFilter(const Aperture<T>* other,
+                                   const T iFocus[3],
+                                   T** odata, size_t* nSignals, size_t* nSamples,
+                                   int** sizeAndOffsets, size_t* nFilters, size_t* nTwo,
+                                   T** data, size_t* nData)
+  {
+
+    if (m_data->m_focus_type == FocusingType::Rayleigh) {
+      fprintf(stderr, "Rayleigh focusing type is not supported for pulsed wave calculations\n");
+      fprintf(stderr, "Focusing type is reset to Pythagorean\n");
+      m_data->m_focus_type = FocusingType::Pythagorean;
+    }
+
+    this->FocusUpdate();
+
+    sofus::sysparm_t<T> sysparm;
+    sysparm.c         = m_sysparm->c;
+    sysparm.fs        = Aperture<T>::fs;
+    sysparm.normalize = Aperture<T>::normalize;
+    sysparm.att       = m_sysparm->att;
+    sysparm.beta      = m_sysparm->beta;
+    sysparm.use_att   = m_sysparm->use_att;
+    sysparm.f0        = m_data->m_f0;
+    sysparm.timeDomainCalcType = m_sysparm->timeDomainCalcType;
+    sysparm.timeDomainIntOrder = m_sysparm->timeDomainIntOrder;
+    sysparm.soft_baffle = false;
+
+    sps::point_t<T> point;
+    point[0] = iFocus[0];
+    point[1] = iFocus[1];
+    point[2] = iFocus[2];
+
+    T tStart = sofus::CalcMatchedFilter(sysparm,
+                                        m_data, other->m_data,
+                                        m_pulses, other->m_pulses,
+                                        point,
+                                        odata, nSignals, nSamples,
+                                        sizeAndOffsets, nFilters, nTwo,
+                                        data, nData);
+    return tStart;
+  }
+
+  template <class T>
+  T Aperture<T>::CalcSmfApply(const Aperture<T>* other,
+                              const T iFocus[3],
+                              const T tStart,
+                              const T* iData, const size_t nChannels, const size_t nSamples,
+                              T** data, size_t* nData)
+  {
+    if (m_data->m_focus_type == FocusingType::Rayleigh) {
+      fprintf(stderr, "Rayleigh focusing type is not supported for pulsed wave calculations\n");
+      fprintf(stderr, "Focusing type is reset to Pythagorean\n");
+      m_data->m_focus_type = FocusingType::Pythagorean;
+    }
+
+    this->FocusUpdate();
+
+    sofus::sysparm_t<T> sysparm;
+    sysparm.c         = m_sysparm->c;
+    sysparm.fs        = Aperture<T>::fs;
+    sysparm.normalize = Aperture<T>::normalize;
+    sysparm.att       = m_sysparm->att;
+    sysparm.beta      = m_sysparm->beta;
+    sysparm.use_att   = m_sysparm->use_att;
+    sysparm.f0        = m_data->m_f0;
+    sysparm.timeDomainCalcType = m_sysparm->timeDomainCalcType;
+    sysparm.timeDomainIntOrder = m_sysparm->timeDomainIntOrder;
+    sysparm.soft_baffle = false;
+
+    sps::point_t<T> point;
+    point[0] = iFocus[0];
+    point[1] = iFocus[1];
+    point[2] = iFocus[2];
+
+    return sofus::CalcSmfApply(sysparm,
+                               m_data,
+                               other->m_data,
+                               m_pulses,
+                               other->m_pulses,
+                               point,
+                               tStart,
+                               iData, nChannels, nSamples, data, nData);
+  }
+
+
+
+  template <class T>
+  T Aperture<T>::CalcPwEcho(const Aperture<T>* other,
+                            const T* pos, const size_t nPositions, const size_t nDim,
+                            const T* data, const size_t nData,
+                            T** odata, size_t* nSignals, size_t* nSamples)
+  {
+    assert(nDim == 3);
+
+    if ( (nDim != 3) || (!pos) || nPositions == 0) {
+      *odata = NULL;
+      *nSignals = 0;
+      *nSamples = 0;
+      return T(0.0);
+    }
+
+    if (m_data->m_focus_type == FocusingType::Rayleigh) {
+      fprintf(stderr, "Rayleigh focusing type is not supported for pulsed wave calculations\n");
+      fprintf(stderr, "Focusing type is reset to Pythagorean\n");
+      m_data->m_focus_type = FocusingType::Pythagorean;
+    }
+    this->FocusUpdate();
+
+    // TODO: Find better way - agree on content of sysparm or split in two
+    sofus::sysparm_t<T> sysparm;
+    sysparm.c         = m_sysparm->c;
+    sysparm.fs        = Aperture<T>::fs;
+    sysparm.normalize = Aperture<T>::normalize;
+
+    sysparm.att     = m_sysparm->att;
+    sysparm.beta    = m_sysparm->beta;
+    sysparm.use_att = m_sysparm->use_att;
+    sysparm.f0      = m_data->m_f0;
+    sysparm.timeDomainCalcType = m_sysparm->timeDomainCalcType;
+    sysparm.timeDomainIntOrder = m_sysparm->timeDomainIntOrder;
+    sysparm.soft_baffle = false;
+    T retval = sofus::CalcPwEcho(sysparm,
+                                 m_data,
+                                 other->m_data,
+                                 m_pulses,
+                                 other->m_pulses,
+                                 pos, nPositions, nDim,
+                                 data, nData,
+                                 odata, nSignals, nSamples);
+    return retval;
+  }
+
   template <class T>
   const T& Aperture<T>::FsGet() const
   {
@@ -579,14 +831,25 @@ namespace fnm {
   }
 
   template <class T>
-  void Aperture<T>::FsSet(const T fs)
+  void Aperture<T>::FsSet(const T& fs)
   {
-    // Make static variable
     assert(fs > T(1.0));
     if (fs > T(1.0)) {
       Aperture<T>::fs = fs;
       m_pulses->fs = fs;
     }
+  }
+
+  template <class T>
+  const bool& Aperture<T>::NormalizeGet() const
+  {
+    return Aperture<T>::normalize;
+  }
+
+  template <class T>
+  void Aperture<T>::NormalizeSet(const bool& normalize)
+  {
+    Aperture<T>::normalize = normalize;
   }
 
   template <class T>
@@ -605,7 +868,8 @@ namespace fnm {
     m_pulses->impulse.m_data = NULL;
 
     if (nData > 0) {
-      m_pulses->impulse.m_data  = std::shared_ptr<T>( (T*) _mm_malloc(sizeof(T)*nData,16), [=](T *p) {
+      m_pulses->impulse.m_data  =
+      std::shared_ptr<T>( (T*) _mm_malloc(sizeof(T)*nData,16), [=](T *p) {
         _mm_free(p);
       });
       memcpy((void*)m_pulses->impulse.m_data.get(), data, nData*sizeof(T));
@@ -615,6 +879,7 @@ namespace fnm {
   template <class T>
   void Aperture<T>::ExcitationGet(T** data, size_t* nData) const
   {
+    // A view is returned. TODO: Consider allocating (change to odata)
     *nData = m_pulses->excitation.ndata;
     *data  = m_pulses->excitation.m_data.get();
   }
@@ -628,7 +893,8 @@ namespace fnm {
     m_pulses->excitation.m_data   = NULL;
 
     if (nData > 0) {
-      m_pulses->excitation.m_data  = std::shared_ptr<T>( (T*) _mm_malloc(sizeof(T)*nData,16), [=](T *p) {
+      m_pulses->excitation.m_data  =
+      std::shared_ptr<T>( (T*) _mm_malloc(sizeof(T)*nData,16), [=](T *p) {
         _mm_free(p);
       });
       memcpy((void*)m_pulses->excitation.m_data.get(), data, nData*sizeof(T));
@@ -639,13 +905,13 @@ namespace fnm {
   template <class T>
   const T& Aperture<T>::CGet()  const
   {
-    return Aperture<T>::_sysparm.c;
+    return this->m_sysparm->c;
   }
 
   template <class T>
-  void Aperture<T>::CSet (const T c)
+  void Aperture<T>::CSet (const T& c)
   {
-    Aperture<T>::_sysparm.c = c;
+    this->m_sysparm->c = c;
     // Invalidate focus
     m_data->m_focus_valid = FocusingType::FocusingTypeCount;
   }
@@ -665,32 +931,31 @@ namespace fnm {
   template <class T>
   const size_t& Aperture<T>::NDivWGet() const
   {
-    return Aperture<T>::_sysparm.nDivW;
+    return this->m_sysparm->nDivW;
   }
 
   template <class T>
-  void Aperture<T>::NDivWSet(const size_t nDivW)
+  void Aperture<T>::NDivWSet(const size_t& nDivW)
   {
-    Aperture<T>::_sysparm.nDivW = nDivW;
+    this->m_sysparm->nDivW = nDivW;
   }
 
   template <class T>
   const size_t& Aperture<T>::NDivHGet() const
   {
-    return Aperture<T>::_sysparm.nDivH;
+    return this->m_sysparm->nDivH;
   }
 
   template <class T>
-  void Aperture<T>::NDivHSet(const size_t nDivH)
+  void Aperture<T>::NDivHSet(const size_t& nDivH)
   {
-    Aperture<T>::_sysparm.nDivH = nDivH;
+    this->m_sysparm->nDivH = nDivH;
   }
 
   template <class T>
   void Aperture<T>::RectanglesGet(T** out, size_t* nElements,
                                   size_t* nSubElements, size_t* nParams) const
   {
-
     const size_t nCornerCoordinates = 12;
 
     const size_t _nElements       = m_data->m_nelements;
@@ -707,11 +972,18 @@ namespace fnm {
       for (size_t iElement = 0 ; iElement < _nElements ; iElement++) {
         for (size_t iSubElement = 0 ; iSubElement < _nSubElements ; iSubElement++) {
           for (size_t iCorner = 0 ; iCorner < Aperture<T>::nVerticesPerElement ; iCorner++) {
+            // We need the order [0,1,3,2]
+            size_t iiCorner = iCorner;
+            if (iCorner == 2) {
+              iiCorner = 3;
+            } else if (iCorner == 3) {
+              iiCorner = 2;
+            }
             for (size_t iXYZ = 0 ; iXYZ < 3 ; iXYZ++) {
               arr[iElement * _nSubElements * Aperture<T>::nVerticesPerElement * 3 +
                   iSubElement * Aperture<T>::nVerticesPerElement * 3 + iCorner*3 + iXYZ] =
                     rectangles[iElement*_nSubElements +
-                               iSubElement][iCorner][iXYZ];
+                               iSubElement][iiCorner][iXYZ];
             }
           }
         }
@@ -726,102 +998,113 @@ namespace fnm {
   }
 
   template <class T>
+  int Aperture<T>::ElementsRefGet(size_t* nElements, size_t* nSubElements,
+                                  const sps::element_t<T>**& elements) const
+  {
+    return m_data->ElementsRefGet(nElements, nSubElements, elements);
+  }
+
+  template <class T>
+  int Aperture<T>::ApodizationsRefGet(size_t* nElements, const T*& apodizations) const
+  {
+    return m_data->ApodizationsRefGet(nElements, apodizations);
+  }
+
+  template <class T>
   void Aperture<T>::ElementsGet(T** out, size_t* nElements,
                                 size_t* nParams) const
   {
-    // TODO: Use common function for ElementsGet and SubElementsGet
-
-    const size_t nElePosParams = Aperture<T>::nElementPosParameters;
-
-    const size_t _nElements             = m_data->m_nelements;
-    const size_t nSubElementsPerElement = 1;
-    const size_t arrSize                = _nElements * nSubElementsPerElement * nElePosParams * sizeof(T);
-
-    // The function allocates
-    T* arr = (T*) malloc(arrSize);
-    if (arr) {
-      memset(arr,0,arrSize);
-
-      const auto& elements = m_data->m_elements;
-
-      for (size_t iElement = 0 ; iElement < _nElements ; iElement++) {
-        arr[iElement * nSubElementsPerElement * nElePosParams] = elements[iElement][0].hw;
-
-        arr[iElement * nSubElementsPerElement * nElePosParams + 1] = elements[iElement][0].hh;
-
-        memcpy(&arr[iElement * nSubElementsPerElement * nElePosParams + 2],
-               &(elements[iElement][0].center[0]),
-               sizeof(sps::point_t<T>));
-        arr[iElement * nSubElementsPerElement * nElePosParams+5] = elements[iElement][0].euler.alpha;
-        arr[iElement * nSubElementsPerElement * nElePosParams+6] = elements[iElement][0].euler.beta;
-        arr[iElement * nSubElementsPerElement * nElePosParams+7] = elements[iElement][0].euler.gamma;
-      }
-
-      *nElements    = m_data->m_nelements;
-      *nParams      = Aperture<T>::nElementPosParameters; // No need to introduce static variable
-      *out          = arr;
-    }
+    size_t nSubElements = 0;
+    int err = this->MultiElementsGet(1, out, nElements, &nSubElements, nParams);
+    SPS_UNREFERENCED_PARAMETERS(err);
   }
 
   template <class T>
   void Aperture<T>::SubElementsGet(T** out, size_t* nElements,
                                    size_t* nSubElements, size_t* nParams) const
   {
+    int err = this->MultiElementsGet(1,out,nElements,nSubElements,nParams);
+    SPS_UNREFERENCED_PARAMETERS(err);
+  }
+
+  template <class T>
+  int Aperture<T>::MultiElementsGet(int sub,
+                                    T** out, size_t* nElements,
+                                    size_t* nSubElements, size_t* nParams) const
+  {
 
     const size_t nElePosParams = Aperture<T>::nElementPosParameters;
 
     const size_t _nElements             = m_data->m_nelements;
-    const size_t nSubElementsPerElement = m_data->m_nsubelements;
-    const size_t arrSize                = _nElements * nSubElementsPerElement * nElePosParams * sizeof(T);
+    const size_t _nSubElements          = m_data->m_nsubelements;
 
-    // The function allocates
+    // Size of output
+    size_t nOutputElements              = _nElements;
+    size_t nOutputSubElementsPerElement = _nSubElements;
+
+    // Reduce size if no sub-elements are wanted
+    if (sub == 0) {
+      nOutputSubElementsPerElement = 1;
+    }
+
+    // Size of output array
+    const size_t arrSize                = nOutputElements * nOutputSubElementsPerElement * nElePosParams * sizeof(T);
+
+    // Error code
+    int retval = -1;
+
     T* arr = (T*) malloc(arrSize);
 
     if (arr) {
+
       memset(arr,0,arrSize);
 
-      const auto& elements = m_data->m_elements;
+      size_t __nElements, __nSubElements;
+      const sps::element_t<T>** elements = NULL;
 
-      for (size_t iElement = 0 ; iElement < _nElements ; iElement++) {
-        for (size_t jElement = 0 ; jElement < nSubElementsPerElement ; jElement++) {
+      retval = m_data->ElementsRefGet(&__nElements, &__nSubElements, elements);
 
-          arr[iElement * nSubElementsPerElement * nElePosParams +
+      for (size_t iElement = 0 ; iElement < nOutputElements ; iElement++) {
+        for (size_t jElement = 0 ; jElement < nOutputSubElementsPerElement ; jElement++) {
+
+          arr[iElement * nOutputSubElementsPerElement * nElePosParams +
               jElement * nElePosParams + 0] = elements[iElement][jElement].hw;
 
-          arr[iElement * nSubElementsPerElement * nElePosParams +
+          arr[iElement * nOutputSubElementsPerElement * nElePosParams +
               jElement * nElePosParams + 1] = elements[iElement][jElement].hh;
 
-          memcpy(&arr[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams + 2],
+          memcpy(&arr[iElement * nOutputSubElementsPerElement * nElePosParams + jElement*nElePosParams + 2],
                  &elements[iElement][jElement].center[0],
                  sizeof(sps::point_t<T>));
-          arr[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams+5] =
+          arr[iElement * nOutputSubElementsPerElement * nElePosParams + jElement*nElePosParams+5] =
             elements[iElement][jElement].euler.alpha;
-          arr[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams+6] =
+          arr[iElement * nOutputSubElementsPerElement * nElePosParams + jElement*nElePosParams+6] =
             elements[iElement][jElement].euler.beta;
-          arr[iElement * nSubElementsPerElement * nElePosParams + jElement*nElePosParams+7] =
+          arr[iElement * nOutputSubElementsPerElement * nElePosParams + jElement*nElePosParams+7] =
             elements[iElement][jElement].euler.gamma;
         }
       }
 
       // Assign output
-      *nElements    = m_data->m_nelements;
-      *nSubElements = m_data->m_nsubelements;
+      *nElements    = nOutputElements;
+      *nSubElements = nOutputSubElementsPerElement;
       *nParams      = Aperture<T>::nElementPosParameters;
       *out          = arr;
-    }
-  }
-
-  template <class T>
-  bool Aperture<T>::ElementsSet(const T* pos, const size_t nPositions, const size_t nDim) throw (std::runtime_error)
-  {
-    bool retval = this->SubElementsSet(pos,nPositions,1,nDim);
-    if (!retval) {
-      throw std::runtime_error("Elements improperly formatted");
     }
     return retval;
   }
 
-  // Screws up or???
+  template <class T>
+  void Aperture<T>::ElementsSet(const T* pos, const size_t nPositions, const size_t nDim)// throw (std::runtime_error)
+  {
+    bool retval = this->SubElementsSet(pos,nPositions,1,nDim);
+    if (!retval) {
+      // Causes SWIG to leak memory
+      throw std::runtime_error("Elements improperly formatted");
+    }
+    SPS_UNREFERENCED_PARAMETER(retval);
+  }
+
   template <class T>
   bool Aperture<T>::SubElementsSet(const T* pos, const size_t nElements,
                                    const size_t nSubElementsPerElement, const size_t nDim)
@@ -830,7 +1113,6 @@ namespace fnm {
 
     // We are not allowed to set 0 elements
     if ((nDim != Aperture<T>::nElementPosParameters) || (nSubElementsPerElement < 1)) {
-      // TODO: Consider throwing
       retval = false;
       return retval;
     }
@@ -879,11 +1161,541 @@ namespace fnm {
   }
 #endif
 
+#if !(defined(_MSC_VER) && _MSC_VER < 1900)
+
+  // TODO: Add another template parameter and store typeid(U) in type
+  template <class T>
+  class FunctionInfo {
+  public:
+    RwParamType rw;
+    const char name[32];
+    ScalarType type;
+    size_t nDims;
+    std::function<void(Aperture<T>*)> get_ptr;
+    std::function<void(Aperture<T>*)> set_ptr;
+  };
+
+  template <class T>
+  class FunctionSelectTable {
+  public:
+    // TODO: Consider using a map instead or introduce std::map<string, RwParamType>
+    static FunctionInfo<T> Info[];
+
+    /* Thread local variables */
+    static __THREAD size_t idims[3];
+    static __THREAD size_t* odims[3];
+  };
+
+  template <class U>
+  class FunctionArguments {
+  public:
+    static __THREAD U value;
+    static __THREAD U* ptr;        ///< Non-const pointer for getting
+    static const __THREAD U* iPtr; ///< Const pointer for setting
+  };
+
+  template <class U>
+  __THREAD U FunctionArguments<U>::value = U(0);
+
+  template <class U>
+  __THREAD U* FunctionArguments<U>::ptr = nullptr;
+
+  template <class U>
+  __THREAD const U* FunctionArguments<U>::iPtr = nullptr;
+
+  template class FunctionArguments<bool>;
+  template class FunctionArguments<int>;
+  template class FunctionArguments<size_t>;
+  template class FunctionArguments<float>;
+  template class FunctionArguments<double>;
+
+  template <class T>
+  int Aperture<T>::ParameterInfoGet(const RwParamType& param, ScalarType* type, size_t* nDims)
+  {
+    int retval = -1;
+    if (param < RwParamType::RwParamTypeCount) {
+      *type  = FunctionSelectTable<T>::Info[param].type;
+      *nDims = FunctionSelectTable<T>::Info[param].nDims;
+      return 0;
+    }
+    return retval;
+  }
+
+  template <class T>
+  __THREAD size_t FunctionSelectTable<T>::idims[3] = {0,0,0};
+
+  template <class T>
+  __THREAD size_t* FunctionSelectTable<T>::odims[3] = {nullptr, nullptr, nullptr};
+
+  template <class T>
+  FunctionInfo<T> FunctionSelectTable<T>::Info[] = {
+    {
+      RwParamType::ElementDelays, "ElementDelays", ScalarType::Float,   1,
+      [](Aperture<T>* a)->void{a->DelaysGet(&(fnm::FunctionArguments<T>::ptr), fnm::FunctionSelectTable<T>::odims[0]); },
+      [](Aperture<T>* a)->void{a->DelaysSet(fnm::FunctionArguments<T>::iPtr, fnm::FunctionSelectTable<T>::idims[0]); }
+    },
+    {
+      RwParamType::AttenuationEnabled, "AttenuationEnabled", ScalarType::Bool, 0,
+      [](Aperture<T>* a)->void {*FunctionArguments<bool>::ptr = a->AttenuationEnabledGet();},
+      [](Aperture<T>* a)->void {a->AttenuationEnabledSet(FunctionArguments<bool>::value);},
+    },
+    {
+      RwParamType::Alpha        , "Alpha", ScalarType::Float,   0,
+      [](Aperture<T>* a)->void{*FunctionArguments<T>::ptr = a->AlphaGet();},
+      [](Aperture<T>* a)->void{a->AlphaSet(FunctionArguments<T>::value);}
+    },
+    {
+      RwParamType::Beta         , "Beta", ScalarType::Float,   0,
+      [](Aperture<T>* a)->void{*FunctionArguments<T>::ptr = a->BetaGet();},
+      [](Aperture<T>* a)->void{a->BetaSet(FunctionArguments<T>::value);}
+    },
+    {
+      RwParamType::Positions    , "Positions", ScalarType::Float,   2,
+      [](Aperture<T>* a)->void{
+        a->PositionsGet(&(FunctionArguments<T>::ptr),
+        FunctionSelectTable<T>::odims[0],
+        FunctionSelectTable<T>::odims[1]);
+      },
+      [](Aperture<T>* a)->void{
+        a->PositionsSet(FunctionArguments<T>::iPtr,
+        FunctionSelectTable<T>::idims[0],
+        FunctionSelectTable<T>::idims[1]);
+      },
+    },
+    {
+      RwParamType::Focus        , "Focus", ScalarType::Float,   1,
+      [](Aperture<T>* a)->void{
+        typedef T tre[3];
+        tre* output = (tre*) malloc(3*sizeof(T));
+        a->FocusGet(*output);
+        FunctionArguments<T>::ptr = (T*) output;
+      },
+      [](Aperture<T>* a)->void{
+        typedef T tre[3];
+        const tre* output = (tre*) FunctionArguments<T>::iPtr;
+        assert(FunctionSelectTable<T>::idims[0]==3);
+        a->FocusSet(*output);
+      },
+    },
+    {
+      RwParamType::CenterFocus  , "CenterFocus", ScalarType::Float,   1,
+      [](Aperture<T>* a)->void{
+        typedef T tre[3];
+        tre* output = (tre*) malloc(3*sizeof(T));
+        a->CenterFocusGet(*output);
+        FunctionArguments<T>::ptr = (T*) output;
+      },
+      [](Aperture<T>* a)->void{
+        typedef T tre[3];
+        const tre* output = (tre*) FunctionArguments<T>::iPtr;
+        assert(FunctionSelectTable<T>::idims[0]==3);
+        a->CenterFocusSet(*output);
+      },
+    },
+    {
+      RwParamType::FocusingType , "FocusingType", ScalarType::Int32,   0,
+      [](Aperture<T>* a)->void{*FunctionArguments<int>::ptr = a->FocusingTypeGet();},
+      [](Aperture<T>* a)->void{a->FocusingTypeSet(FunctionArguments<int>::value);}
+    },
+    {
+      RwParamType::NThreads     , "NThreads", ScalarType::SizeT,   0,
+      [](Aperture<T>* a)->void{*FunctionArguments<size_t>::ptr = a->NThreadsGet();},
+      [](Aperture<T>* a)->void{a->NThreadsSet(FunctionArguments<size_t>::value);}
+    },
+    {
+      RwParamType::F0           , "F0", ScalarType::Float,   0,
+      [](Aperture<T>* a)->void{*FunctionArguments<T>::ptr = a->F0Get();},
+      [](Aperture<T>* a)->void{a->F0Set(FunctionArguments<T>::value);}
+    },
+    {
+      RwParamType::W            , "W", ScalarType::Float,   0,
+      [](Aperture<T>* a)->void{*FunctionArguments<T>::ptr = a->WGet();},
+      [](Aperture<T>* a)->void{a->WSet(FunctionArguments<T>::value);}
+    },
+    {
+      RwParamType::SysParm      , "SysParm", ScalarType::Struct,  0, nullptr, nullptr
+    },
+    {
+      RwParamType::C            , "C", ScalarType::Float,   0,
+      [](Aperture<T>* a)->void{*FunctionArguments<T>::ptr = a->CGet();},
+      [](Aperture<T>* a)->void{a->CSet(FunctionArguments<T>::value);}
+    },
+    {
+      RwParamType::Elements     , "Elements", ScalarType::Float,   2,
+      [](Aperture<T>* a)->void{
+        a->ElementsGet(&(FunctionArguments<T>::ptr),
+        FunctionSelectTable<T>::odims[0],
+        FunctionSelectTable<T>::odims[1]);
+      },
+      [](Aperture<T>* a)->void{
+        a->ElementsSet(FunctionArguments<T>::iPtr,
+        FunctionSelectTable<T>::idims[0],
+        FunctionSelectTable<T>::idims[1]);
+      },
+    },
+    {
+      RwParamType::SubElements  , "SubElements", ScalarType::Float,   3,
+      [](Aperture<T>* a)->void{
+        a->SubElementsGet(&(FunctionArguments<T>::ptr),
+        FunctionSelectTable<T>::odims[0],
+        FunctionSelectTable<T>::odims[1],
+        FunctionSelectTable<T>::odims[2]);
+      },
+      [](Aperture<T>* a)->void{
+        a->SubElementsSet(FunctionArguments<T>::iPtr,
+        FunctionSelectTable<T>::idims[0],
+        FunctionSelectTable<T>::idims[1],
+        FunctionSelectTable<T>::idims[2]);
+      },
+    },
+    {
+      RwParamType::Apodization  , "Apodization", ScalarType::Float,   1,
+      [](Aperture<T>* a)->void{a->ApodizationGet(&(FunctionArguments<T>::ptr), FunctionSelectTable<T>::odims[0]);},
+      [](Aperture<T>* a)->void{a->ApodizationSet(FunctionArguments<T>::iPtr, FunctionSelectTable<T>::idims[0]);}
+    },
+    {
+      RwParamType::NDivW        , "NDivW", ScalarType::SizeT,   0,
+      [](Aperture<T>* a)->void{*FunctionArguments<size_t>::ptr = a->NDivWGet();},
+      [](Aperture<T>* a)->void{a->NDivWSet(FunctionArguments<size_t>::value);}
+    },
+    {
+      RwParamType::NDivH        , "NDivH", ScalarType::SizeT,   0,
+      [](Aperture<T>* a)->void{*FunctionArguments<size_t>::ptr = a->NDivHGet();},
+      [](Aperture<T>* a)->void{a->NDivHSet(FunctionArguments<size_t>::value);}
+    },
 #ifdef FNM_PULSED_WAVE
-  // Calculations
+    {
+      RwParamType::Fs           , "Fs", ScalarType::Float,   0,
+      [](Aperture<T>* a)->void{*FunctionArguments<T>::ptr = a->FsGet();},
+      [](Aperture<T>* a)->void{a->FsSet(FunctionArguments<T>::value);}
+    },
+    {
+      RwParamType::Normalize    , "Normalize", ScalarType::Bool,    0,
+      [](Aperture<T>* a)->void {*FunctionArguments<bool>::ptr = a->NormalizeGet();},
+      [](Aperture<T>* a)->void {a->NormalizeSet(FunctionArguments<bool>::value);},
+    },
+    {
+      RwParamType::Excitation   , "Excitation", ScalarType::Float,   1,
+      [](Aperture<T>* a)->void{a->ExcitationGet(&(FunctionArguments<T>::ptr), FunctionSelectTable<T>::odims[0]);},
+      [](Aperture<T>* a)->void{a->ExcitationSet(FunctionArguments<T>::iPtr, FunctionSelectTable<T>::idims[0]);}
+    },
+    {
+      RwParamType::Impulse      , "Impulse", ScalarType::Float,   1,
+      [](Aperture<T>* a)->void{a->ImpulseGet(&(FunctionArguments<T>::ptr), FunctionSelectTable<T>::odims[0]);},
+      [](Aperture<T>* a)->void{a->ImpulseSet(FunctionArguments<T>::iPtr, FunctionSelectTable<T>::idims[0]);}
+    },
+#endif
+  };
+
+  // TODO: This could be templated over U = T, bool, int, size_t
+  template <class T>
+  int Aperture<T>::RwFloatParamGet(int fsel, T** f, size_t nDim, ...)
+  {
+    va_list args;
+    va_start(args,nDim);
+    int retval = this->RwFloatParamGet(fsel,f,nDim,args);
+    va_end(args);
+    return retval;
+  }
+
+  template <class T>
+  int Aperture<T>::RwFloatParamSet(int fsel, const T* f, size_t nDim, ...)
+  {
+    va_list args;
+    va_start(args,nDim);
+    int retval = this->RwFloatParamSet(fsel,f,nDim,args);
+    va_end(args);
+    return retval;
+  }
+
+  template <class T>
+  int Aperture<T>::RwFloatParamSet(int fsel, const T* f, size_t nDim, va_list args)
+  {
+
+    // Verify correct number of dimensions
+    if ((FunctionSelectTable<T>::Info[fsel].nDims != nDim) || (nDim > 3)) {
+      return -1;
+    }
+
+    // Read input dimensions
+    for (size_t i = 0; i < nDim ; i++) {
+      FunctionSelectTable<T>::idims[i] = va_arg(args,size_t);
+    }
+
+    // No need to allocate for setting a scalar
+    FunctionArguments<T>::value = *f;
+
+    // Pointer used for inputs of 1, 2 dimensions
+    FunctionArguments<T>::iPtr = f;
+
+    // Check that the parameters are floating point (i.e. T)
+    if (FunctionSelectTable<T>::Info[fsel].type == ScalarType::Float) {
+      FunctionSelectTable<T>::Info[fsel].set_ptr(this);
+    }
+
+    return 0;
+  }
+
+  template <class T>
+  int Aperture<T>::RwFloatParamGet(int fsel, T** f, size_t nDim, va_list args)
+  {
+
+    // Verify correct number of dimensions
+    if ((FunctionSelectTable<T>::Info[fsel].nDims != nDim) || (nDim > 3)) {
+      return -1;
+    }
+
+    // Read pointers for output dimensions
+    for (size_t i = 0; i < nDim ; i++) {
+      FunctionSelectTable<T>::odims[i] = va_arg(args,size_t*);
+    }
+
+    if (FunctionSelectTable<T>::Info[fsel].type == ScalarType::Float) {
+      // Dimensions 1 or 2
+      if (FunctionSelectTable<T>::Info[fsel].nDims > 0) {
+
+        // Call function
+        FunctionSelectTable<T>::Info[fsel].get_ptr(this);
+
+        // Assign output
+        *f = FunctionArguments<T>::ptr;
+      }
+      // Scalars we also allocate (same interface)
+      else {
+        // Update static variables
+        *f = (T*) malloc(sizeof(T));
+        FunctionArguments<T>::ptr = *f;
+        // Call function
+        FunctionSelectTable<T>::Info[fsel].get_ptr(this);
+      }
+    }
+
+    return 0;
+  }
+
+  template <class T>
+  void Aperture<T>::RwBooleanParamSet0D(int fsel, const bool& value)
+  {
+    if (FunctionSelectTable<T>::Info[fsel].type == ScalarType::Bool) {
+      FunctionArguments<bool>::value = value;
+      FunctionSelectTable<T>::Info[fsel].set_ptr(this);
+    }
+  }
+
+  template <class T>
+  void Aperture<T>::RwSizeTParamSet0D(int fsel, const size_t& value)
+  {
+    if (FunctionSelectTable<T>::Info[fsel].type == ScalarType::SizeT) {
+      FunctionArguments<size_t>::value = value;
+      FunctionSelectTable<T>::Info[fsel].set_ptr(this);
+    }
+  }
+
+  template <class T>
+  void Aperture<T>::RwIntegerParamSet0D(int fsel, const int& value)
+  {
+    if (FunctionSelectTable<T>::Info[fsel].type == ScalarType::Int32) {
+      FunctionArguments<int>::value = value;
+      FunctionSelectTable<T>::Info[fsel].set_ptr(this);
+    }
+  }
+#endif
+  template <class T>
+  void Aperture<T>::FocusUpdateRef()
+  {
+    const size_t nElements    = m_data->m_nelements;
+    const size_t nSubElements = m_data->m_nsubelements;
+
+    if (m_data->m_focus_type == FocusingType::Pythagorean) {
+
+      // Geometric focusing - allocate here, since we consider removing m_data->m_delays
+      auto delays = sps::deleted_aligned_array_create<T>(nElements);
+      T maxDelay = T(0.0);
+      T minDelay =  std::numeric_limits<T>::max();
+      for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
+        delays[iElement] = norm(m_data->m_pos[iElement] - m_data->m_focus) / m_sysparm->c;
+        maxDelay = std::max<T>(maxDelay,delays[iElement]);
+        minDelay = std::min<T>(minDelay,delays[iElement]);
+      }
+      // Using center_focus for computing minDelay
+      minDelay = norm(m_data->m_center_focus - m_data->m_center_focus) / m_sysparm->c;
+
+      for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
+        // Verify if we can positive delays
+        m_data->m_delays[iElement] = minDelay - delays[iElement];
+
+        // TODO: Verify if it is okay, if delays and phases are opposite
+        for (size_t jElement = 0 ; jElement < nSubElements ; jElement++) {
+          m_data->m_phases[iElement*nSubElements+jElement] = T(M_2PI) * (delays[iElement] - maxDelay) * m_data->m_f0;
+        }
+      }
+    } else if (m_data->m_focus_type == FocusingType::Rayleigh) {
+
+      // Rayleigh focusing (CW)
+      size_t nPositions = nElements;
+      auto positions = sps::deleted_aligned_array_create<T>(3*nPositions);
+      for (size_t iPosition = 0 ; iPosition < nPositions ; iPosition++) {
+        positions[3*iPosition]   = m_data->m_focus[0];
+        positions[3*iPosition+1] = m_data->m_focus[1];
+        positions[3*iPosition+2] = m_data->m_focus[2];
+      }
+
+      std::complex<T>* pFieldValues = NULL;
+      size_t nFieldValues;
+
+      // Note, this function allocates!!!
+      this->CalcCwFocusRef(positions.get(),nPositions,3,
+                           &pFieldValues, &nFieldValues);
+
+      for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
+        for (size_t jElement = 0 ; jElement < nSubElements ; jElement++) {
+          T phase = -std::arg<T>(pFieldValues[iElement]);
+          m_data->m_phases[iElement*nSubElements+jElement] = phase;
+          debug_print("phase: %f\n", phase);
+        }
+      }
+      free(pFieldValues);
+    } else if (m_data->m_focus_type == FocusingType::Delays) {
+      // Update phases using delays
+      for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
+        for (size_t jElement = 0 ; jElement < nSubElements ; jElement++) {
+          m_data->m_phases[iElement*nSubElements+jElement] =
+            std::fmod<T>(m_data->m_f0*m_data->m_delays[iElement], T(1.0))*T(M_2PI);
+        }
+      }
+    }
+
+    // Set validity
+    m_data->m_focus_valid = m_data->m_focus_type;
+  }
+
+  template <class T>
+  void Aperture<T>::FocusUpdate()
+  {
+
+    // Ups, we need to introduce requested and actual
+    if ((m_data->m_focus_valid == m_data->m_focus_type) && false) {
+      debug_print("We cannot skip this if elements,c, or f0 are changed");
+      return;
+    }
+
+    const size_t nElements    = m_data->m_nelements;
+    const size_t nSubElements = m_data->m_nsubelements;
+
+    if (m_data->m_focus_type == FocusingType::Pythagorean) {
+
+      auto delays = sps::deleted_aligned_array_create<T>(nElements);
+      T maxDelay = T(0.0);
+      T minDelay =  std::numeric_limits<T>::max();
+      for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
+        delays[iElement] = norm(m_data->m_pos[iElement] - m_data->m_focus) / m_sysparm->c;
+        maxDelay = std::max<T>(maxDelay,delays[iElement]);
+        minDelay = std::min<T>(minDelay,delays[iElement]);
+      }
+      for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
+        m_data->m_delays.get()[iElement] = minDelay - delays[iElement];
+        for (size_t jElement = 0 ; jElement < nSubElements ; jElement++) {
+          m_data->m_phases[iElement*nSubElements+jElement] = T(M_2PI) * (delays[iElement] - maxDelay) * m_data->m_f0;
+        }
+      }
+    } else if (m_data->m_focus_type == FocusingType::Rayleigh) {
+
+      // Rayleigh focusing (CW)
+      size_t nPositions;
+#if FNM_PHASED_FOCUS
+      nPositions = nElements*nSubElements;
+#else
+      nPositions = nElements;
+#endif
+      auto positions = sps::deleted_aligned_array_create<T>(3*nPositions);
+      for (size_t iPosition = 0 ; iPosition < nPositions ; iPosition++) {
+        positions[3*iPosition]   = m_data->m_focus[0];
+        positions[3*iPosition+1] = m_data->m_focus[1];
+        positions[3*iPosition+2] = m_data->m_focus[2];
+      }
+
+      std::complex<T>* pFieldValues = NULL;
+      size_t nFieldValues;
+
+      this->CalcCwFocus(positions.get(), nPositions, 3,
+                        &pFieldValues, &nFieldValues);
+
+      for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
+        for (size_t jElement = 0 ; jElement < nSubElements ; jElement++) {
+          T phase;
+#if FNM_PHASED_FOCUS
+          // Experimenting with setting phase per sub-element
+          phase = - std::arg<T>(pFieldValues[iElement*nSubElements + jElement]);
+#else
+          phase = -std::arg<T>(pFieldValues[iElement]);
+#endif
+          m_data->m_phases[iElement*nSubElements+jElement] = phase;
+          debug_print("phase: %f\n", phase);
+        }
+      }
+      free(pFieldValues);
+    } else if (m_data->m_focus_type == FocusingType::Delays) {
+      // Update phases using delays
+      for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
+        for (size_t jElement = 0 ; jElement < nSubElements ; jElement++) {
+          m_data->m_phases[iElement*nSubElements+jElement] =
+            std::fmod<T>(m_data->m_f0*m_data->m_delays[iElement], T(1.0))*T(M_2PI);
+        }
+      }
+    }
+
+    // Set validity
+    m_data->m_focus_valid = m_data->m_focus_type;
+  }
+
+#ifdef FNM_PULSED_WAVE
+// Calculations
   template <class T>
   T Aperture<T>::CalcPwField(const T* pos, const size_t nPositions, const size_t nDim,
                              T** odata, size_t* nSignals, size_t* nSamples)
+  {
+    assert(nDim == 3);
+    if (nDim != 3) {
+      *odata = NULL;
+      *nSignals = 0;
+      *nSamples = 0;
+      return T(0.0);
+    }
+
+    if (m_data->m_focus_type == FocusingType::Rayleigh) {
+      fprintf(stderr, "Rayleigh focusing type is not supported for pulsed wave calculations\n");
+      fprintf(stderr, "Focusing type is reset to Pythagorean\n");
+      m_data->m_focus_type = FocusingType::Pythagorean;
+    }
+    this->FocusUpdate();
+
+    // TODO: Find better way - agree on content of sysparm or split in two
+    sofus::sysparm_t<T> sysparm;
+    sysparm.c        = m_sysparm->c;
+    sysparm.fs       = Aperture<T>::fs;
+    sysparm.normalize= Aperture<T>::normalize;
+    sysparm.att      = m_sysparm->att;
+    sysparm.beta     = m_sysparm->beta;
+    sysparm.use_att  = m_sysparm->use_att;
+    sysparm.f0       = m_data->m_f0;
+    sysparm.timeDomainCalcType = m_sysparm->timeDomainCalcType;
+    sysparm.timeDomainIntOrder = m_sysparm->timeDomainIntOrder;
+    sysparm.soft_baffle = false;
+
+    T tStart = sofus::CalcPwField(sysparm,
+                                  m_data,
+                                  m_pulses,
+                                  pos, nPositions, nDim,
+                                  odata, nSignals, nSamples,
+                                  m_pbar);
+
+    return tStart;
+  }
+
+
+  template <class T>
+  T Aperture<T>::CalcPwFieldRef(const T* pos, const size_t nPositions, const size_t nDim,
+                                T** odata, size_t* nSignals, size_t* nSamples)
   {
 
     assert(nDim == 3);
@@ -896,29 +1708,35 @@ namespace fnm {
 
     if (m_data->m_focus_type == FocusingType::Rayleigh) {
       fprintf(stderr, "Rayleigh focusing type is not supported for pulsed wave calculations\n");
+      fprintf(stderr, "Focusing type is reset to Pythagorean\n");
+      m_data->m_focus_type = FocusingType::Pythagorean;
     }
     this->FocusUpdate();
 
+    // TODO: Find better way - agree on content of sysparm or split in two
     sofus::sysparm_t<T> sysparm;
-    sysparm.c   = Aperture<T>::_sysparm.c;
-    sysparm.fs  = Aperture<T>::fs;
+    sysparm.c       = m_sysparm->c;
+    sysparm.fs      = Aperture<T>::fs;
+    sysparm.normalize=Aperture<T>::normalize;
 
-    sysparm.att = Aperture<T>::_sysparm.att;
-    sysparm.beta = Aperture<T>::_sysparm.beta;
-    sysparm.use_att = Aperture<T>::_sysparm.use_att;
+    sysparm.att     = m_sysparm->att;
+    sysparm.beta    = m_sysparm->beta;
+    sysparm.use_att = m_sysparm->use_att;
+    sysparm.soft_baffle = false;
+    sysparm.f0      = m_data->m_f0;
+    sysparm.timeDomainCalcType = m_sysparm->timeDomainCalcType;
+    sysparm.timeDomainIntOrder = m_sysparm->timeDomainIntOrder;
 
-    T retval = sofus::CalcPwField(sysparm,
-                                  m_data,
-                                  m_pulses,
-                                  Aperture<T>::_sysparm.timeDomainCalcType,
-                                  Aperture<T>::_sysparm.pulseWaveIntOrder,
-                                  pos, nPositions, nDim,
-                                  odata, nSignals, nSamples,
-                                  m_pbar);
+    T tStart = sofus::CalcPwFieldRef(sysparm,
+                                     m_data,
+                                     m_pulses,
+                                     pos, nPositions, nDim,
+                                     odata, nSignals, nSamples);
 
-    return retval;
+    return tStart;
   }
 
+# ifndef FNM_DOUBLE_SUPPORT
   template <class T>
   T Aperture<T>::CalcPwFieldThreaded(const T* pos, const size_t nPositions, const size_t nDim,
                                      T** odata, size_t* nSignals, size_t* nSamples)
@@ -932,37 +1750,42 @@ namespace fnm {
       return T(0.0);
     }
 
-    if (m_data->m_focus_type != FocusingType::Pythagorean) {
-      fprintf(stderr, "Focusing type must be Pythagorean for pulsed wave calculations\n");
+    if ((m_data->m_focus_type != FocusingType::Pythagorean) &&
+        (m_data->m_focus_type != FocusingType::Delays)) {
+      fprintf(stderr, "Focusing type must be Pythagorean or set using "
+              "delays for pulsed wave calculations\n");
     }
     this->FocusUpdate();
 
     sofus::sysparm_t<T> sysparm;
-    sysparm.c        = Aperture<T>::_sysparm.c;
+    sysparm.c        = m_sysparm->c;
     sysparm.fs       = Aperture<T>::fs;
+    sysparm.normalize= Aperture<T>::normalize;
     sysparm.nthreads = Aperture<T>::nthreads;
 
-    sysparm.att      = Aperture<T>::_sysparm.att;
-    sysparm.beta     = Aperture<T>::_sysparm.beta;
-    sysparm.use_att  = Aperture<T>::_sysparm.use_att;
+    sysparm.att      = m_sysparm->att;
+    sysparm.beta     = m_sysparm->beta;
+    sysparm.use_att  = m_sysparm->use_att;
+    sysparm.soft_baffle = false;
+    sysparm.timeDomainIntOrder = m_sysparm->timeDomainIntOrder;
+    sysparm.timeDomainCalcType = m_sysparm->timeDomainCalcType;
 
-    // Allocates
-    T retval = sofus::CalcPwFieldThreaded(sysparm,
+    // Allocates (TODO: Consider using common sysparm and store (fs, type, order) in another struct)
+    T tStart = sofus::CalcPwFieldThreaded(sysparm,
                                           m_data,
                                           m_pulses,
-                                          Aperture<T>::_sysparm.timeDomainCalcType,
-                                          Aperture<T>::_sysparm.pulseWaveIntOrder,
                                           pos, nPositions, nDim,
                                           odata, nSignals, nSamples,
                                           m_pbar);
 
-    return retval;
+    return tStart;
   }
+# endif
 #endif
 
   template <class T>
-  int Aperture<T>::CalcCwField(const T* pos, const size_t nPositions, const size_t nDim,
-                               std::complex<T>** odata, size_t* nOutPositions)
+  int Aperture<T>::CalcCwFieldNaive(const T* pos, const size_t nPositions, const size_t nDim,
+                                    std::complex<T>** odata, size_t* nOutPositions)
   {
 
     assert(nDim == 3);
@@ -976,13 +1799,72 @@ namespace fnm {
     *odata = (std::complex<T>*) malloc(nScatterers*sizeof(std::complex<T>));
     *nOutPositions = nScatterers;
 
+    // Works if replaced by FocusUpdateRef
     this->FocusUpdate();
 
-    fnm::CalcCwField<T>(*this->m_data,
+    fnm::CalcCwField<T>(this->m_sysparm, *this->m_data,
                         pos, nPositions,
                         odata);
     return 0;
   }
+
+  // Even better integration range
+  template <class T>
+  int Aperture<T>::CalcCwFieldFourRef(const T* pos, const size_t nPositions, const size_t nDim,
+                                      std::complex<T>** odata, size_t* nOutPositions)
+  {
+    assert(nDim == 3);
+    if (nDim != 3) {
+      *odata = NULL;
+      *nOutPositions = 0;
+      return -1;
+    }
+
+    // Allocate data
+    size_t nScatterers = nPositions;
+    *odata = (std::complex<T>*) malloc(nScatterers*sizeof(std::complex<T>));
+    *nOutPositions = nScatterers;
+
+    // This causes deviations
+    this->FocusUpdateRef();
+
+    int tStart = fnm::CalcCwFieldFourRef<T>(this->m_sysparm, this->m_data,
+                                            pos, nPositions,
+                                            odata);
+    return tStart;
+  }
+
+#if FNM_PULSED_WAVE
+
+  template <class T>
+  T Aperture<T>::CalcFdTransientRef(const T* pos, const size_t nPositions, const size_t nDim,
+                                    T** odata, size_t* nSignals, size_t* nSamples)
+  {
+    assert(nDim == 3);
+    if (nDim != 3) {
+      *odata = NULL;
+      *nSignals = 0;
+      *nSamples = 0;
+      return T(0.0);
+    }
+
+    if (m_data->m_focus_type == FocusingType::Rayleigh) {
+      fprintf(stderr, "Rayleigh focusing type is not supported for pulsed wave calculations\n");
+      fprintf(stderr, "Focusing type is reset to Pythagorean\n");
+      m_data->m_focus_type = FocusingType::Pythagorean;
+    }
+    this->FocusUpdate();
+
+    T tStart = fnm::CalcFdTransientRef(m_sysparm,
+                                       m_data,
+                                       pos, nPositions, nDim,
+                                       odata, nSignals, nSamples);
+
+    return tStart;
+
+  }
+#endif
+
 
   // Optimal sampling for integral (reduced integration path)
   template <class T>
@@ -1002,15 +1884,14 @@ namespace fnm {
     *odata = (std::complex<T>*) malloc(nScatterers*sizeof(std::complex<T>));
     *nOutPositions = nScatterers;
 
-    this->FocusUpdate();
+    // This causes deviations
+    this->FocusUpdateRef();
 
-    int retval = fnm::CalcCwFieldRef<T>(*this->m_data,
+    int tStart = fnm::CalcCwFieldRef<T>(this->m_sysparm, this->m_data,
                                         pos, nPositions,
-                                        odata);
-    return retval;
+                                        odata, m_pbar);
+    return tStart;
   }
-
-#ifndef FNM_DOUBLE_SUPPORT
 
   template <class T>
   int Aperture<T>::CalcCwFast(const T* pos,
@@ -1035,14 +1916,14 @@ namespace fnm {
 
     this->FocusUpdate();
 
-    retval = fnm::CalcCwThreaded<T>(this->m_data, pos, nPositions, odata);
+    retval = fnm::CalcCwThreaded<T>(this->m_sysparm, this->m_data, pos, nPositions, odata, this->m_pbar);
 
     return retval;
   }
 
   template <class T>
   int Aperture<T>::CalcCwFocus(const T* pos, const size_t nPositions, const size_t nDim,
-                               std::complex<T>** odata, size_t* nOutPositions)
+                               std::complex<T>** odata, size_t* nOutPositions) const
   {
     int retval = 0;
     assert(nDim == 3);
@@ -1057,23 +1938,50 @@ namespace fnm {
     memset(*odata, 0, nPositions*sizeof(std::complex<T>));
     *nOutPositions = nPositions;
 
-    retval = fnm::CalcCwFocus<T>(*this->m_data,pos,nPositions,odata);
+    retval = fnm::CalcCwFocus<T>(this->m_sysparm, *this->m_data, pos, nPositions, odata);
 
     return retval;
   }
 
-  // Sub-optimal integration range (Old function). TODO: Remove or move to fnm_calc
   template <class T>
-  int Aperture<T>::CalcCwField2(const T* pos, const size_t nPositions, const size_t nDim,
-                                std::complex<T>** odata, size_t* nOutPositions)
+  int Aperture<T>::CalcCwFocusRef(const T* pos, const size_t nPositions, const size_t nDim,
+                                  std::complex<T>** odata, size_t* nOutPositions)
   {
-
+    int retval = 0;
     assert(nDim == 3);
     if (nDim != 3) {
       *odata = NULL;
       *nOutPositions = 0;
-      return -1;
+      retval = -1;
+      return retval;
     }
+
+    *odata = (std::complex<T>*) malloc(nPositions*sizeof(std::complex<T>));
+    memset(*odata, 0, nPositions*sizeof(std::complex<T>));
+    *nOutPositions = nPositions;
+
+    // Phases for each element (or sub-element)
+    retval = fnm::CalcCwFocusRef<T>(this->m_sysparm, *this->m_data, pos, nPositions, odata);
+
+    return retval;
+  }
+
+#ifndef FNM_DOUBLE_SUPPORT
+
+// Sub-optimal integration range (Old function). TODO: Remove or move to fnm_calc
+  template <class T>
+  int Aperture<T>::CalcCwFieldNaiveFast(const T* pos, const size_t nPositions, const size_t nDim,
+                                        std::complex<T>** odata, size_t* nOutPositions)
+  {
+    int retval = 0;
+    assert(nDim == 3);
+    if (nDim != 3) {
+      *odata = NULL;
+      *nOutPositions = 0;
+      retval = -1;
+      return retval;
+    }
+
     size_t nScatterers = nPositions;
     *odata = (std::complex<T>*) malloc(nScatterers*sizeof(std::complex<T>));
     memset(*odata, 0, nScatterers*sizeof(std::complex<T>));
@@ -1081,79 +1989,10 @@ namespace fnm {
 
     this->FocusUpdate();
 
-    const T lambda = Aperture<T>::_sysparm.c / m_data->m_f0;
+    retval = fnm::CalcCwFocusNaiveFast<T>(this->m_sysparm, *this->m_data, pos, nPositions, odata);
 
-    const T k = T(M_2PI)/lambda;
+    return retval;
 
-    const size_t nElements = m_data->m_nelements;
-
-    const size_t nSubElements = m_data->m_nsubelements;
-
-    const T* apodizations = m_data->m_apodizations.get();
-
-    T apodization;
-
-
-    // Need weights and abcissa values
-    size_t nDivW = Aperture<T>::_sysparm.nDivW;
-    size_t nDivH = Aperture<T>::_sysparm.nDivH;
-
-    auto uweights = sps::deleted_aligned_array<T>();
-    auto vweights = sps::deleted_aligned_array<T>();
-    auto uxs      = sps::deleted_aligned_array<T>();
-    auto vxs      = sps::deleted_aligned_array<T>();
-
-    CalcWeightsAndAbcissae(std::move(uxs),std::move(uweights),
-                           std::move(vxs),std::move(vweights));
-
-    sps::deleted_aligned_multi_array<sps::element_t<T>,2>& elements = m_data->m_elements;
-
-    sps::point_t<T> projection;
-
-    for (size_t iPoint = 0 ; iPoint < nPositions ; iPoint++) {
-
-      __m128 vec_point = _mm_set_ps(0.0f, float(pos[iPoint*3 + 2]),float(pos[iPoint*3 + 1]),float(pos[iPoint*3]));
-
-      std::complex<T> final = std::complex<T>(T(0.0),T(0.0));
-
-      for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
-
-        apodization = apodizations[iElement];
-
-        if (apodization != 0.0) {
-
-          for (size_t jElement = 0 ; jElement < nSubElements ; jElement++) {
-
-            const sps::element_t<T>& element = elements[iElement][jElement];
-
-            std::complex<T> result;
-
-            // TODO: Move element_t to smath.hpp and make projection(point_t<T>, element_t<T>)->point_t<T>
-            assert(((uintptr_t)&element.center[0] & 0x0F) == 0 && "Data must be aligned");
-            __m128 vec_r2p = _mm_sub_ps(vec_point, _mm_load_ps((float*)&element.center[0]));
-            _mm_store_ss((float*)&projection[0],_mm_dp_ps(_mm_load_ps(&element.uvector[0]), vec_r2p,0x71));
-            _mm_store_ss((float*)&projection[1],_mm_dp_ps(_mm_load_ps(&element.vvector[0]), vec_r2p,0x71));
-            _mm_store_ss((float*)&projection[2],_mm_fabs_ps(_mm_dp_ps(_mm_load_ps(&element.normal[0]), vec_r2p,0x71)));
-
-            result = CalcHzAll<T>(element, projection, k,
-                                  uxs.get(), uweights.get(), nDivW,
-                                  vxs.get(), vweights.get(), nDivH);
-            final = final + apodization *
-                    result * exp(std::complex<T>(0,m_data->m_phases[iElement*nSubElements+jElement]));
-          }
-        }
-      }
-      (*odata)[iPoint] = final;
-    }
-    return 0;
-  }
-
-  template <class T>
-  void Aperture<T>::ManagedAllocation(std::complex<T>** outTest, size_t* nOutTest)
-  {
-    const size_t _nData = 100000000;
-    *nOutTest = _nData;
-    *outTest = (std::complex<T>*) malloc(_nData*sizeof(std::complex<T>));
   }
 
   template <class T>
@@ -1218,7 +2057,7 @@ namespace fnm {
   {
     int retval = 0;
 
-    const T c    = Aperture<T>::_sysparm.c;
+    const T c    = m_sysparm->c;
     const T f0   = this->m_data->m_f0;
 
     /* Propagator 'P' */
@@ -1231,6 +2070,7 @@ namespace fnm {
     const T alpha = beta / dBperNeper * T(100.0) * f0 / T(1.0e6);
 
     const T lambda = c/f0;
+
 
     // Write zero output
     *onx = Nx;
@@ -1366,12 +2206,33 @@ namespace fnm {
 
 #ifdef FNM_DOUBLE_SUPPORT
   template class Aperture<double>;
+//  template void SysParmDestroy<double>();
+//  template void SysParmInitialize<double>();
 #endif
 
   template class Aperture<float>;
+//template void SysParmDestroy<float>();
+//template void SysParmInitialize<float>();
+
 }
 
 // Template instantiation
+
+/*
+#ifdef __cplusplus
+#define IS_C(x)   extern "C" x ;
+#define IS_CPP(x) x ;
+#else
+#define IS_C(x)   x ;
+#define IS_CPP(x)
+#endif
+With this type of header:
+
+IS_C   (void ArrayList_insert(ArrayList *arrlst, void *data, int i))
+IS_CPP (void ArrayList_insert(ArrayList *arrlst, char *data, int i))
+IS_CPP (void ArrayList_insert(ArrayList *arrlst, Buffer *data, int i))
+*/
+
 
 
 /* Local variables: */

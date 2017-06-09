@@ -5,7 +5,8 @@
  *
  * @brief  Wrapper signal.h (C header)
  *
- * TODO: Export functions sigaction, sigemptyset, sigaddset, sigprocmask, pthread_sigmask
+ * TODO: Export functions:
+ *       sigaction, sigemptyset, sigaddset, sigprocmask, pthread_sigmask
  *
  * Needed are sigemptyset, sigaddset, pthread_sigmask
  */
@@ -14,7 +15,9 @@
 
 #include <sps/cenv.h>
 
-#include <sps/config.h>
+#ifdef HAVE_CONFIG
+# include <sps/config.h>
+#endif
 
 #ifdef __GNUC__
 # include <signal.h>
@@ -30,6 +33,7 @@ typedef uint64_t sigset_t;
 typedef uint32_t sigset_t;
 #endif
 
+// Alternative definition
 //#define sigemptyset(what)   (*(what) = 0, 0)
 //#define sigaddset(what,sig) (*(what) |= (1<<(sig)))
 

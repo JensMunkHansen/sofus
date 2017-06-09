@@ -93,14 +93,16 @@ class rect(dotdict):
       return result
 
     def H_single(self,u1,u2,v,z,k,us,ws):
-      # Is multiple later by length of opposite dimension
+      # Is multiplied later by length of opposite dimension
       ndiv = len(us)
-      ss = (u2-u1)/2.0 * us + (u2+u1)/2.0
+      sm = (u2-u1)/2.0
+      sp = (u2+u1)/2.0
+      ss = sm * us + sp
       ss2 = ss**2
-      if (abs(u2-u1) < np.finfo(np.float32).eps):
+      if (abs(sm) < np.finfo(np.float32).eps):
         result = 0.0
       else:
-        result = (u2-u1)/2.0 * np.sum(((np.exp(-k*np.sqrt(z**2+ss2+v**2)*1j)-np.ones(ndiv)*np.exp(-k*z*1j))/(ss2+v**2))*ws)
+        result = sm * np.sum(((np.exp(-k*np.sqrt(z**2+ss2+v**2)*1j)-np.ones(ndiv)*np.exp(-k*z*1j))/(ss2+v**2))*ws)
       return result 
 
     def H_ref(self,point,k):
@@ -109,7 +111,7 @@ class rect(dotdict):
       wave with wave-number k. Superposition is used as first
       demonstrated by Lockwood and Wilette (1973)
 
-      Reference implementation
+      Reference implementation. Ranges can be optimized
       """
       vertices = self.corners()
 
@@ -144,8 +146,8 @@ class rect(dotdict):
 
       # Four contributions are computed and superposed to give the right value
       for i in range(4):
-          result1 = self.Hz_ref(np.abs(s[i]),np.abs(l[i]),z,k)*np.sign(s[i])*np.sign(l[i])
-          result = result + result1
+        result1 = self.Hz_ref(np.abs(s[i]),np.abs(l[i]),z,k)*np.sign(s[i])*np.sign(l[i])
+        result = result + result1
 
       return result
 
@@ -153,7 +155,7 @@ class rect(dotdict):
       """
       CW field of element on a grid specified using nx,dx,nz and the wave-number k. 
       
-      Reference implementation
+      Reference implementation. Ranges are optimized
       """
 
       nx = xs.shape[0]
@@ -191,37 +193,45 @@ class rect(dotdict):
 
           result1 = 0
           if (np.abs(x) > a):
+            # Outside - optimized ranges
             _l = l[0]
-            # 2 integrals
+            # 2 integrals (can be combined to a range: |x|-a -> |x|+a)
             result1 = result1 + _l * self.H_single(np.abs(x),np.abs(x)+a,_l,z,k,us,ws)
             result1 = result1 + _l * self.H_single(np.abs(x)-a,np.abs(x),_l,z,k,us,ws)
-            _l = np.abs(l[2]) # Check if sign is needed
-            # 2 integrals
+            _l = np.abs(l[2])
+            # 2 integrals (can be combined to a range: |x|-a -> |x|+a)
             result1 = result1 + _l * self.H_single(np.abs(x),np.abs(x)+a,_l,z,k,us,ws)
             result1 = result1 + _l * self.H_single(np.abs(x)-a,np.abs(x),_l,z,k,us,ws)
           else:
+            # Inside
             _s = s[0]
             _l = l[0]
+            # (0,|x|+a) * (|y|+b)
             result1 = result1 + _l * self.H_single(0,_s,_l,z,k,us,ws)
             _s = s[1]
             _l = l[1]
+            # (0,a-|x|) * (|y|+b) -> Combine to (a - |x|, a + |x|)
             result1 = result1 + _l * self.H_single(0,_s,_l,z,k,us,ws)
             _s = s[2]
-            _l = l[2] # Gives sign
+            _l = l[2]
+            # (0, |x|+a) * (b-|y|)
             result1 = result1 + _l * self.H_single(0,_s,_l,z,k,us,ws)
             _s = s[3]
-            _l = l[3] # Gives sign
+            _l = l[3]
+            # (0, a - |x|) * (b-|y|) -> Combine to (a - |x|, a + |x|) 
             result1 = result1 + _l * self.H_single(0,_s,_l,z,k,us,ws)
           if (np.abs(y) > b):
+            # Outside
             _s = s[0]
             # 2 integrals, 0 and 2
             result1 = result1 + _s * self.H_single(np.abs(y)-b,np.abs(y),_s,z,k,us,ws)
             result1 = result1 + _s * self.H_single(np.abs(y),np.abs(y)+b,_s,z,k,us,ws)
-            _s = np.abs(s[1]) # Is sign needed?
+            _s = np.abs(s[1])
             # 2 integrals, 1 and 3
             result1 = result1 + _s * self.H_single(np.abs(y)-b,np.abs(y),_s,z,k,us,ws)
             result1 = result1 + _s * self.H_single(np.abs(y),np.abs(y)+b,_s,z,k,us,ws)
           else:
+            # Inside
             _s = s[0]
             _l = l[0]
             result1 = result1 + _s*self.H_single(0,_l,_s,z,k,us,ws)
@@ -237,9 +247,6 @@ class rect(dotdict):
           results[ix,iz] = result1
 
       return results / (2*np.pi * k * 1j)
-
-    def H4(self,xs,ys,zs,k):
-      return self.H_accurate(xs,ys,zs,k)
 
     def H_accurate(self,xs,ys,zs,k):
       """
@@ -362,7 +369,6 @@ class rect(dotdict):
               print('int_v: %f, %f' % (tmp.real, tmp.imag))
             result1 = result1 + tmp
             _s = s[1] #np.abs(s[1]) # Sign is not needed (verify)
-            # print('s[1], abs(s[1]): %f %f' % (s[1],np.abs(s[1])))
             # 2 integrals, 1 and 3
             tmp = _s * self.H_single(np.abs(y)-b,np.abs(y),_s,z,k,us0,ws0)
             if show:
@@ -499,10 +505,11 @@ class rect(dotdict):
         expz0 = np.r_[ndiv0 * [expz]]
         expz1 = np.r_[ndiv1 * [expz]]
 
-        sscale0 = (shigh0[i0] - slow0[i0])/2.0
+        # s-integral
+        sscale0 = (shigh0[i0] - slow0[i0])/2.0 # sm0
         ss02 = (np.dot(us1, sscale0.reshape((1,n1))) + np.r_[ndiv1 * [(shigh0[i0] + slow0[i0])/2.0]])**2
 
-        sscale1 = (shigh1[i0] - slow1[i0])/2.0
+        sscale1 = (shigh1[i0] - slow1[i0])/2.0 # sm1
         ss12 = (np.dot(us1, sscale1.reshape((1,n1))) + np.r_[ndiv1 * [(shigh1[i0] + slow1[i0])/2.0]])**2
         
         l = l0[i0]
@@ -511,14 +518,6 @@ class rect(dotdict):
         num0 = np.exp(-k*np.sqrt(ss02 + z2 + l22)*1j) - expz1
         num1 = np.exp(-k*np.sqrt(ss12 + z2 + l22)*1j) - expz1
 
-        if False:#i0==0:
-          print('sscale0.shape'+str(sscale0.shape)) # (n1,)
-          print('l.shape'+str(l.shape))             # (n1,)
-          print('num0.shape'+str(num0.shape))       # (ndiv1,n1)
-          print('ss02.shape'+str(ss02.shape))       # (ndiv1,n1)
-          print('l22.shape'+str(l22.shape))         # (n1)
-          print('ws1.shape'+str(ws1.shape))         # (ndiv1,n1), n1 = 250
-          
         tmp = np.sum((l * ( sscale0 * (num0 / (ss02 + l22)) +
                             sscale1 * (num1 / (ss12 + l22))) * ws1), axis=0)
 
@@ -565,9 +564,9 @@ class rect(dotdict):
       """
       Compute the impulse response at positions specified using 3
       matrices of x-,y-, and z-coordinates for a continuous wave
-      with wave-number k
+      with wave-number k using naive integration limits
       
-      This is a fast implementation, but less accurate than H_accurate or HN
+      This is a fast implementation, but less accurate than H_accurate or HN.
       """
       vertices = self.corners()
       
@@ -769,13 +768,9 @@ class linear_array(dotdict):
       """
       start = timer()
       nSubElements = len(self.rects)
-      #      print('Element: %d' % 0)  
       result = self.phases[0] * self.rects[0].HN(xs,ys,zs,k)
-      #result = self.phases[0] * self.rects[0].H_accurate(xs,ys,zs,k)
       for i in range(1,nSubElements):
-        # print('Element: %d' % (i))
         result = result + self.phases[i / self.nSubH] * self.rects[i].HN(xs,ys,zs,k)
-#        result = result + self.phases[i / self.nSubH] * self.rects[i].H_accurate(xs,ys,zs,k)
       end = timer()
       timeString = create_time_string(end-start)
       print(timeString)

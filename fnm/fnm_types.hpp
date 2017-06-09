@@ -3,7 +3,7 @@
  * @author Jens Munk Hansen <jens.munk.hansen@gmail.com>
  * @date   Tue Oct 18 20:17:24 2016
  *
- * @brief
+ * @brief Structure types used for field simulations
  *
  *
  */
@@ -12,14 +12,15 @@
 
 #include <fnm/config.h>
 #include <fnm/fnm_export.h>
+#include <fnm/fnm_types.h>
 
 #include <sps/cenv.h>
 #include <sps/memory>
-#include <sps/smath.hpp> // sps::point_t and sps::euler_t, now element_t
 
 #if FNM_PULSED_WAVE
 # include <sofus/sofus_types.hpp>
 #endif
+
 namespace fnm {
 
   /*! \brief Sysparm structure
@@ -31,38 +32,81 @@ namespace fnm {
    */
   template <class T>
   struct FNM_EXPORT sysparm_t {
+    sysparm_t();
+
     /// Speed of sound
     T c;
 
+    /// Frequency dependent attenuation
+    T att;
+
+    /// Frequency independent attenuation
+    T beta;
+
+    /// Use attenuation
+    bool use_att;
+
+    /** @name Frequency domain parameters
+     *
+     */
+    ///@{
+
     /// Number of width abcissas
     size_t nDivW;
+
     /// Number of height abcissas
     size_t nDivH;
 
-    T att;
-    T beta;
-    bool use_att;
+    /// Width of Hanning pulse
+    T w;
+    ///@}
 
 #if FNM_PULSED_WAVE
+    /** @name Time domain parameters
+     *
+     */
+    ///@{
+
     /// Time-domain calculation type
     sofus::TimeDomainCalcType timeDomainCalcType;
 
-    /// Bum
-    sofus::PulsedWaveIntOrder pulseWaveIntOrder;
+    /// Time-domain integration order
+    sofus::TimeDomainIntOrder timeDomainIntOrder;
+
+    ///@}
 #endif
+
   };
 
-  struct FNM_EXPORT FocusingTypeNS {
-    enum Value {
-      Rayleigh          = 0x00, ///< Rayleigh integral is solved to fix phase of complex signal
-      Pythagorean       = 0x01, ///< Distance from center of element is used to fix phase
-      Delays            = 0x02,
-      FocusingTypeCount = 0x03, ///< Used for invalid focusing type
-    };
+  typedef FNM_FocusingTypeNS::FocusingType_Value FocusingType;
+
+  typedef RwParamTypeNS::RwParamType_Value RwParamType;
+
+  typedef FNM_TypeNS::Type_Value ScalarType;
+
+  /*! \brief GL (Gauss-Legendre) structure
+   *
+   * Weight and abcissas for 1D integration
+   */
+  template <class T>
+  struct GLQuad1D {
+    T* xs;       ///< abcissas
+    T* ws;       ///< weights
+    size_t nx;   ///< number of abcissas
   };
 
-  // TODO: Renaming to time-domain / freq. domain, when Goertzel is implemeted and we can do
-  // time-space decomposition.
-  typedef FocusingTypeNS::Value FocusingType;
-
+  /*! \brief GL (Gauss-Legendre) structure
+   *
+   * Weight and abcissas for 2D integration
+   */
+  template <class T>
+  struct GLQuad2D {
+    GLQuad1D<T> u;
+    GLQuad1D<T> v;
+  };
 }
+/* Local variables: */
+/* indent-tabs-mode: nil */
+/* tab-width: 2 */
+/* c-basic-offset: 2 */
+/* End: */

@@ -23,6 +23,7 @@ option (BUILD_SPS_TEST "Build SPS tests" OFF)
 
 check_include_file(stdint.h HAVE_STDINT_H)
 check_include_file(mqueue.h HAVE_MQUEUE_H)
+check_include_file(signal.h HAVE_SIGNAL_H)
 
 include_directories(
   "${PROJECT_BINARY_DIR}")  # to find sps/config.h
@@ -57,6 +58,7 @@ if (USE_FFTWThreads)
   set(USE_FFTW_THREADS 1)
 endif()
 
+# Enable config.h
 set(HAVE_CONFIG_H 1)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
@@ -64,7 +66,21 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY
 use_cxx11()
 
 if (CYGWIN)
-  set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS} -msse2 -msse3 -msse4 -mavx -pedantic -Wall")
+  set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS} -mfma -msse2 -msse3 -msse4 -mavx -pedantic -Wall")
+endif()
+
+if (MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4996")
+
+  if (ENABLE_AVX)
+    add_compile_flags("C;CXX" "/arch:AVX")
+    add_definitions("/arch:AVX")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX")
+  endif()
+  if (ENABLE_AVX2)
+    add_definitions("/arch:AVX2")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX2")
+  endif()
 endif()
 
 #add_definitions(-DSPS_DEBUG)
@@ -99,12 +115,8 @@ if (HAVE_MQUEUE_H)
   set(sps_SOURCES "${sps_SOURCES}" "sps_mqueue.cpp")
 endif()
 
-if (UNIX AND NOT WIN32)
+if (UNIX AND NOT WIN32 AND NOT CYGWIN)
   set(sps_SOURCES "${sps_SOURCES}" "strace.cpp")
-endif()
-
-if (MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4996")
 endif()
 
 add_library(sps ${LIB_TYPE} ${sps_HEADERS} ${sps_SOURCES})
@@ -158,9 +170,10 @@ if (BUILD_SPS_TEST)
   
   # Enable the tests
   enable_testing()
-  add_test(NAME    indexed_types_test
-           COMMAND indexed_types_test)
-    
+  if (UNIX)
+    add_test(NAME    indexed_types_test
+             COMMAND indexed_types_test)
+  endif()
   add_test(NAME    extintrin_test 
            COMMAND extintrin_test)
   
@@ -240,7 +253,7 @@ endif()
 if( ${PROJECT_NAME} STREQUAL "Fnm")
   install(TARGETS sps
     # IMPORTANT: Add the fnm library to the "export-set"
-    EXPORT FnmTargets
+    EXPORT SofusTargets
     RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
     ARCHIVE DESTINATION "${INSTALL_LIB_DIR}" COMPONENT lib
     LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT shlib

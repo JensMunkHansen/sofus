@@ -1,7 +1,20 @@
+/**
+ * @file   <sps/win32/memory>
+ * @author Jens Munk Hansen <jens.munk.hansen@gmail.com>
+ * @date   Sun Apr 23 13:17:10 2017
+ * 
+ * @brief  Memory related functions
+ * 
+ * 
+ */
 #pragma once
 
 #include <sps/cenv.h>
 
+/*
+  TODO: Consider using sps::align<32> and/or renaming base_align16 to
+  sps_base_align16 and move it to a C header
+*/
 namespace sps {
   namespace win32 {
 
@@ -13,14 +26,14 @@ namespace sps {
       /*
         Empty classes are "special" because the standard requires that no complete object have size 0,
         so a class with no data members or bases always requires some padding if it doesn't have a vtable.    
-
+        
         Apparently, MSVC creates a struct of size 16, if a struct of size 16 is derived from a struct of
         size 0, so we have removed this and ignored warning 4324
-    
-    */
+        
+      */
       //      char dummy[16];
     };
-    ALIGN32_BEGIN struct ALIGN32_END sps_base_align32 {
+    ALIGN32_BEGIN struct ALIGN32_END base_align32 {
     };
 #ifdef _MSC_VER
 # pragma warning(pop)
@@ -67,11 +80,10 @@ namespace sps {
        */
       typedef T* pointer;
       
-      typedef std::unique_ptr<T, std::function<void(T*)> > deleted_unique_array;
-  
       deleted_aligned_array() : m_data() {}
-  
-      deleted_aligned_array(size_t n) : m_data((T*)_mm_malloc(n*sizeof(T),16), [](T* p) {_mm_free(p);}) {}
+
+      // 32-byte aligned to allow 4-vectors of doubles
+      deleted_aligned_array(size_t n) : m_data((T*)_mm_malloc(n*sizeof(T),32), [](T* p) {_mm_free(p);}) {}
   
       deleted_aligned_array(deleted_aligned_array&& other) : m_data(std::move(other.m_data)) {}
   
@@ -106,6 +118,7 @@ namespace sps {
       }
       
     private:
+      typedef std::unique_ptr<T, std::function<void(T*)> > deleted_unique_array;
       deleted_aligned_array(const deleted_aligned_array& other) = delete;
       deleted_aligned_array& operator=( const deleted_aligned_array& a ) = delete;
       deleted_unique_array m_data;
@@ -121,32 +134,34 @@ namespace sps {
     };
 
     template <class T>
-    class deleted_aligned_multi_array<T,2> {
+    class deleted_aligned_multi_array<T, 2> {
     public:
       typedef T** pointer;
-      typedef std::unique_ptr<T*, std::function<void(T**)>> deleted_unique_array;
-      
+      typedef const T** const_pointer;
+
       deleted_aligned_multi_array() : m_data(), m(0), n(0) {}
 
-      deleted_aligned_multi_array(size_t m, size_t n) : m_data(new T*[m](),
-                                                               [](T** x) {
+      deleted_aligned_multi_array(size_t m, size_t n) :
+        m_data(new T*[m](),
+               [](T** x) {
 # ifndef _DEBUG
-                                                                 // TODO: Check using sps::msize(x[0])
-                                                                 if (sps::msize(x) > sizeof(intptr_t))
-                                                                 {
-                                                                   _mm_free(&(x[0][0]));
-                                                                 }
+                 // TODO: Check using sps::msize(x[0])
+                 if (sps::msize(x) > sizeof(intptr_t))
+                 {
+                   _mm_free(&(x[0][0]));
+                 }
 # else
-                                                                 if (sps::msize(x) > 0)
-                                                                 {
-                                                                   _mm_free(&(x[0][0]));
-                                                                 }
+                 if (sps::msize(x) > 0)
+                 {
+                   _mm_free(&(x[0][0]));
+                 }
 # endif
-                                                                 delete[] x;}), m(m), n(n) {
+                 delete[] x;}), m(m), n(n) {
         // Allocate
         if (m*n > 0) {
-          m_data.get()[0] = (T*) _mm_malloc(m*n*sizeof(T),16);
-        
+          // 32-byte aligned to allow 4-vectors of doubles
+          m_data.get()[0] = (T*) _mm_malloc(m*n*sizeof(T),32);
+          
           // Row pointers. First pointer may screw up de-allocation.
           for (size_t iRow = 1; iRow < m; iRow++) {
             (m_data.get())[iRow] = &(m_data.get()[0][iRow*n]);
@@ -154,8 +169,9 @@ namespace sps {
         }
       }
       
-      deleted_aligned_multi_array(deleted_aligned_multi_array&& other) : m_data(std::move(other.m_data)), m(other.m), n(other.n) {}
-
+      deleted_aligned_multi_array(deleted_aligned_multi_array&& other) :
+        m_data(std::move(other.m_data)), m(other.m), n(other.n) {}
+      
       // Dangerous
       deleted_aligned_multi_array& operator=( deleted_aligned_multi_array&& other ) 
       {
@@ -166,7 +182,7 @@ namespace sps {
         }
         return *this;
       }
-
+      
       T& operator()(size_t i, size_t j) {
         return this->m_data.get()[0][i*n + j];
       }
@@ -179,10 +195,14 @@ namespace sps {
         return m_data.get()[m];
       }
       
-      pointer get() const {
+      pointer get() {
         return m_data.get();
       }
       
+      const_pointer get() const {
+        return const_cast<const_pointer>(m_data.get());
+      }
+
       void reset(pointer __p = pointer()) {
         m_data.reset(__p);
       }
@@ -191,18 +211,19 @@ namespace sps {
       void reset(_Up) = delete;
       
     private:
+      typedef std::unique_ptr<T*, std::function<void(T**)>> deleted_unique_array;
       deleted_aligned_multi_array(const deleted_aligned_multi_array& other) = delete;
       deleted_aligned_multi_array& operator=( const deleted_aligned_multi_array& a ) = delete;
 
       deleted_unique_array m_data;  ///<Data
     public:
-      size_t m;                   ///<Number of rows
-      size_t n;                   ///<Number of columns
+      size_t m; ///<Number of rows
+      size_t n; ///<Number of columns
     };
 
     // Work-around to partially specialize a function (multiple dimensions)
     template <class T, size_t I>
-    inline typename std::enable_if<I==2, deleted_aligned_multi_array<T,2> >::type
+    inline typename std::enable_if<I == 2, deleted_aligned_multi_array<T, 2> >::type
     deleted_aligned_multi_array_create(size_t m, size_t n)
     {
       return deleted_aligned_multi_array<T,2>(m,n);
@@ -210,53 +231,6 @@ namespace sps {
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
 /* Local variables: */
 /* mode: c++ */
 /* indent-tabs-mode: nil */

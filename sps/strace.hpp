@@ -3,13 +3,13 @@
  * @author Jens Munk Hansen <jens.munk.hansen@gmail.com>
  * @date   Sun Jul 20 04:43:06 2014
  *
- * @brief
+ * @brief  Stack-trace functionality (C++-interface)
  *
  */
 #ifndef _STRACE_HPP_
 #define _STRACE_HPP_
 
-// TODO: Us fcntl(fd, F_GETFD) for testing file descriptor
+// TODO: Use fcntl(fd, F_GETFD) for testing file descriptor
 
 #include <cstdio>
 #include <cstddef>
@@ -20,6 +20,7 @@ typedef struct siginfo siginfo_t;
 #else
 # include <sps/signal.h>
 #endif
+
 typedef struct sigaction sigaction_t;
 
 #ifndef _STRACE_H_

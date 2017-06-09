@@ -1,26 +1,71 @@
-// TODO: Support multiple configuration files or make it header only
+/**
+ * @file   smath.cpp
+ * @author Jens Munk Hansen <jmh@jmhlaptop>
+ * @date   Sun Apr 30 22:52:50 2017
+ *
+ * @brief
+ *
+ *
+ */
+
 #include <sps/config.h>
 
 #include <sps/smath.hpp>
 
 #include <sps/trigintrin.h>
 
+namespace std {
+  template struct SPS_EXPORT std::pair<float,float>;
+  template struct SPS_EXPORT std::pair<double, double>;
+}
+
 namespace sps {
 
-  template <typename T>
-  void basis_rotate(const sps::point_t<T>& input, const euler_t<T>& euler, sps::point_t<T>& output)
+  template <typename T, typename U>
+  std::pair<T,T> SPS_EXPORT
+  minmax_delay(const T* xs, const U* ws, size_t nData)
   {
-    sps::point_t<T> vec0, vec1, vec2;
-    basis_vectors<T>(vec0, euler, 0);
-    basis_vectors<T>(vec1, euler, 1);
-    basis_vectors<T>(vec2, euler, 2);
-
-    output[0] = vec0[0]*input[0] + vec1[0]*input[1] + vec2[0]*input[2];
-    output[1] = vec0[1]*input[0] + vec1[1]*input[1] + vec2[1]*input[2];
-    output[2] = vec0[2]*input[0] + vec1[2]*input[1] + vec2[2]*input[2];
+    std::pair<T,T> result(T(0.0),T(0.0));
+#if 0
+    // If we always had apodization and no offsets were allowed
+    for (size_t i = 0 ; i < nData ; i++) {
+      if (fabs(ws[i]) > U(0)) {
+        result.first  = std::min<T>(result.first, xs[i]);
+        result.second = std::min<T>(result.second, xs[i]);
+      }
+    }
+#endif
+    bool bFirst = true;
+    if (xs) {
+      if (ws) {
+        for (size_t i = 0 ; i < nData ; i++) {
+          if (fabs(ws[i]) > U(0.0)) {
+            if (bFirst) {
+              result.first = result.second = xs[i];
+              bFirst = false;
+            } else {
+              result.first = std::min<T>(result.first,xs[i]);
+              result.second = std::max<T>(result.second,xs[i]);
+            }
+          }
+        }
+      } else {
+        for (size_t i = 0 ; i < nData ; i++) {
+          if (bFirst) {
+            result.first = result.second = xs[i];
+            bFirst = false;
+          } else {
+            result.first = std::min<T>(result.first,xs[i]);
+            result.second = std::max<T>(result.second,xs[i]);
+          }
+        }
+      }
+    }
+    return result;
   }
 
-  template <typename T>
+  // TODO: Figure out to specialize
+  template <typename T, RotationConvention conv>
   void basis_vectors(sps::point_t<T>& output, const euler_t<T>& euler, size_t index)
   {
 
@@ -98,6 +143,91 @@ namespace sps {
   }
 
   template <>
+  void basis_vectors<float, sps::EulerIntrinsicYXY>(sps::point_t<float>& output, const euler_t<float>& euler, size_t index)
+  {
+
+    const float alpha = euler.alpha;
+    const float beta  = euler.beta;
+    const float gamma = euler.gamma;
+
+    const float sa = sin(alpha);
+    const float ca = cos(alpha);
+    const float sb = sin(beta);
+    const float cb = cos(beta);
+    const float sc = sin(gamma);
+    const float cc = cos(gamma);
+
+    // Intrinsic rotations, y, x and y'
+    switch (index) {
+    case 0:
+      // Mult by (a,b,c) to get x component
+      output[0]= ca*cc - cb*sa*sc;
+      output[1]= sb*sc;
+      output[2]=-ca*cb*sc - cc*sa;
+      break;
+    case 1:
+      output[0]=sa*sb;
+      output[1]=cb;
+      output[2]=ca*sb;
+      break;
+    case 2:
+      output[0]= ca*sc + cb*cc*sa;
+      output[1]=-cc*sb;
+      output[2]= ca*cb*cc - sa*sc;
+      break;
+    }
+  }
+
+  template <>
+  void basis_vectors<double, sps::EulerIntrinsicYXY>(sps::point_t<double>& output, const euler_t<double>& euler, size_t index)
+  {
+
+    const double alpha = euler.alpha;
+    const double beta  = euler.beta;
+    const double gamma = euler.gamma;
+
+    const double sa = sin(alpha);
+    const double ca = cos(alpha);
+    const double sb = sin(beta);
+    const double cb = cos(beta);
+    const double sc = sin(gamma);
+    const double cc = cos(gamma);
+
+    // Intrinsic rotations, y, x and y'
+    switch (index) {
+    case 0:
+      // Mult by (a,b,c) to get x component
+      output[0]= ca*cc - cb*sa*sc;
+      output[1]= sb*sc;
+      output[2]=-ca*cb*sc - cc*sa;
+      break;
+    case 1:
+      output[0]=sa*sb;
+      output[1]=cb;
+      output[2]=ca*sb;
+      break;
+    case 2:
+      output[0]= ca*sc + cb*cc*sa;
+      output[1]=-cc*sb;
+      output[2]= ca*cb*cc - sa*sc;
+      break;
+    }
+  }
+
+  template <typename T, RotationConvention conv>
+  void basis_rotate(const sps::point_t<T>& input, const euler_t<T>& euler, sps::point_t<T>& output)
+  {
+    sps::point_t<T> vec0, vec1, vec2;
+    basis_vectors<T, conv>(vec0, euler, 0);
+    basis_vectors<T, conv>(vec1, euler, 1);
+    basis_vectors<T, conv>(vec2, euler, 2);
+
+    output[0] = vec0[0]*input[0] + vec1[0]*input[1] + vec2[0]*input[2];
+    output[1] = vec0[1]*input[0] + vec1[1]*input[1] + vec2[1]*input[2];
+    output[2] = vec0[2]*input[0] + vec1[2]*input[1] + vec2[2]*input[2];
+  }
+
+  template <>
   void basis_vectors(float* vec0, float* vec1, float* vec2, const sps::euler_t<float>& euler)
   {
 
@@ -128,7 +258,8 @@ namespace sps {
     p2->f32[1] = c.f32[2]*s.f32[1];
     p2->f32[2] = c.f32[1];
 #elif ROTATION_CONVENTION == ROTATION_CONVENTION_EULER_YXY
-    p0->f32[0] =  c.f32[0]*c.f32[2]          - c.f32[2]*s.f32[0]*s.f32[2];
+    // Verify this
+    p0->f32[0] =  c.f32[0]*c.f32[2]          - c.f32[1]*s.f32[0]*s.f32[2];
     p0->f32[1] =  s.f32[1]*s.f32[2];
     p0->f32[2] = -c.f32[0]*c.f32[1]*s.f32[2] - c.f32[2]*s.f32[0];
 
@@ -136,9 +267,9 @@ namespace sps {
     p1->f32[1] =  c.f32[1];
     p1->f32[2] =  c.f32[0]*s.f32[1];
 
-    p2->f32[0] = c.f32[0]*s.f32[2] + c.f32[1]*c.f32[2]*s.f32[0];
+    p2->f32[0] =  c.f32[0]*s.f32[2] + c.f32[1]*c.f32[2]*s.f32[0];
     p2->f32[1] = -c.f32[2]*s.f32[1];
-    p2->f32[2] = c.f32[0]*c.f32[1]*c.f32[2] - s.f32[0]*s.f32[2];
+    p2->f32[2] =  c.f32[0]*c.f32[1]*c.f32[2] - s.f32[0]*s.f32[2];
 #endif
   }
 
@@ -193,9 +324,10 @@ namespace sps {
 
   template struct euler_t<float>;
   template struct point_t<float>;
+  template struct element_t<float>;
 
 #ifdef _WIN32
-// Not possible to move to fnm library
+  // Not possible to move to fnm library
   template class std::aligned_array<sps::point_t<float>,4U>;
   template class std::aligned_array<sps::point_t<double>,4U>;
 #endif
@@ -209,26 +341,28 @@ namespace sps {
   template float dist_to_line(const point_t<float>& point, const point_t<float>& pointOnLine,
                               const point_t<float>& direction);
 
-  template void SPS_EXPORT basis_vectors(sps::point_t<float>& output, const sps::euler_t<float>& euler, size_t index);
+  template void SPS_EXPORT basis_vectors<float, sps::EulerIntrinsicYXY>(sps::point_t<float>& output, const sps::euler_t<float>& euler, size_t index);
 
   template std::ostream& operator<<(std::ostream& out, const point_t<float>& point);
-  template void SPS_EXPORT basis_vectors(float* vec0, float* vec1, float* vec2, const sps::euler_t<float>& euler);
 
-  template void SPS_EXPORT basis_rotate(const sps::point_t<float>& input, const sps::euler_t<float>& euler,
-                                        sps::point_t<float>& output);
+  template void
+  SPS_EXPORT basis_vectors(float* vec0, float* vec1, float* vec2, const sps::euler_t<float>& euler);
 
-  template void SPS_EXPORT dists_most_distant_and_closest(const sps::bbox_t<float> &box0,
+  template void
+  SPS_EXPORT basis_rotate<float, sps::EulerIntrinsicYXY>(const sps::point_t<float>& input, const sps::euler_t<float>& euler, sps::point_t<float>& output);
+
+  template void
+  SPS_EXPORT dists_most_distant_and_closest(const sps::bbox_t<float> &box0,
       const sps::bbox_t<float> &box1,
       float* distNear,
       float* distFar);
 
+  // Is this a problem, when it is exported (it must be export using SOFUS_EXPORT when used in SOFUS)
+  template std::pair<float,float> minmax_delay<float,float>(const float* xs, const float* ws, size_t nData);
 
-  template struct euler_t<double>;
-  template struct point_t<double>;
-
-  template struct element_t<float>;
-  template struct element_t<double>;
-
+  //template struct SPS_EXPORT euler_t<double>;
+  //template struct SPS_EXPORT point_t<double>; // TODO: ??? Already defined
+  template struct SPS_EXPORT element_t<double>;
 
   template point_t<double> operator-(const point_t<double> &a, const point_t<double> &b);
   template point_t<double> operator+(const point_t<double> &a, const point_t<double> &b);
@@ -238,18 +372,19 @@ namespace sps {
   template double norm(const point_t<double> &a);
   template double dist_to_line(const point_t<double>& point, const point_t<double>& pointOnLine,
                                const point_t<double>& direction);
-  template void SPS_EXPORT basis_vectors(sps::point_t<double>& output, const sps::euler_t<double>& euler, size_t index);
+
+
+  template void SPS_EXPORT basis_vectors<double, EulerIntrinsicYXY>(sps::point_t<double>& output, const sps::euler_t<double>& euler, size_t index);
   template std::ostream& operator<<(std::ostream& out, const point_t<double>& point);
   template void SPS_EXPORT basis_vectors(double* vec0, double* vec1, double* vec2, const sps::euler_t<double>& euler);
-
-  template void SPS_EXPORT basis_rotate(const sps::point_t<double>& input, const sps::euler_t<double>& euler,
-                                        sps::point_t<double>& output);
-
-
+  template void SPS_EXPORT basis_rotate<double, EulerIntrinsicYXY>(const sps::point_t<double>& input, const sps::euler_t<double>& euler,
+      sps::point_t<double>& output);
   template void SPS_EXPORT dists_most_distant_and_closest(const sps::bbox_t<double> &box0,
       const sps::bbox_t<double> &box1,
       double* distNear,
       double* distFar);
+
+  template std::pair<double,double> minmax_delay<double,double>(const double* xs, const double* ws, size_t nData);
 }
 
 

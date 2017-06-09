@@ -9,7 +9,9 @@
  */
 #pragma once
 
-#include <sps/config.h>
+#ifdef HAVE_CONFIG
+# include <sps/config.h>
+#endif
 
 #include <stdlib.h>
 #include <stdint.h>

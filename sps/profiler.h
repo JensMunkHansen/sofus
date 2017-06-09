@@ -14,20 +14,22 @@ namespace sps {
   class profiler {
   public:
 #ifdef _MSC_VER
-    static double time(void) {
+    static double time(void)
+    {
       static __THREAD double freq = 0.0;
       if (freq == 0.0) {
-	LARGE_INTEGER llDiv;
-	QueryPerformanceFrequency(&llDiv);
-	freq = double(llDiv.QuadPart);
+        LARGE_INTEGER llDiv;
+        QueryPerformanceFrequency(&llDiv);
+        freq = double(llDiv.QuadPart);
       }
       LARGE_INTEGER ll;
       QueryPerformanceCounter(&ll);
       return double(ll.QuadPart) / freq;
     }
 #else
-    static double time(void) {
-      
+    static double time(void)
+    {
+
       register double sec;
       register double usec;
 
@@ -58,6 +60,6 @@ clock() from <time.h> (20ms or 10ms resolution?)
 
 gettimeofday() from Posix <sys/time.h> (microseconds)
 
-clock_gettime() on Posix (nanoseconds?) // CLOCK_PROCESS_CPUTIME_ID, CLOCK_THREAD_CPUTIME_ID, 
+clock_gettime() on Posix (nanoseconds?) // CLOCK_PROCESS_CPUTIME_ID, CLOCK_THREAD_CPUTIME_ID,
 CLOCK_MONOTONIC, CLOCK_REALTIME
 */

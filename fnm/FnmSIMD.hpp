@@ -8,6 +8,8 @@
  *
  */
 
+// TODO: Make HzFast twice as fast by reducing integrals to four
+
 #pragma once
 
 #include <fnm/config.h>
@@ -18,6 +20,22 @@
 
 #include <complex>
 
+/**
+ *
+ *
+ * @param s
+ * @param l
+ * @param z
+ * @param k
+ * @param us
+ * @param uweights
+ * @param nUs
+ * @param vs
+ * @param vweights
+ * @param nVs
+ *
+ * @return
+ */
 template <class T>
 STATIC_INLINE_BEGIN std::complex<T> CalcHzVecGL(const T& s,
     const T& l,
@@ -31,21 +49,35 @@ STATIC_INLINE_BEGIN std::complex<T> CalcHzVecGL(const T& s,
     const size_t nVs) STATIC_INLINE_END;
 
 
-// Non-reduced integral, but simple
-template <class T>
-STATIC_INLINE_BEGIN std::complex<T> CalcHzAll(const sps::element_t<T>& element,
-    const sps::point_t<T>& projection,
-    const T& k,
-    const T* us,
-    const T* uweights,
-    const size_t nUs,
-    const T* vs,
-    const T* vweights,
-    const size_t nVs) STATIC_INLINE_END;
+/**
+ *
+ *
+ * @param element
+ * @param projection
+ * @param k
+ * @param us
+ * @param uweights
+ * @param nUs
+ * @param vs
+ * @param vweights
+ * @param nVs
+ *
+ * @return
+ */template <class T>
+STATIC_INLINE_BEGIN
+std::complex<T> CalcHzAll(const sps::element_t<T>& element,
+                          const sps::point_t<T>& projection,
+                          const T& k,
+                          const T* us,
+                          const T* uweights,
+                          const size_t nUs,
+                          const T* vs,
+                          const T* vweights,
+                          const size_t nVs) STATIC_INLINE_END;
 
 
 /**
- * Integral with (nUs x nVs) points inside the region of integration
+ * Integral with (nUs x nVs) points with projection inside the region of integration
  *
  * @param element
  * @param projection
@@ -60,15 +92,62 @@ STATIC_INLINE_BEGIN std::complex<T> CalcHzAll(const sps::element_t<T>& element,
  * @return
  */
 template <class T>
-STATIC_INLINE_BEGIN std::complex<T> CalcHzFast(const sps::element_t<T>& element,
-    const sps::point_t<T>& projection,
-    const T& k,
-    const T* us,
-    const T* uweights,
-    const size_t nUs,
-    const T* vs,
-    const T* vweights,
-    const size_t nVs) STATIC_INLINE_END;
+STATIC_INLINE_BEGIN
+std::complex<T> CalcHzFast(const sps::element_t<T> &__restrict element,
+                           const sps::point_t<T> &__restrict projection,
+                           const T &__restrict k,
+                           const T* __restrict us,
+                           const T* __restrict uweights,
+                           const size_t nUs,
+                           const T* __restrict vs,
+                           const T* __restrict vweights,
+                           const size_t nVs) STATIC_INLINE_END;
+
+template <class T>
+STATIC_INLINE_BEGIN
+std::complex<T> CalcFastFourAny(const T& u,
+                                const T& v,
+                                const T& hh,
+                                const T& hw,
+                                const T& z,
+                                const T& __restrict k,
+                                const T* __restrict s,
+                                const T* __restrict weights,
+                                const size_t nS) STATIC_INLINE_END;
+
+template <class T>
+STATIC_INLINE_BEGIN
+std::complex<T> CalcFastFourAny2(const T& u,
+                                 const T& v,
+                                 const T& hh,
+                                 const T& hw,
+                                 const T& z,
+                                 const T& __restrict k,
+                                 const T* __restrict s,
+                                 const T* __restrict weights,
+                                 const size_t nS) STATIC_INLINE_END;
+
+
+template <class T>
+STATIC_INLINE_BEGIN
+std::complex<T> CalcFourFast(const sps::element_t<T> &__restrict element,
+                             const sps::point_t<T> &__restrict projection,
+                             const T &__restrict k,
+                             const T* __restrict uvs,
+                             const T* __restrict uvweights,
+                             const size_t nUVs) STATIC_INLINE_END;
+
+template <class T>
+STATIC_INLINE_BEGIN
+std::complex<T> CalcHzFastSingle(const sps::element_t<T>& element,
+                                 const sps::point_t<T>& projection,
+                                 const T& k,
+                                 const T* us,
+                                 const T* uweights,
+                                 const size_t nUs,
+                                 const T* vs,
+                                 const T* vweights,
+                                 const size_t nVs) STATIC_INLINE_END;
 
 template <>
 std::complex<float>
@@ -323,654 +402,41 @@ inline CalcHzAll(const sps::element_t<float>& element,
   return retval;
 }
 
-// TODO: Verify what happens on edges
+
+// Not working accurately!!!
+
 template <>
 std::complex<float>
-inline CalcHzFast(const sps::element_t<float>& element,
-                  const sps::point_t<float>& projection,
-                  const float& k,
-                  const float* us,
-                  const float* uweights,
-                  const size_t nUs,
-                  const float* vs,
-                  const float* vweights,
-                  const size_t nVs)
+inline CalcHzFastSingle(const sps::element_t<float>& element,
+                        const sps::point_t<float>& projection,
+                        const float& k,
+                        const float* us,
+                        const float* uweights,
+                        const size_t nUs,
+                        const float* vs,
+                        const float* vweights,
+                        const size_t nVs)
 {
-
-  std::complex<float> retval = std::complex<float>(0.0f,0.0f);
-
-  // Temporaries
-  const float x  = projection[0];
-  const float y  = projection[1];
-  const float z  = projection[2];
-  const float hw = element.hw;
-  const float hh = element.hh;
-
-  const __m128 v_mk = _mm_set1_ps(-k);
-  const __m128 v_z  = _mm_set1_ps(z);
-
-  __m128 s_stop_in;
-  __m128 l_stop_in;
-  __m128 s_start_out;
-
-  __m128 s_stop_out;
-  __m128 l_start_out;
-  __m128 l_stop_out;
-
-  const __m128 v_absx = _mm_set1_ps(fabs(x));
-  const __m128 v_absy = _mm_set1_ps(fabs(y));
-  const __m128 v_hw   = _mm_set1_ps(hw);
-  const __m128 v_hh   = _mm_set1_ps(hh);
-
-#if 0
-  // Look equally bad
-  const float absX = fabs(projection[0]);
-  const float absY = fabs(projection[1]);
-
-  float s0 = absX + hw; // [0;|x|+hw] -> [0;hw+|x|]  -> [|x|;|x|+hw]
-  float s1 = hw - absX; // [0;hw-|x|] -> -[hw-|x|;0] -> [|x|-hw;|x|]
-  float l0 = absY + hh;
-  float l2 = hh - absY;
-
-  // Negative (maybe)
-  // hw + (-1,1,-1,1)*absX
-  s_stop_in = _mm_set_ps(s1,s0,s1,s0);
-  // hh + (-1,-1,1,1)*absX
-  l_stop_in = _mm_set_ps(l2,l2,l0,l0);
-
-  float s1_o = absX+hw;
-  float s0_o = absX-hw;
-  float l0_o = absY-hh;
-  float l2_o = absY+hh;
-
-  // absX + (-1,0,-1,0)*hw
-  s_start_out = _mm_set_ps(s0_o, absX, s0_o, absX);
-  // absX + (0,1,0,1)*hw
-  s_stop_out  = _mm_set_ps(absX, s1_o, absX, s1_o);
-
-  // absY + (-1,-1,0,0)*hh
-  l_start_out = _mm_set_ps(l0_o, l0_o, absY, absY);
-  // absY + (0,0,1,1)*hh
-  l_stop_out  = _mm_set_ps(absY, absY, l2_o, l2_o);
-#else
-
-  const __m128 v_pmpm = _mm_set_ps(1.0f,-1.0f,1.0f,-1.0f);
-  const __m128 v_ppmm = _mm_set_ps(1.0f,1.0f,-1.0f,-1.0f);
-  const __m128 v_p0p0 = _mm_set_ps(1.0f,0.0f,1.0f,0.0f);
-  const __m128 v_pp00 = _mm_set_ps(1.0f,1.0f,0.0f,0.0f);
-
-  s_stop_in   = _mm_sub_ps(v_hw,_mm_mul_ps(v_pmpm,v_absx));
-  l_stop_in   = _mm_sub_ps(v_hh,_mm_mul_ps(v_ppmm,v_absy));
-
-  s_start_out = _mm_sub_ps(v_absx,_mm_mul_ps(v_p0p0,v_hw));
-  s_stop_out  = _mm_add_ps(v_absx,_mm_mul_ps(_mm_sub_ps(_m_one_ps,v_p0p0),v_hw));
-
-  l_start_out = _mm_sub_ps(v_absy,_mm_mul_ps(v_pp00,v_hh));
-  l_stop_out  = _mm_add_ps(v_absy, _mm_mul_ps(_mm_sub_ps(_m_one_ps,v_pp00),v_hh));
-
-#endif
-  // Integral (stop, inside)
-  __m128 start_in = _mm_setzero_ps();
-
-  // |x| > hw
-  __m128 mask = _mm_cmpgt_ps(v_absx,v_hw);
-
-  __m128 s_start = _mm_sel_ps(start_in, s_start_out, mask);
-  __m128 s_stop  = _mm_sel_ps(s_stop_in, s_stop_out, mask);
-
-  // |y| > hh
-  __m128 mask1   = _mm_cmpgt_ps(v_absy,v_hh);
-
-  __m128 l_start = _mm_sel_ps(start_in, l_start_out, mask1);
-  __m128 l_stop  = _mm_sel_ps(l_stop_in, l_stop_out, mask1);
-
-  __m128 s = _mm_sub_ps(s_stop, s_start); // Always positive
-  __m128 l = _mm_sub_ps(l_stop, l_start); // Always positive
-
-  __m128 cargz, sargz;
-
-  _mm_sin_cos_ps(_mm_mul_ps(v_mk,v_z),&sargz,&cargz);
-
-  const __m128 v_z2 = _mm_square_ps(v_z);
-  const __m128 v_l2 = _mm_square_ps(l_stop_in);
-  const __m128 v_s2 = _mm_square_ps(s_stop_in);
-
-  __m128 rcp_denom1 = _mm_rcp_ps(_mm_mul_ps(_m_2pi_ps,_mm_neg_ps(v_mk)));
-
-  // u-integral, s-integral
-  const __m128 s_offset = _mm_mul_ps(_m_half_ps,_mm_add_ps(s_stop,s_start));
-  const __m128 s_scale  = _mm_mul_ps(_m_half_ps,_mm_sub_ps(s_stop,s_start));
-
-  // v-integral, l-integral
-  const __m128 l_offset = _mm_mul_ps(_m_half_ps,_mm_add_ps(l_start,l_stop));
-  const __m128 l_scale  =_mm_mul_ps(_m_half_ps,_mm_sub_ps(l_stop,l_start));
-
-  __m128 intWreal = _mm_setzero_ps();
-  __m128 intWimag = _mm_setzero_ps();
-
-  __m128 real, imag;
-
-  for (size_t iu = 0 ; iu < nUs ; iu++) {
-
-    __m128 us1       = _mm_load1_ps(&us[iu]);
-    __m128 uweights1 = _mm_load1_ps(&uweights[iu]);
-
-    // [0 ; |x|+hw] , [0 ; hw - |x|];
-    __m128 ls  = _mm_add_ps(_mm_mul_ps(s_scale,us1),s_offset);
-
-    __m128 ls2 = _mm_square_ps(ls);
-
-    __m128 argw = _mm_mul_ps(
-                    v_mk,
-                    _mm_sqrt_ps(
-                      _mm_add_ps(
-                        _mm_add_ps(
-                          ls2,
-                          v_z2),
-                        v_l2)));
-
-    __m128 cargw, sargw;
-
-    _mm_sin_cos_ps(argw, &sargw, &cargw);
-
-    __m128 denom = _mm_add_ps(ls2,v_l2);
-    __m128 rcp_denom = _mm_rcp_ps(denom);
-    // If the integral has zero length, reciprocal of denominator is set to zero
-    __m128 mask_denom = _mm_cmplt_ps(_mm_fabs_ps(s_scale),_m_eps_ps);
-    rcp_denom = _mm_sel_ps(rcp_denom,_mm_setzero_ps(),mask_denom);
-
-    real = _mm_mul_ps(
-             _mm_mul_ps(
-               uweights1,
-               _mm_sub_ps(
-                 cargw,
-                 cargz)),
-             rcp_denom);
-
-    imag = _mm_mul_ps(
-             _mm_mul_ps(
-               uweights1,
-               _mm_sub_ps(
-                 sargw,
-                 sargz)),
-             rcp_denom);
-    intWreal = _mm_add_ps(intWreal, real);
-    intWimag = _mm_add_ps(intWimag, imag);
-  }
-
-  __m128 intScale = _mm_mul_ps(
-                      _mm_mul_ps(
-                        _mm_sel_ps(s_scale,_mm_mul_ps(s,_m_half_ps),mask),
-                        l_stop_in),
-                      rcp_denom1);
-
-  // Divide by denominator
-  intWreal = _mm_mul_ps(intWreal,intScale);
-  intWimag = _mm_mul_ps(intWimag,intScale);
-
-  // Filter (consider recover sign earlier)
-  __m128 intHreal = _mm_setzero_ps();
-  __m128 intHimag = _mm_setzero_ps();
-
-  for(size_t iv = 0 ; iv < nVs ; iv++) {
-
-    __m128 vs1       = _mm_load1_ps(&vs[iv]);
-    __m128 vweights1 = _mm_load1_ps(&vweights[iv]);
-
-    __m128 ss  = _mm_add_ps(_mm_mul_ps(l_scale,vs1),l_offset);
-
-    __m128 ss2 = _mm_square_ps(ss);
-
-    __m128 argh = _mm_mul_ps(v_mk,
-                             _mm_sqrt_ps(
-                               _mm_add_ps(
-                                 _mm_add_ps(
-                                   ss2,
-                                   v_z2),
-                                 v_s2)));
-
-    __m128 cargh, sargh;
-
-    _mm_sin_cos_ps(argh, &sargh, &cargh);
-
-    __m128 denom = _mm_add_ps(ss2,v_s2);
-    __m128 rcp_denom = _mm_rcp_ps(denom);
-    // If the integral has zero length, reciprocal of denominator is set to zero
-    __m128 mask_denom = _mm_cmplt_ps(_mm_fabs_ps(l_scale),_m_eps_ps);
-    rcp_denom = _mm_sel_ps(rcp_denom,_mm_setzero_ps(),mask_denom);
-
-    real = _mm_mul_ps(
-             _mm_mul_ps(
-               vweights1,
-               _mm_sub_ps(
-                 cargh,
-                 cargz)),
-             rcp_denom);
-    imag = _mm_mul_ps(
-             _mm_mul_ps(
-               vweights1,
-               _mm_sub_ps(
-                 sargh,
-                 sargz)),
-             rcp_denom);
-    intHreal = _mm_add_ps(intHreal, real);
-    intHimag = _mm_add_ps(intHimag, imag);
-  }
-
-  intScale = _mm_mul_ps(
-               _mm_mul_ps(
-                 _mm_sel_ps(l_scale,_mm_mul_ps(_m_half_ps,l),mask1),
-                 s_stop_in),
-               rcp_denom1);
-
-  // Divide by denominator
-  intHreal = _mm_mul_ps(intHreal,intScale);
-  intHimag = _mm_mul_ps(intHimag,intScale);
-
-  intHreal = _mm_add_ps(intHreal,intWreal);
-  intHimag = _mm_add_ps(intHimag,intWimag);
-
-  // Multiply by -i
-  __m128 tmp = intHreal;
-  intHreal = intHimag;
-  intHimag = _mm_neg_ps(tmp);
-
-  // Horizontal sums
-  _mm_store_ss(
-    &(reinterpret_cast<float(&)[2]>(retval)[0]),
-    _mm_dp_ps(
-      _m_one_ps,
-      intHreal,
-      0xF1));
-  _mm_store_ss(&(reinterpret_cast<float(&)[2]>(retval)[1]),
-               _mm_dp_ps(
-                 _m_one_ps,
-                 intHimag,
-                 0xF1));
-
-  return retval;
+  SPS_UNREFERENCED_PARAMETERS(element,projection, k, us, uweights, nUs,
+                              vs, vweights, nVs);
+  return std::complex<float>();
 }
 
-// Not working!!!
 template <>
 std::complex<double>
-inline CalcHzFast(const sps::element_t<double>& element,
-                  const sps::point_t<double>& projection,
-                  const double& k,
-                  const double* us,
-                  const double* uweights,
-                  const size_t nUs,
-                  const double* vs,
-                  const double* vweights,
-                  const size_t nVs)
+inline CalcHzFastSingle(const sps::element_t<double>& element,
+                        const sps::point_t<double>& projection,
+                        const double& k,
+                        const double* us,
+                        const double* uweights,
+                        const size_t nUs,
+                        const double* vs,
+                        const double* vweights,
+                        const size_t nVs)
 {
-
-  std::complex<double> retval = std::complex<double>(0.0f,0.0f);
-
-  const double absX = fabs(projection[0]);
-  const double absY = fabs(projection[1]);
-  const double z    = projection[2];
-
-  const double hw = element.hw;
-  const double hh = element.hh;
-
-  double s0 = absX + hw; // [0;|x|+hw] -> [0;hw+|x|]  -> [|x|;|x|+hw]
-  double s1 = hw - absX; // [0;hw-|x|] -> -[hw-|x|;0] -> [|x|-hw;|x|]
-  double l0 = absY + hh;
-  double l2 = hh - absY;
-
-  // Integral (stop, inside)
-  __m128d start_in = _mm_setzero_pd();
-
-  const __m128d vec_mk = _mm_set1_pd(-k);
-  const __m128d vec_z  = _mm_set1_pd(z);
-
-  // First half
-
-  // Negative
-  __m128d s_stop_in = _mm_set_pd(s1,s0);
-  __m128d l_stop_in = _mm_set_pd(l2,l2);
-
-  __m128d s_start_out = _mm_set_pd(absX-hw,absX   );
-  __m128d s_stop_out  = _mm_set_pd(absX   ,absX+hw);
-
-  __m128d l_start_out = _mm_set_pd(absY-hh, absY-hh);
-  __m128d l_stop_out  = _mm_set_pd(absY   , absY   );
-
-  // |x| > hw
-  __m128d mask = _mm_cmpgt_pd(_mm_fabs_pd(_mm_set1_pd(projection[0])),_mm_set1_pd(hw));
-
-  __m128d s_start = _mm_sel_pd(start_in,s_start_out,mask);
-  __m128d s_stop  = _mm_sel_pd(s_stop_in,s_stop_out  ,mask);
-
-  // Okay
-  __m128d mask1 = _mm_cmpgt_pd(_mm_fabs_pd(_mm_set1_pd(projection[1])),_mm_set1_pd(hh));
-
-  __m128d l_start = _mm_sel_pd(start_in,l_start_out,mask1);
-  __m128d l_stop  = _mm_sel_pd(l_stop_in, l_stop_out, mask1);
-
-  __m128d s = _mm_sub_pd(s_stop,s_start); // Always positive
-  __m128d l = _mm_sub_pd(l_stop,l_start); // Always positive
-
-  __m128d cargz, sargz;
-  _mm_sin_cos_pd(_mm_mul_pd(vec_mk,vec_z),&sargz,&cargz);
-
-  const __m128d z2 = _mm_square_pd(vec_z);
-  __m128d vec_l2   = _mm_square_pd(l_stop_in);
-  __m128d vec_s2   = _mm_square_pd(s_stop_in);
-
-  __m128d rcp_denom1 = _mm_rcp_pd(_mm_mul_pd(_m_2pi_pd,_mm_set1_pd(k)));
-
-
-  // u-integral, s-integral
-  __m128d s_offset = _mm_mul_pd(_m_half_pd,_mm_add_pd(s_stop,s_start));
-  __m128d s_scale  = _mm_mul_pd(_m_half_pd,_mm_sub_pd(s_stop,s_start));
-
-  __m128d l_offset = _mm_mul_pd(_m_half_pd,_mm_add_pd(l_start,l_stop));
-  __m128d l_scale  =_mm_mul_pd(_m_half_pd,_mm_sub_pd(l_stop,l_start));
-
-  __m128d intWreal = _mm_setzero_pd();
-  __m128d intWimag = _mm_setzero_pd();
-
-  __m128d real, imag;
-
-  for (size_t iu = 0 ; iu < nUs ; iu++) {
-
-    __m128d us1       = _mm_load1_pd(&us[iu]);
-    __m128d uweights1 = _mm_load1_pd(&uweights[iu]);
-
-    // [0 ; |x|+hw] , [0 ; hw - |x|];
-    __m128d ls  = _mm_add_pd(_mm_mul_pd(s_scale,us1),s_offset);
-
-    __m128d ls2 = _mm_square_pd(ls);
-
-    __m128d argw = _mm_mul_pd(
-                     vec_mk,
-                     _mm_sqrt_pd(
-                       _mm_add_pd(
-                         _mm_add_pd(
-                           ls2,
-                           z2),
-                         vec_l2)));
-
-    __m128d cargw, sargw;
-
-    _mm_sin_cos_pd(argw, &sargw, &cargw);
-
-    __m128d rcp_denom = _mm_rcp_pd(_mm_add_pd(ls2,vec_l2));
-    __m128d mask_denom = _mm_cmplt_pd(_mm_fabs_pd(s_scale),_m_eps_pd);
-    rcp_denom = _mm_sel_pd(rcp_denom,_mm_setzero_pd(),mask_denom);
-
-    real = _mm_mul_pd(
-             _mm_mul_pd(
-               uweights1,
-               _mm_sub_pd(
-                 cargw,
-                 cargz)),
-             rcp_denom);
-
-    imag = _mm_mul_pd(
-             _mm_mul_pd(
-               uweights1,
-               _mm_sub_pd(
-                 sargw,
-                 sargz)),
-             rcp_denom);
-    intWreal = _mm_add_pd(intWreal, real);
-    intWimag = _mm_add_pd(intWimag, imag);
-  }
-
-  __m128d intScale = _mm_mul_pd(
-                       _mm_mul_pd(
-                         _mm_sel_pd(s_scale,s,mask), // Half integral
-                         l_stop_in),                     // Stop value
-                       rcp_denom1);
-
-  // Divide by denominator
-  intWreal = _mm_mul_pd(intWreal,intScale);
-  intWimag = _mm_mul_pd(intWimag,intScale);
-
-  // Filter (consider recover sign earlier)
-  __m128d intHreal = _mm_setzero_pd();
-  __m128d intHimag = _mm_setzero_pd();
-
-  for(size_t iv = 0 ; iv < nVs ; iv++) {
-
-    __m128d vs1       = _mm_load1_pd(&vs[iv]);
-    __m128d vweights1 = _mm_load1_pd(&vweights[iv]);
-
-    __m128d ss  = _mm_add_pd(_mm_mul_pd(l_scale,vs1),l_offset);
-
-    __m128d ss2 = _mm_square_pd(ss);
-
-    __m128d argh = _mm_mul_pd(vec_mk,
-                              _mm_sqrt_pd(
-                                _mm_add_pd(
-                                  _mm_add_pd(
-                                    ss2,
-                                    z2),
-                                  vec_s2)));
-
-    __m128d cargh, sargh;
-
-    _mm_sin_cos_pd(argh, &sargh, &cargh);
-
-    __m128d rcp_denom = _mm_rcp_pd(_mm_add_pd(ss2,vec_s2));
-
-    __m128d mask_denom = _mm_cmplt_pd(_mm_fabs_pd(l_scale),_m_eps_pd);
-    rcp_denom = _mm_sel_pd(rcp_denom,_mm_setzero_pd(),mask_denom);
-
-    real = _mm_mul_pd(
-             _mm_mul_pd(
-               vweights1,
-               _mm_sub_pd(
-                 cargh,
-                 cargz)),
-             rcp_denom);
-    imag = _mm_mul_pd(
-             _mm_mul_pd(
-               vweights1,
-               _mm_sub_pd(
-                 sargh,
-                 sargz)),
-             rcp_denom);
-    intHreal = _mm_add_pd(intHreal, real);
-    intHimag = _mm_add_pd(intHimag, imag);
-  }
-
-  intScale = _mm_mul_pd(
-               _mm_mul_pd(
-                 _mm_sel_pd(l_scale,l,mask1), // Half integral
-                 s_stop_in),                  // Inserts sign
-               rcp_denom1);
-  // Divide by denominator
-  intHreal = _mm_mul_pd(intHreal,intScale);
-  intHimag = _mm_mul_pd(intHimag,intScale);
-
-  intHreal = _mm_add_pd(intHreal,intWreal);
-  intHimag = _mm_add_pd(intHimag,intWimag);
-
-  // Multiply by -i
-  __m128d tmp = intHreal;
-  intHreal = intHimag;
-  intHimag = _mm_neg_pd(tmp);
-
-  // Horizontal sum
-  ALIGN16_BEGIN double tmpd[2] ALIGN16_END;
-  _mm_store_pd(tmpd,_mm_dp_pd(_m_one_pd,intHreal,0xF1));
-  retval.real(tmpd[0]);
-
-  _mm_store_pd(tmpd,_mm_dp_pd(_m_one_pd,intHimag,0xF1));
-  retval.imag(tmpd[0]);
-
-  // Second half
-  // Negative
-  s_stop_in = _mm_set_pd(s1,s0);
-  l_stop_in = _mm_set_pd(l0,l0);
-
-  s_start_out = _mm_set_pd(absX-hw,absX);
-  s_stop_out  = _mm_set_pd(absX   ,absX+hw);
-
-  l_start_out = _mm_set_pd(absY   , absY);
-  l_stop_out  = _mm_set_pd(absY+hh, absY+hh);
-
-  // |x| > hw
-  mask = _mm_cmpgt_pd(_mm_fabs_pd(_mm_set1_pd(projection[0])),_mm_set1_pd(hw));
-
-  s_start = _mm_sel_pd(start_in,s_start_out,mask);
-  s_stop  = _mm_sel_pd(s_stop_in,s_stop_out  ,mask);
-
-  // Okay
-  mask1 = _mm_cmpgt_pd(_mm_fabs_pd(_mm_set1_pd(projection[1])),_mm_set1_pd(hh));
-
-  l_start = _mm_sel_pd(start_in,l_start_out,mask1);
-  l_stop  = _mm_sel_pd(l_stop_in, l_stop_out, mask1);
-
-  s = _mm_sub_pd(s_stop,s_start); // Always positive
-  l = _mm_sub_pd(l_stop,l_start); // Always positive
-
-  _mm_sin_cos_pd(_mm_mul_pd(vec_mk,vec_z),&sargz,&cargz);
-
-  vec_l2 = _mm_square_pd(l_stop_in);
-  vec_s2 = _mm_square_pd(s_stop_in);
-
-  rcp_denom1 = _mm_rcp_pd(_mm_mul_pd(_m_2pi_pd,_mm_set1_pd(k)));
-
-
-  // u-integral, s-integral
-  s_offset = _mm_mul_pd(_m_half_pd,_mm_add_pd(s_stop,s_start));
-  s_scale  = _mm_mul_pd(_m_half_pd,_mm_sub_pd(s_stop,s_start));
-
-  l_offset = _mm_mul_pd(_m_half_pd,_mm_add_pd(l_start,l_stop));
-  l_scale  =_mm_mul_pd(_m_half_pd,_mm_sub_pd(l_stop,l_start));
-
-  intWreal = _mm_setzero_pd();
-  intWimag = _mm_setzero_pd();
-
-  for (size_t iu = 0 ; iu < nUs ; iu++) {
-
-    __m128d us1       = _mm_load1_pd(&us[iu]);
-    __m128d uweights1 = _mm_load1_pd(&uweights[iu]);
-
-    // [0 ; |x|+hw] , [0 ; hw - |x|];
-    __m128d ls  = _mm_add_pd(_mm_mul_pd(s_scale,us1),s_offset);
-
-    __m128d ls2 = _mm_square_pd(ls);
-
-    __m128d argw = _mm_mul_pd(
-                     vec_mk,
-                     _mm_sqrt_pd(
-                       _mm_add_pd(
-                         _mm_add_pd(
-                           ls2,
-                           z2),
-                         vec_l2)));
-
-    __m128d cargw, sargw;
-
-    _mm_sin_cos_pd(argw, &sargw, &cargw);
-
-    __m128d rcp_denom = _mm_rcp_pd(_mm_add_pd(ls2,vec_l2));
-
-    real = _mm_mul_pd(
-             _mm_mul_pd(
-               uweights1,
-               _mm_sub_pd(
-                 cargw,
-                 cargz)),
-             rcp_denom);
-
-    imag = _mm_mul_pd(
-             _mm_mul_pd(
-               uweights1,
-               _mm_sub_pd(
-                 sargw,
-                 sargz)),
-             rcp_denom);
-    intWreal = _mm_add_pd(intWreal, real);
-    intWimag = _mm_add_pd(intWimag, imag);
-  }
-
-  intScale = _mm_mul_pd(
-               _mm_mul_pd(
-                 _mm_sel_pd(s_scale,s,mask), // Half integral
-                 l_stop_in),                     // Stop value
-               rcp_denom1);
-
-  // Divide by denominator
-  intWreal = _mm_mul_pd(intWreal,intScale);
-  intWimag = _mm_mul_pd(intWimag,intScale);
-
-  // Filter (consider recover sign earlier)
-  intHreal = _mm_setzero_pd();
-  intHimag = _mm_setzero_pd();
-
-  for(size_t iv = 0 ; iv < nVs ; iv++) {
-
-    __m128d vs1       = _mm_load1_pd(&vs[iv]);
-    __m128d vweights1 = _mm_load1_pd(&vweights[iv]);
-
-    __m128d ss  = _mm_add_pd(_mm_mul_pd(l_scale,vs1),l_offset);
-
-    __m128d ss2 = _mm_square_pd(ss);
-
-    __m128d argh = _mm_mul_pd(vec_mk,
-                              _mm_sqrt_pd(
-                                _mm_add_pd(
-                                  _mm_add_pd(
-                                    ss2,
-                                    z2),
-                                  vec_s2)));
-
-    __m128d cargh, sargh;
-
-    _mm_sin_cos_pd(argh, &sargh, &cargh);
-
-    __m128d rcp_denom = _mm_rcp_pd(_mm_add_pd(ss2,vec_s2));
-
-    real = _mm_mul_pd(
-             _mm_mul_pd(
-               vweights1,
-               _mm_sub_pd(
-                 cargh,
-                 cargz)),
-             rcp_denom);
-    imag = _mm_mul_pd(
-             _mm_mul_pd(
-               vweights1,
-               _mm_sub_pd(
-                 sargh,
-                 sargz)),
-             rcp_denom);
-    intHreal = _mm_add_pd(intHreal, real);
-    intHimag = _mm_add_pd(intHimag, imag);
-  }
-
-  intScale = _mm_mul_pd(
-               _mm_mul_pd(
-                 _mm_sel_pd(l_scale,l,mask1), // Half integral
-                 s_stop_in),                  // Inserts sign
-               rcp_denom1);
-  // Divide by denominator
-  intHreal = _mm_mul_pd(intHreal,intScale);
-  intHimag = _mm_mul_pd(intHimag,intScale);
-
-  intHreal = _mm_add_pd(intHreal,intWreal);
-  intHimag = _mm_add_pd(intHimag,intWimag);
-
-  // Multiply by -i
-  tmp = intHreal;
-  intHreal = intHimag;
-  intHimag = _mm_neg_pd(tmp);
-
-  // Horizontal sum
-  _mm_store_pd(tmpd,_mm_dp_pd(_m_one_pd,intHreal,0xF1));
-  retval.real(retval.real() + tmpd[0]);
-
-  _mm_store_pd(tmpd,_mm_dp_pd(_m_one_pd,intHimag,0xF1));
-  retval.imag(retval.imag() + tmpd[0]);
-
-  return retval;
+  SPS_UNREFERENCED_PARAMETERS(element,projection, k, us, uweights, nUs,
+                              vs, vweights, nVs);
+  return std::complex<double>();
 }
 
 template <>
@@ -1007,6 +473,9 @@ inline CalcHzAll(const sps::element_t<double>& element,
   std::complex<double> retval;
   return retval;
 }
+
+#include <fnm/fnm_ps.hpp>
+#include <fnm/fnm_pd.hpp>
 
 /* Local variables: */
 /* indent-tabs-mode: nil */

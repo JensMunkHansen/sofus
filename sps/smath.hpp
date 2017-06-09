@@ -12,6 +12,7 @@
 #include <sps/cenv.h>
 #include <sps/sps_export.h>
 #include <sps/math.h>
+#include <sps/zip>
 
 #include <sps/smath_types.hpp>
 
@@ -19,6 +20,8 @@
 #include <iostream>
 
 #ifdef _WIN32
+# undef max
+# undef min
 /**
  * Signum function
  *
@@ -77,14 +80,45 @@ int signum(T x)
 /** @addtogroup SPS */
 namespace sps {
 
+  template <typename I, typename J>
+  std::pair<I,J>
+  minmax_weighted_element(I begin, I end, J it)
+  {
+    std::pair<I, I> result(end,end);
+
+    std::zip( [&](I xi,
+    J wi)->void {
+      if (*wi > 0)
+      {
+        if (result.first == end) {
+          result.first = xi;
+        }
+        if (result.second == end) {
+          result.second = xi;
+        }
+        if (*result.first < *xi) {
+          result.first = xi;
+        }
+        if (*result.second > *xi) {
+          result.second = xi;
+        }
+      }
+    }, begin, end, it);
+    return result;
+  }
+
+  /* if STATIC_INLINE - used but never defined */
+  template <typename T, typename U>
+  std::pair<T,T> SPS_EXPORT
+  minmax_delay(const T* xs, const U* ws, size_t nData);
 
   /**
    * Distance from point to point
    *
-   * @param a
-   * @param b
+   * @param a First point
+   * @param b Second point
    *
-   * @return
+   * @return \f$d = |\mathbf{a}-\mathbf{b}|\f$
    */
   template <class T>
   inline T dist_point_to_point(const point_t<T>& a, const point_t<T>& b)
@@ -98,7 +132,7 @@ namespace sps {
    * @param a
    * @param b
    *
-   * @return
+   * @return \f$d= \mathbf{a}\cdot\mathbf{b}\f$
    */
   template <typename T>
   inline T dot(const point_t<T> &a, const point_t<T> &b)
@@ -184,7 +218,7 @@ namespace sps {
    *
    * @param a
    *
-   * @return |a|
+   * @return \f$|\mathbf{a}|\f$
    */
   template <typename T>
   inline T norm(const point_t<T> &a)
@@ -209,17 +243,18 @@ namespace sps {
   }
 
   /**
-   * Signed distance from point to plane
+   * Signed distance from point to plane.
    *
-   * @param point
-   * @param pointOnPlane
-   * @param unitNormal
+   * @param point           \f$\mathbf{p}\f$
+   * @param pointOnPlane    \f$\mathbf{q}\f$
+   * @param unitNormal      \f$\mathbf{n}\f$
    *
-   * @return
+   * @return \f$d = (\mathbf{p} - \mathbf{q})\cdot \mathbf{n}\f$
    */
   template <typename T>
-  inline T sgn_dist_to_plane(const point_t<T>& point, const point_t<T>& pointOnPlane,
-                             const point_t<T>& unitNormal)
+  inline
+  T sgn_dist_to_plane(const point_t<T>& point, const point_t<T>& pointOnPlane,
+                      const point_t<T>& unitNormal)
   {
     return dot((point - pointOnPlane),unitNormal);
   }
@@ -233,7 +268,8 @@ namespace sps {
    * @return
    */
   template <typename T>
-  inline sps::point_t<T> clamp_vector(const sps::point_t<T> &point, const sps::bbox_t<T> &box)
+  inline
+  sps::point_t<T> clamp_vector(const sps::point_t<T> &point, const sps::bbox_t<T> &box)
   {
     sps::point_t<T> clamped;
     clamped[0] = (point[0] < box.min[0]) ? box.min[0] : (point[0] > box.max[0]) ? box.max[0] : point[0];
@@ -241,6 +277,38 @@ namespace sps {
     clamped[2] = (point[2] < box.min[2]) ? box.min[2] : (point[2] > box.max[2]) ? box.max[2] : point[2];
     return clamped;
   }
+
+
+  /**
+   * Compute bounding box aligned with the axes for 3D positions
+   *
+   * @param pos
+   * @param nPos
+   * @param box
+   */
+  template<typename T>
+  void compute_bounding_box3(const T* pos, const size_t nPos, sps::bbox_t<T>* box)
+  {
+
+    size_t iPoint = 0;
+    size_t iXYZ = 0;
+
+    box->min[0] = pos[iPoint*3 + 0];
+    box->min[1] = pos[iPoint*3 + 1];
+    box->min[2] = pos[iPoint*3 + 2];
+    box->max[0] = pos[iPoint*3 + 0];
+    box->max[1] = pos[iPoint*3 + 1];
+    box->max[2] = pos[iPoint*3 + 2];
+
+    for (iPoint = 0 ; iPoint < nPos ; iPoint++) {
+      for (iXYZ = 0 ; iXYZ < 3 ; iXYZ++) {
+        box->min[iXYZ] = std::min<T>(box->min[iXYZ], pos[iPoint*3+iXYZ]);
+        box->max[iXYZ] = std::max<T>(box->max[iXYZ], pos[iPoint*3+iXYZ]);
+      }
+    }
+  }
+
+
 
   /**
    * Nearest point on a box (from a point)
@@ -281,11 +349,20 @@ namespace sps {
     return farthest;
   }
 
+  /**
+   * Shortest and longest distance between any point on two boxes
+   *
+   * @param box0
+   * @param box1
+   * @param distNear Shortest distance
+   * @param distFar  Longest distance
+   */
   template <typename T>
-  inline void dists_most_distant_and_closest(const sps::bbox_t<T> &box0,
-      const sps::bbox_t<T> &box1,
-      T* distNear,
-      T* distFar)
+  inline
+  void dists_most_distant_and_closest(const sps::bbox_t<T> &box0,
+                                      const sps::bbox_t<T> &box1,
+                                      T* distNear,
+                                      T* distFar)
   {
     // Corners
     T boundaries[6];
@@ -341,19 +418,35 @@ namespace sps {
   template struct SPS_EXPORT euler_t<double>;
 #endif
 
-  template <typename T>
+  typedef enum RotationConvention {
+    EulerIntrinsicZYZ = 0x00,
+    EulerIntrinsicYXY = 0x01,
+  } RotationConvention;
+
+  /**
+   * Rotate point using 3 Euler angles according to the @ref conv convention.
+   *
+   * @tparam conv Rotation convention
+   * @param input
+   * @param euler
+   * @param output
+   *
+   * @return
+   */
+  template <typename T, RotationConvention conv>
   void SPS_EXPORT basis_rotate(const sps::point_t<T>& input, const euler_t<T>& euler, sps::point_t<T>& output);
 
   /**
    * Function for returning the basis vector for a given coordinate
    * system defined using 3 Euler angles according to the the z-x-z'
-   * convention.
+   * or y-x-y' convention.
    *
+   * @tparam conv Rotation convention
    * @param output
    * @param euler
    * @param index
    */
-  template <typename T>
+  template <typename T, RotationConvention conv>
   void SPS_EXPORT basis_vectors(sps::point_t<T>& output, const sps::euler_t<T>& euler, size_t index);
 
   /**

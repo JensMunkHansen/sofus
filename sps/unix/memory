@@ -1,42 +1,78 @@
+/**
+ * @file   <sps/unix/memory>
+ * @author Jens Munk Hansen <jens.munk.hansen@gmail.com>
+ * @date   Thu Mar 23 22:48:58 2017
+ * 
+ * @brief  Memory related functions
+ * 
+ * 
+ */
 #pragma once
 
 #include <sps/mm_malloc.h>
 
+#ifndef __cplusplus
+# error This is a C++ header
+#endif
+
 #include <algorithm>
 #include <cassert>
 
+// For multi_array
+#include <cstdarg>
+
 namespace sps {
   namespace nix {
-#if 1 //def __GNUG__
     template<typename T>
     using deleted_aligned_array = std::unique_ptr<T[], std::function<void(T*)> >;
-    
+
+    /** 
+     * Create unique aligned array with custom deleter
+     *
+     * @tparam T type
+     * @param n  length
+     * 
+     * @return 
+     */
     template<typename T>
     deleted_aligned_array<T> deleted_aligned_array_create(size_t n) {
-      return deleted_aligned_array<T>((T*)_mm_malloc(n*sizeof(T),16),
+      return deleted_aligned_array<T>((T*)_mm_malloc(n*sizeof(T), 4*sizeof(T)),
                                       [](T* f)->void { _mm_free(f);});
     }
+
+    //! Aligned multi-dimensional array
+    /*! Aligned multi-dimensional array, which is automatically deleted like a unique ptr */
     template <class T, size_t D>
     class deleted_aligned_multi_array {
     };
 
     template <class T>
-    class deleted_aligned_multi_array<T,1> : public std::unique_ptr<T[], std::function<void(T*)> > {
+    class deleted_aligned_multi_array<T, 1> : public std::unique_ptr<T[], std::function<void(T*)> >{
       deleted_aligned_multi_array(size_t n) :
-        std::unique_ptr<T[], std::function<void(T*)> >((T*)_mm_malloc(n*sizeof(T),16),
+        // 32-byte aligned to allow 4-vectors of doubles
+        std::unique_ptr<T[], std::function<void(T*)> >((T*)_mm_malloc(n*sizeof(T),32),
                                                        [](T* f)->void { _mm_free(f);}) {}
     };
     
-    // TODO: Does not support zero-size arrays, but works
     template <class T>
-    class deleted_aligned_multi_array<T,2> {
+    class deleted_aligned_multi_array<T, 2> {
     public:
       typedef T** pointer;
+      typedef const T** const_pointer;
       typedef std::unique_ptr<T*, std::function<void(T**)>> deleted_unique_array;
-      
+
+      /** 
+       * Default constructor
+       * 
+       */
       deleted_aligned_multi_array() : m(0), n(0), data() {}
 
-      // Using this pointer works, but I get invalid read of size 8 (some times)
+      /** 
+       * 
+       * 
+       * @param m 
+       * @param n 
+       */
       deleted_aligned_multi_array(size_t m, size_t n) : m(m), n(n) {
         if (m*n > 0) {
           data = deleted_unique_array(new T*[m](),
@@ -53,18 +89,30 @@ namespace sps {
 
         // Allocate
         if (m*n > 0) {
-          data.get()[0] = (T*) _mm_malloc(m*n*sizeof(T),16);
-
+          // 32-byte aligned to allow 4-vectors of doubles
+          data.get()[0] = (T*) _mm_malloc(m*n*sizeof(T),32);
+          
           // Row pointers. First pointer may screw up de-allocation.
           for (size_t iRow = 1; iRow < m; iRow++) {
             (data.get())[iRow] = &(data.get()[0][iRow*n]);
           }
         }
       }
-      
+
+      /** 
+       * Move constructor
+       * 
+       * @param other 
+       */
       deleted_aligned_multi_array(deleted_aligned_multi_array&& other) : m(std::move(other.m)), n(std::move(other.n)), data(std::move(other.data)) { }
 
-      // Dangerous
+      /** 
+       * Move assignment
+       * 
+       * @param other 
+       * 
+       * @return 
+       */
       deleted_aligned_multi_array& operator=( deleted_aligned_multi_array&& other ) 
       {
         if (this != &other) {
@@ -75,30 +123,74 @@ namespace sps {
         return *this;
       }
 
+      /** 
+       * Get reference to element
+       *
+       * @param i
+       * @param j 
+       * 
+       * @return reference to element
+       */
       T& operator()(size_t i, size_t j) {
         return this->data.get()[0][i*n + j];
       }
-      
+
+      /** 
+       * Get row pointer
+       * 
+       * @param m 
+       * 
+       * @return 
+       */
       T* operator[](size_t m) {
         return &(data.get()[m][0]);
       }
-      
+
+      /** 
+       * Get const row pointer
+       * 
+       * @param m 
+       * 
+       * @return 
+       */
       const T* operator[](size_t m) const {
         return data.get()[m];
       }
-      
+
+      /** 
+       * Get pointer to data
+       * 
+       * 
+       * @return 
+       */
       pointer get() {
         return data.get();
       }
 
-      const pointer get2() const {
-        return data.get();
+      /** 
+       * Get const pointer to data
+       * 
+       * 
+       * @return 
+       */
+      const_pointer get() const {
+        return const_cast<const T**>(data.get());
       }
-      
+
+      /** 
+       * 
+       * 
+       * @param __p 
+       */
       void reset(pointer __p = pointer()) {
         data.reset(__p);
       }
 
+      /** 
+       * 
+       * 
+       * @tparam _Up 
+       */
       template<typename _Up>
       void reset(_Up) = delete;
       
@@ -111,7 +203,7 @@ namespace sps {
       size_t n;                   ///<Number of columns
       deleted_unique_array data;  ///<Data
     };
-
+    
     // Work-around to partially specialize a function (multiple dimensions)
     template <class T, size_t I>
     inline typename std::enable_if<I==2, deleted_aligned_multi_array<T,2> >::type
@@ -119,7 +211,29 @@ namespace sps {
     {
       return deleted_aligned_multi_array<T,2>(m,n);
     }
-#endif
+
+    // If we don't care about contiguous-ness, we can do the following (fix recursive type)
+    template <class T, size_t d>
+    class multi_array {
+    public:
+      typedef std::unique_ptr<T[]> ManagedC;
+      
+      multi_array(...) {
+        va_list ap;             /* varargs list traverser */
+        size_t *d1;             /* dimension list */
+        va_start(ap,d);
+        d1 = (size_t *) malloc(d*sizeof(size_t));
+        size_t i, j;            /* loop counters */
+        for(i=0; i<d; i++)
+          d1[i] = va_arg(ap,size_t);
+
+        // TODO: Figure out how to declara member variable
+        auto managed_array = std::unique_ptr<ManagedC[]>(new ManagedC[d1[0]]);
+        for (size_t i = 0; i < d1[0]; ++i)
+          managed_array[i] = ManagedC(new T[d1[1]]);
+        free(d1);
+      }
+    };
   }
 }
 

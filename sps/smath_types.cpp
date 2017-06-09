@@ -1,7 +1,8 @@
-// TODO: Clean up
+// TODO: Clean up - it is obsolete
 
 #include <sofus/config.h>
 #include <sofus/sofus_export.h>
+
 #include <sofus/ApertureData.hpp>
 #include <sps/math.h>
 #include <sps/smath.hpp>
@@ -170,9 +171,9 @@ namespace sps {
     return out;
   }
 
-//  template struct point_t<float>;
+  template struct point_t<float>;
   template struct element_t<float>;
-
-//template struct point_t<double>;
+  
+  template struct point_t<double>;
   template struct element_t<double>;
 }

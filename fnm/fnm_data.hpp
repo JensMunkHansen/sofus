@@ -3,7 +3,7 @@
  * @author Jens Munk Hansen <jens.munk.hansen@gmail.com>
  * @date   Thu Jun  9 06:12:31 2016
  *
- * @brief
+ * @brief Data structures containing data for field computation
  *
  *
  */
@@ -14,31 +14,33 @@
 
 #include <sps/cenv.h>
 #include <sps/memory>
+#include <sps/smath.hpp> // sps::point_t and sps::euler_t, now element_t
 
 #include <fnm/fnm_types.hpp> // FocusingType, element_t
 
-#ifdef FNM_PULSED_WAVE
-# include <vector>
-#endif
-
-// Do we need to export std::vector<std::vector<sps::element_t<float> > >
-
 namespace fnm {
 
-  /*! \brief Aperture data structure
-   *
+  /*! \brief ApertureData structure
    *
    * A struct containing data of the aperture
+   *
+   * @tparam T floating point type
+   *
    */
 #ifdef _MSC_VER
   template <class T>
-  class /*FNM_EXPORT*/ ApertureData
+  class ApertureData
 #else
   template <class T>
-  ALIGN16_BEGIN struct ALIGN16_END /*FNM_EXPORT*/ ApertureData
+  ALIGN16_BEGIN struct ALIGN16_END ApertureData
+      // __attribute__((aligned(4*sizeof(T))))
 #endif
   {
+#ifdef _MSC_VER
   public:
+#endif
+    typedef sps::deleted_aligned_multi_array<sps::element_t<T>, 2U> element_array;
+
     /// Next unique identifier to use
     static size_t nextID;
 
@@ -52,7 +54,7 @@ namespace fnm {
     size_t m_npos;
 
     /// Elements
-    sps::deleted_aligned_multi_array<sps::element_t<T>, 2U> m_elements;
+    element_array m_elements;
 
     /// Positions
     sps::deleted_aligned_array<sps::point_t<T> > m_pos;
@@ -69,11 +71,20 @@ namespace fnm {
     /// Rectangles
     sps::deleted_aligned_array<sps::rect_t<T> > m_rectangles;
 
+    /// Boxes encapsulating sub-elements
+    sps::deleted_aligned_array<sps::bbox_t<T> > m_boxes;
+
+    /// Maximum half width or height (used for far field memory allocation)
+    T m_h_xyz[3];
+
     /// Center frequency
     T m_f0;
 
     /// Focus point
     sps::point_t<T> m_focus;
+
+    /// Focus point
+    sps::point_t<T> m_center_focus;
 
     /// Focusing Type, Rayleigh or Pythagorean
     int m_focus_type;
@@ -90,56 +101,101 @@ namespace fnm {
     /// Ctor
     ApertureData();
 
-    void ElementsSet(sps::deleted_aligned_multi_array<sps::element_t<T>,2> &&elements, const size_t& nRows, const size_t& nCols);
-
-#ifdef FNM_PULSED_WAVE
     /**
-     * Nasty STL-vector return type
+     * Set elements. Data are moved
+     *
+     * @param elements
+     * @param nRows
+     * @param nCols
+     */
+    void ElementsSet(element_array &&elements,
+                     const size_t& nRows, const size_t& nCols) __restrict; /* pointer is unaliased */
+
+    /**
+     * Get reference to (sub)-elements
+     *
+     * @param nElements
+     * @param nSubElements
+     * @param elements double-pointer to const elements
+     *
+     * @return
+     */
+    int ElementsRefGet(size_t* nElements, size_t* nSubElements, const sps::element_t<T>**& elements) const;
+
+    /**
+     * Get reference to apodizations
+     *
+     * @param nElements
+     * @param apodizations pointer to const apodizations
+     *
+     * @return
+     */
+    int ApodizationsRefGet(size_t* nElements, const T*& apodizations) const;
+
+    /**
+     *
+     *
+     * @param nElements
+     * @param delays
+     *
+     * @return
+     */
+    int DelaysRefGet(size_t* nElements, const T*& delays) const;
+
+    /**
+     * ElementExtentGet
+     *
+     * @param iElement
+     * @param bbox Bounding box enclosing sub-elements for the i'th element
+     */
+    void ElementExtentGet(const size_t iElement, sps::bbox_t<T>& bbox) const;
+
+    /**
+     * Return extent of aperture in directions: x, y, and z
+     *
+     * @param bbox Bounding box enclosing aperture
+     */
+    void ExtentGet(sps::bbox_t<T>& bbox) const;
+
+    /**
+     * Total acoustic area
+     *
+     *
+     * @return total area of elements
+     */
+    T AreaGet() const;
+
+    /**
+     * Dtor
      *
      *
      * @return
      */
-    std::vector<std::vector<sps::element_t<T> > > ElementsVectorGet() const;
-#endif
-
-    void initVectors();
-
-    void initElements();
-
-    void initRectangles();
-
-    void ExtentGet(sps::bbox_t<T>& bbox) const;
-
-    T AreaGet() const;
-
-    /// Dtor
     ~ApertureData();
   private:
+    /**
+     * Initialize basis vectors for each element
+     *
+     */
+    void initVectors();
+
+    /**
+     * Initialize apodizations, positions, phases and delays
+     *
+     */
+    void initElements();
+
+    /**
+     * Initialize rectangles used for Far field approximations
+     *
+     */
+    void initRectangles();
+
+    // Note: Deep copy is needed, if it is made copyable.
     ApertureData(const ApertureData& other) = delete;
     ApertureData& operator=(const ApertureData& other) = delete;
     ApertureData(ApertureData&& other) = delete;
     ApertureData& operator=(ApertureData&& other) = delete;
-
-    // Deep copy is needed, if it is made copyable.
-    /*
-      ApertureData(const ApertureData& other)
-      : m_pos((point_t<T>*)_mm_malloc(other.m_npos*sizeof(point_t<T>),16), [](point_t<T>* f)->void { _mm_free(f);}),
-        m_apodizations((T*)_mm_malloc(other.m_npos*sizeof(T),16), [](T* f)->void { _mm_free(f);}),
-        m_phases((T*)_mm_malloc(other.m_npos*sizeof(T),16), [](T* f)->void { _mm_free(f);}),
-        m_rectangles((rect_t<T>*)_mm_malloc(other.m_npos*sizeof(rect_t<T>),16), [](rect_t<T>* f)->void { _mm_free(f);})
-      {
-        memcpy(m_pos.get(),other.m_pos.get(),m_npos*sizeof(T));
-        // etc
-        return *this;
-      }
-
-      and std::move is needed, if it is made moveable
-
-      ApertureData(ApertureData&& other) : m_pos(std::move(other.m_pos))
-      {
-        return *this;
-      }
-    */
   };
 }
 

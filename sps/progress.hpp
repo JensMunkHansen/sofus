@@ -6,8 +6,9 @@
 #include <mutex>
 #include <condition_variable>
 
+// TODO: Export only interface
 namespace sps {
-  class SPS_EXPORT ProgressBar : public ProgressBarInterface {
+  class ProgressBar : public ProgressBarInterface {
   public:
     virtual void show(float percent) = 0;
     virtual ~ProgressBar() = default;
@@ -23,7 +24,8 @@ namespace sps {
     std::condition_variable cnd;
   };
 
-  class SPS_EXPORT ProgressBarStdOut : public ProgressBar {
+  class SPS_EXPORT ProgressBarStdOut : public ProgressBarInterface {
+      // Add stuff like above
   public:
     virtual void show(float percent);
     virtual ~ProgressBarStdOut() = default;

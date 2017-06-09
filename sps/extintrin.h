@@ -48,13 +48,22 @@
 # include <immintrin.h> // AVX
 #endif
 
-#ifdef HAVE_ZMMINTRIN_H
-# include <zmmintrin.h> // AVX2
+#ifndef WIN32
+# ifdef HAVE_ZMMINTRIN_H
+#  include <zmmintrin.h> // AVX2
+# endif
+#else
 #endif
 
 #ifdef HAVE_STDINT_H
 # include <stdint.h>
 #endif
+
+#ifdef WIN32
+// Bulldozer AMD
+// # include <x86intrin.h>
+#endif
+
 
 #ifdef __cplusplus
 # include <iostream>
@@ -76,7 +85,12 @@ static const __m128 _m_eps_ps   = _mm_set1_ps(FLT_EPSILON);
 
 const __m128d _m_half_pd         = _mm_set1_pd(0.5);
 const __m128d _m_one_pd          = _mm_set1_pd(1.0);
+
 static const __m128d _m_eps_pd   = _mm_set1_pd(DBL_EPSILON);
+
+static const __m256d _m256_m_one_pd = _mm256_set1_pd(-1.0);
+static const __m256d _m256_one_pd = _mm256_set1_pd(1.0);
+static const __m256d _m256_half_pd = _mm256_set1_pd(0.5);
 
 /**@}*/
 
@@ -89,6 +103,9 @@ const ALIGN16_BEGIN int _clear_signmask[4] ALIGN16_END =
 
 const ALIGN16_BEGIN long long int _clear_signmaskd[2] ALIGN16_END =
 {0x7FFFFFFFFFFFFFFF,0x7FFFFFFFFFFFFFFF};                                 ///< clear sign mask for pd
+
+const ALIGN32_BEGIN long long int _clear_signmask_256[4] ALIGN32_END =
+{0x7FFFFFFFFFFFFFFF,0x7FFFFFFFFFFFFFFF,0x7FFFFFFFFFFFFFFF,0x7FFFFFFFFFFFFFFF}; ///< clear sign mask for ps
 
 
 #ifdef _WIN32
@@ -105,7 +122,10 @@ const ALIGN16_BEGIN int _neg_signmask[4] ALIGN16_END =
 const ALIGN16_BEGIN long long int _neg_signmaskd[2] ALIGN16_END =
 {(long long int)0x8000000000000000,(long long int)0x8000000000000000};   ///< negative sign mask for pd
 
-const __m128i negmask = _mm_set1_epi32(-1);                                ///< negate mask 0xFFFFFFFF for epi32
+const __m128i negmask = _mm_set1_epi32(-1);                              ///< negate mask 0xFFFFFFFF for epi32
+
+
+const __m256i negmask_256 = _mm256_set_epi64x(-1,-1,-1,-1);              ///< negate mask 0xFFFFFFFFFFFFFFFF for epi32
 
 
 /**@}*/
@@ -144,6 +164,16 @@ typedef union __declspec(intrin_type) _CRT_ALIGN(16) v4i {
     v = _v;
   }
 } v4i;
+
+typedef union __declspec(intrin_type) _CRT_ALIGN(32) v4d {
+  __m256d v;
+  double               f64[4];
+  v4d() {}
+  v4d(const __m256d& _v) {
+    v = _v;
+  }
+} v4d;
+
 #else
 typedef union v4f {
   __m128 v;
@@ -178,7 +208,23 @@ typedef union v4i {
     v = _v;
   }
 } v4i __attribute__ ((aligned (16)));
+
+typedef union v4d {
+  __m256d v;
+  double               f64[4];
+  v4d() {}
+  v4d(const __m256d& _v) {
+    v = _v;
+  }
+}  v4d __attribute__ ((aligned (32)));
+
 #endif
+
+STATIC_INLINE_BEGIN __m256d _mm256_movehl_pd(__m256d a, __m256d b)
+{
+  return _mm256_castps_pd(_mm256_permute2f128_ps(_mm256_castpd_ps(a), _mm256_castpd_ps(b), 0x11 /*0x21*/));
+}
+
 
 /**
  * Multiply and accumulate
@@ -204,7 +250,7 @@ STATIC_INLINE_BEGIN __m128  _mm_madd_ps(__m128 a, __m128 b, __m128 c) STATIC_INL
 STATIC_INLINE_BEGIN int64_t mulshift (int64_t a, int64_t b, int s)
 {
   int64_t res;
-  __asm__ volatile (                                // rax = a, rdx = b, ecx = s
+  __asm__ volatile (                // rax = a, rdx = b, ecx = s
     "imulq %%rdx;\n\t"              // rdx:rax = rax * rdx
     "shrdq %%cl, %%rdx, %%rax;\n\t" // rax = int64_t (rdx:rax >> s)
     "movq  %%rax, %0;"              // res = rax
@@ -252,6 +298,28 @@ STATIC_INLINE_BEGIN __m128 _mm_rcp_nr_ps(const __m128& x)
   return res =  _mm_sub_ps(_mm_add_ps(res, res), muls);
 }
 
+// AVX-512 (HACK)
+#if defined(_MSC_VER) && (_MSC_VER <= 2000)
+STATIC_INLINE_BEGIN __m256d _mm256_rcp14_pd(__m256d x)
+{
+  __m128 x1 = _mm256_cvtpd_ps(x);
+  x1 = _mm_rcp_ps(x1);
+  return _mm256_cvtps_pd(x1);
+}
+#endif
+
+// SVML (Intel) provides _mm256_exp_pd in ia32intrin.h
+
+#ifndef INTEL_COMPILER
+STATIC_INLINE_BEGIN double
+_mm256_cvtsd_f64(__m256d d)
+{
+  // TODO: Keep input argument in register
+  v4d _d;
+  _d.v = d;
+  return _d.f64[0];
+}
+#endif
 
 /**
  * Absolute values of packed singles.
@@ -262,8 +330,32 @@ STATIC_INLINE_BEGIN __m128 _mm_rcp_nr_ps(const __m128& x)
  */
 STATIC_INLINE_BEGIN  __m128 _mm_fabs_ps(__m128 x) STATIC_INLINE_END;
 
+/**
+ * Absolute values of packed doubles.
+ *
+ * @param x
+ *
+ * @return
+ */
 STATIC_INLINE_BEGIN  __m128d _mm_fabs_pd(__m128d x) STATIC_INLINE_END;
 
+/**
+ * Absolute values of packed doubles.
+ *
+ * @param x
+ *
+ * @return
+ */
+STATIC_INLINE_BEGIN  __m256d _mm256_fabs_pd(__m256d x) STATIC_INLINE_END;
+
+/**
+ * Floating point modulo of packed singles
+ *
+ * @param a
+ * @param aDiv
+ *
+ * @return
+ */
 STATIC_INLINE_BEGIN __m128 _mm_fmod_ps(const __m128& a, const __m128& aDiv) STATIC_INLINE_END;
 
 STATIC_INLINE_BEGIN __m128 _mm_fmod_ps(const __m128& a, const __m128& aDiv)
@@ -313,8 +405,6 @@ STATIC_INLINE_BEGIN __m128 _mm_mulcmplx_ps(const __m128 &a, const __m128 &b)
   xmm0 = _mm_add_ps(xmm0,xmm3);
   return xmm0;
 }
-
-// It is actually vertical
 
 /**
  * Horizontal AND values, 32-bit at a time. Result is placed in the
@@ -407,6 +497,67 @@ STATIC_INLINE_BEGIN __m128i _mm_dp_epi32(__m128i x, __m128i y)
 }
 #endif
 
+STATIC_INLINE_BEGIN  __m128d _mm256_hsum_pd(__m256d x1, __m256d x2)
+{
+  // calculate 4 two-element horizontal sums:
+  // lower 64 bits contain x1[0] + x1[1]
+  // next 64 bits contain x2[0] + x2[1]
+  // next 64 bits contain x1[2] + x1[3]
+  // next 64 bits contain x2[2] + x2[3]
+  __m256d sum = _mm256_hadd_pd(x1, x2);
+  // extract upper 128 bits of result
+  __m128d sum_high = _mm256_extractf128_pd(sum, 1);
+  // add upper 128 bits of sum to its lower 128 bits
+  __m128d result = _mm_add_pd(sum_high, _mm256_castpd256_pd128(sum));
+  // lower 64 bits of result contain the sum of x1[0], x1[1], x1[2], x1[3]
+  // upper 64 bits of result contain the sum of x2[0], x2[1], x2[2], x2[3]
+  return result;
+}
+
+
+STATIC_INLINE_BEGIN __m256d _mm256_dp_pd(const __m256d& x, const __m256d& y, const int mask) STATIC_INLINE_END;
+
+STATIC_INLINE_BEGIN __m256d _mm256_dp_pd(const __m256d& x, const __m256d& y, const int mask)
+{
+  // Without AVX-512 and __m256_cmp_epu32 a few casts are needed
+  const __m256i smask      = _mm256_set_epi64x(0x80,0x40,0x20,0x10);
+  const __m256i omask      = _mm256_set_epi64x(0x08,0x04,0x02,0x01);
+
+  const __m256i bum = _mm256_set1_epi64x(mask);
+
+#ifdef HAVE_ZMMINTRIN_H
+  const __m256d selectMask = _mm256_cmp_pd(
+                               _mm256_castsi256_pd(_mm256_and_si256(smask, bum)),
+                               _mm256_castsi256_pd(smask),
+                               _CMP_EQ_UQ);
+  const __m256d outputMask = _mm256_cmp_pd(
+                               _mm256_castsi256_pd(_mm256_and_si256(omask, bum)),
+                               _mm256_castsi256_pd(omask),
+                               _CMP_EQ_UQ);
+#else
+  // Without AVX-2 more casts are needed
+  const __m256d selectMask = _mm256_cmp_pd(
+                               _mm256_castps_pd(_mm256_and_ps(_mm256_castsi256_ps(smask), _mm256_castsi256_ps(bum))),
+                               _mm256_castsi256_pd(smask),
+                               _CMP_EQ_UQ);
+  const __m256d outputMask = _mm256_cmp_pd(
+                               _mm256_castps_pd(_mm256_and_ps(_mm256_castsi256_ps(omask), _mm256_castsi256_ps(bum))),
+                               _mm256_castsi256_pd(omask),
+                               _CMP_EQ_UQ);
+#endif
+
+  __m256d xy = _mm256_mul_pd( x, y );
+  xy = _mm256_and_pd(xy,selectMask);
+
+  __m256d temp = _mm256_hadd_pd( xy, xy );
+
+  // Without AVX-512 and _mm256_permute2f128_pd, we need a few casts
+  __m256d temp_high_low = _mm256_castps_pd(_mm256_permute2f128_ps(_mm256_castpd_ps(temp), _mm256_castpd_ps(temp), 0x21));
+  __m256d r3   = _mm256_add_pd(temp, temp_high_low);
+  return _mm256_and_pd(r3,outputMask);
+
+}
+
 #if HAVE_SMMINTRIN_H
 /*
    SSE4.1 provides _mm_dp_ps.
@@ -433,6 +584,7 @@ STATIC_INLINE_BEGIN __m128 _mm_dp_ps(__m128 __X, __m128 __Y, const int __M)
 
   const __m128 smask      = _mm_set_epi32(0x80,0x40,0x20,0x10);
   const __m128 omask      = _mm_set_epi32(0x08,0x04,0x02,0x01);
+  // TODO: Need comparison to form mask
   const __m128 selectMask = _mm_castsi128_ps(_mm_and_si128(smask,_mm_set1_epi32(__M)));
   const __m128 outputMask = _mm_castsi128_ps(_mm_and_si128(omask,_mm_set1_epi32(__M)));
 
@@ -446,6 +598,7 @@ STATIC_INLINE_BEGIN __m128 _mm_dp_ps(__m128 __X, __m128 __Y, const int __M)
 
   const __m128 smask      = _mm_set_epi32(0x80,0x40,0x20,0x10);
   const __m128 omask      = _mm_set_epi32(0x08,0x04,0x02,0x01);
+  // TODO: Need comparison to form mask
   const __m128 selectMask = _mm_castsi128_ps(_mm_and_si128(smask,_mm_set1_epi32(__M)));
   const __m128 outputMask = _mm_castsi128_ps(_mm_and_si128(omask,_mm_set1_epi32(__M)));
 
@@ -461,6 +614,43 @@ STATIC_INLINE_BEGIN __m128 _mm_dp_ps(__m128 __X, __m128 __Y, const int __M)
 }
 #endif
 
+/*
+
+__m256d xy = _mm256_mul_pd( x, y );
+__m256d temp = _mm256_hadd_pd( xy, xy );
+__m128d hi128 = _mm256_extractf128_pd( temp, 1 );
+__m128d dotproduct = _mm_add_pd( (__m128d)temp, hi128 );
+
+Edit:
+After an idea of Norbert P. I extended this version to do 4 dot products at one time.
+
+__m256d xy0 = _mm256_mul_pd( x[0], y[0] );
+__m256d xy1 = _mm256_mul_pd( x[1], y[1] );
+__m256d xy2 = _mm256_mul_pd( x[2], y[2] );
+__m256d xy3 = _mm256_mul_pd( x[3], y[3] );
+
+// low to high: xy00+xy01 xy10+xy11 xy02+xy03 xy12+xy13
+__m256d temp01 = _mm256_hadd_pd( xy0, xy1 );
+
+// low to high: xy20+xy21 xy30+xy31 xy22+xy23 xy32+xy33
+__m256d temp23 = _mm256_hadd_pd( xy2, xy3 );
+
+// low to high: xy02+xy03 xy12+xy13 xy20+xy21 xy30+xy31
+__m256d swapped = _mm256_permute2f128_pd( temp01, temp23, 0x21 );
+
+// low to high: xy00+xy01 xy10+xy11 xy22+xy23 xy32+xy33
+__m256d blended = _mm256_blend_pd(temp01, temp23, 0b1100);
+
+__m256d dotproduct = _mm256_add_pd( swapped, blended );
+
+
+
+
+
+
+ */
+
+
 /**
  * Absolute value of packed singles
  *
@@ -470,12 +660,18 @@ STATIC_INLINE_BEGIN __m128 _mm_dp_ps(__m128 __X, __m128 __Y, const int __M)
  */
 STATIC_INLINE_BEGIN  __m128 _mm_fabs_ps(__m128 x)
 {
+  // Same as _mm_set1_ps(-0.f);
   return _mm_and_ps(x,_mm_load_ps((float *) _clear_signmask));
 }
 
 STATIC_INLINE_BEGIN  __m128d _mm_fabs_pd(__m128d x)
 {
-  return _mm_and_pd(x,_mm_load_pd((double *) _clear_signmask));
+  return _mm_and_pd(x,_mm_load_pd((double *) _clear_signmaskd));
+}
+
+STATIC_INLINE_BEGIN  __m256d _mm256_fabs_pd(__m256d x)
+{
+  return _mm256_and_pd(x,_mm256_load_pd((double *) _clear_signmask_256));
 }
 
 /**
@@ -490,11 +686,25 @@ STATIC_INLINE_BEGIN __m128 _mm_neg_ps(__m128 x)
   return _mm_xor_ps(x,_mm_load_ps((float *) _neg_signmask));
 }
 
+/**
+ * Negate packed doubles.
+ *
+ * @param x
+ *
+ * @return
+ */
 STATIC_INLINE_BEGIN __m128d _mm_neg_pd(__m128d x)
 {
   return _mm_xor_pd(x,_mm_load_pd((double *) _neg_signmaskd));
 }
 
+/**
+ * Negate packed integers.
+ *
+ * @param x
+ *
+ * @return
+ */
 STATIC_INLINE_BEGIN __m128i _mm_neg_epi32(__m128i x)
 {
   return _mm_sub_epi32(_mm_setzero_si128(), x);
@@ -502,7 +712,7 @@ STATIC_INLINE_BEGIN __m128i _mm_neg_epi32(__m128i x)
 }
 
 /**
- * Select floating point result based on mask.
+ * Select packed floating point result based on mask.
  *
  * @param a
  * @param b
@@ -521,6 +731,15 @@ STATIC_INLINE_BEGIN __m128 _mm_sel_ps(__m128 a, __m128 b, __m128 mask )
 #endif
 }
 
+/**
+ * Select packed double result based on mask.
+ *
+ * @param a
+ * @param b
+ * @param mask
+ *
+ * @return If mask is false, a is returned, otherwise b is returned.
+ */
 STATIC_INLINE_BEGIN __m128d _mm_sel_pd(__m128d a, __m128d b, __m128d mask )
 {
 #ifdef HAVE_SMMINTRIN_H
@@ -531,6 +750,20 @@ STATIC_INLINE_BEGIN __m128d _mm_sel_pd(__m128d a, __m128d b, __m128d mask )
   return _mm_or_pd( a, b );
 #endif
 }
+
+STATIC_INLINE_BEGIN __m256d _mm256_sel_pd(__m256d a,
+    __m256d b,
+    __m256d mask )
+{
+#ifdef HAVE_ZMMINTRIN_H
+  return _mm256_blendv_pd(a,b,mask);
+#else
+  a = _mm256_andnot_pd( mask, a);
+  b = _mm256_and_pd( b, mask );
+  return _mm256_or_pd( a, b );
+#endif
+}
+
 
 
 #if HAVE_SMMINTRIN_H
@@ -572,8 +805,10 @@ STATIC_INLINE_BEGIN __m128i _mm_sel_epi32(__m128i a, __m128i b, __m128i mask )
 
 #ifdef __GNUC__
 # define INFINITYf __builtin_inff()
+# define INFINITYd __builtin_inf()
 #elif defined(_WIN32)
 # define INFINITYf   HUGE_VALF
+# define INFINITYd   HUGE_VALD
 #endif
 
 #ifdef _MSC_VER
@@ -597,6 +832,12 @@ STATIC_INLINE_BEGIN __m128 _mm_is_minfinity(__m128 d)
 {
   return _mm_cmpeq_ps(_mm_fabs_ps(d), _mm_set1_ps(-INFINITYf));
 }
+
+STATIC_INLINE_BEGIN __m256d _mm256_is_minfinity(__m256d d)
+{
+  return _mm256_cmp_pd(_mm256_fabs_pd(d), _mm256_set1_pd(-INFINITYd), 8);
+}
+
 #ifdef _MSC_VER
 # pragma warning( pop )
 #endif
@@ -646,6 +887,17 @@ STATIC_INLINE_BEGIN __m128 _mm_not_ps(__m128 a)
   return _mm_castsi128_ps(_mm_xor_si128(_mm_castps_si128(a),negmask));
 }
 
+STATIC_INLINE_BEGIN __m256d _mm256_not_pd(__m256d a)
+{
+#ifdef HAVE_ZMMINTRIN_H
+  return _mm256_castsi256_pd(_mm256_xor_si256(_mm256_castpd_si256(a), negmask_256));
+#else
+  // _mm256_xor_si256 not inlined if AVX2 isn't present
+  return _mm256_castps_pd(_mm256_xor_ps(_mm256_castpd_ps(a), _mm256_castsi256_ps(negmask_256)));
+#endif
+}
+
+
 /**
  * Square packed singles
  *
@@ -661,6 +913,11 @@ STATIC_INLINE_BEGIN __m128 _mm_square_ps(__m128 a)
 STATIC_INLINE_BEGIN __m128d _mm_square_pd(__m128d a)
 {
   return _mm_mul_pd(a,a);
+}
+
+STATIC_INLINE_BEGIN __m256d _mm256_square_pd(__m256d a)
+{
+  return _mm256_mul_pd(a,a);
 }
 
 STATIC_INLINE_BEGIN __m128d _mm_rcp_pd(__m128d a)
@@ -704,7 +961,8 @@ STATIC_INLINE_BEGIN int8_t _mm_max1_epi8(__m128i buffer)
 
 STATIC_INLINE_BEGIN __m128  _mm_madd_ps(__m128 a, __m128 b, __m128 c)
 {
-#ifdef HAVE_FMAINTRIN_H
+  /* TODO: Ensure instead that -mfma is passed on to Cygwin */
+#if defined(HAVE_FMAINTRIN_H) && !defined(__CYGWIN__)
   return _mm_fmadd_ps(a,b,c);
 #else
   return _mm_add_ps(_mm_mul_ps(a, b), c);
@@ -839,6 +1097,29 @@ STATIC_INLINE_BEGIN float _mm_min1_ps(__m128 x)
   _mm_store_ss(&min,min4);
   return min;
 }
+
+STATIC_INLINE_BEGIN double _mm256_min1_pd(__m256d x)
+{
+  __m256d ul = _mm256_castps_pd(_mm256_permute2f128_ps(_mm256_castpd_ps(x), _mm256_castpd_ps(x), 0x21));
+
+  __m256d min0 = _mm256_min_pd(x,ul);
+
+  __m256d min1 = _mm256_min_pd(min0, _mm256_permute_pd(min0,   0x05));
+
+  return _mm256_cvtsd_f64(min1);
+}
+
+STATIC_INLINE_BEGIN double _mm256_max1_pd(__m256d x)
+{
+  __m256d ul = _mm256_castps_pd(_mm256_permute2f128_ps(_mm256_castpd_ps(x), _mm256_castpd_ps(x), 0x21));
+
+  __m256d max0 = _mm256_max_pd(x,ul);
+
+  __m256d max1 = _mm256_max_pd(max0, _mm256_permute_pd(max0,   0x05));
+
+  return _mm256_cvtsd_f64(max1);
+}
+
 
 /*
   Transpose can be performed using nxlog2(n) rather than nxn

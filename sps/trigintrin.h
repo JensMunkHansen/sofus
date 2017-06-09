@@ -35,6 +35,12 @@ const __m128 _m_2_ps         = _mm_set1_ps(2.0f);
 
 const __m128d _m_2pi_pd      = _mm_set1_pd((double)M_2PI);     // 2 * pi
 
+const __m256d _m256_pi_pd         = _mm256_set1_pd(M_PI);      // pi
+const __m256d _m256_1_2pi_pd      = _mm256_set1_pd(M_1_2PI);   // 1 / (2pi)
+const __m256d _m256_pi2_pd        = _mm256_set1_pd(M_PI_2);    // pi/ 2
+
+const __m256d _m256_1_pd         = _mm256_set1_pd(1.0f);
+
 
 /**@}*/
 
@@ -49,6 +55,15 @@ const __m128d _m_2pi_pd      = _mm_set1_pd((double)M_2PI);     // 2 * pi
  */
 STATIC_INLINE_BEGIN __m128 _mm_arccos_ps(__m128 x) STATIC_INLINE_END;
 
+/**
+ * Arccos function.
+ *
+ * @param x
+ *
+ * @return
+ */
+STATIC_INLINE_BEGIN __m256d _mm256_arccos_pd(__m256d x) STATIC_INLINE_END;
+  
 /**
  * Arcsine function. Handbook of Mathematical Functions M. Abramowitz
  * and I.A. Stegun, Ed. Absolute error <= 6.7e-5.
@@ -95,6 +110,32 @@ STATIC_INLINE_BEGIN __m128 _mm_arctan2_ps(__m128 y, __m128 x) STATIC_INLINE_END;
 STATIC_INLINE_BEGIN __m128 _mm_exp_ps(__m128 d) STATIC_INLINE_END;
 
 
+STATIC_INLINE_BEGIN __m256d _mm256_arccos_pd(__m256d x)
+{
+  // TODO: Increase precision of constants
+#if 1
+  v4d _x;
+  _x.v = x;
+  
+	return _mm256_set_pd(acos(_x.f64[3]), acos(_x.f64[2]), acos(_x.f64[1]), acos(_x.f64[0]));
+#else
+  __m256d mask = _mm256_cmp_pd(x, _mm256_setzero_pd(), _CMP_LT_OQ); // TODO: Manage signals and ordering
+
+  x = _mm256_fabs_pd(x);
+
+  __m256d ret = _mm256_set1_pd(-0.0187293f); 
+  ret = _mm256_mul_pd(ret,x);
+  ret = _mm256_add_pd(ret,_mm256_set1_pd(0.0742610f));
+  ret = _mm256_mul_pd(ret,x);
+  ret = _mm256_sub_pd(ret,_mm256_set1_pd(0.2121144f));
+  ret = _mm256_mul_pd(ret,x);
+  ret = _mm256_add_pd(ret, _m256_pi2_pd);
+  ret = _mm256_mul_pd(_mm256_sqrt_pd(_mm256_sub_pd(_m256_one_pd,x)),ret);
+
+  return _mm256_sel_pd(ret,_mm256_sub_pd(_m256_pi_pd,ret),mask);
+#endif
+}
+  
 STATIC_INLINE_BEGIN __m128 _mm_arccos_ps(__m128 x)
 {
   __m128 mask = _mm_cmplt_ps(x,_mm_setzero_ps());
@@ -603,6 +644,9 @@ STATIC_INLINE_BEGIN void _mm_sincos_cephes_ps(__m128 x, __m128 *s, __m128 *c)
  */
 STATIC_INLINE_BEGIN __m128 _mm_ldexpf(__m128 x, __m128i q) STATIC_INLINE_END;
 
+STATIC_INLINE_BEGIN __m256d _mm256_ldexpd(__m256d x, __m128i q) STATIC_INLINE_END;
+
+
 STATIC_INLINE_BEGIN __m128 _mm_exp_approx_ps(__m128 x)
 {
   __m128 retval = _mm_setzero_ps();
@@ -637,6 +681,49 @@ STATIC_INLINE_BEGIN __m128 _mm_exp_ps(__m128 d)
 
   u = _mm_andnot_ps(_mm_is_minfinity(d), u);
 
+  return u;
+}
+
+/*
+STATIC_INLINE_BEGIN __m256i _mm256_cvtpd_epi64(__m256d d) {
+  
+}
+*/
+
+STATIC_INLINE_BEGIN __m256d _mm256_madd_pd(__m256d a, __m256d b, __m256d c) {
+  return _mm256_add_pd(_mm256_mul_pd(a,b),c);
+}
+
+STATIC_INLINE_BEGIN __m256d _mm256_exp_pd(__m256d d)
+{
+  __m256d u;
+  v4d _d;
+  _d.v = d;
+  
+  u = _mm256_set_pd(exp(_d.f64[3]),exp(_d.f64[2]),exp(_d.f64[1]),exp(_d.f64[0]));
+  
+#if 0
+  // Need AVX-512 for _mm256_cvtpd_epi64
+  __m128i q = _mm256_cvtpd_epi32(_mm256_mul_pd(d, _mm256_set1_pd(R_LN2f)));
+  __m256d s;
+
+  // Need AVX-512 for _mm256_madd_pd
+  s = _mm256_madd_pd(_mm256_cvtepi32_pd(q), _mm256_set1_pd(-L2Uf), d);
+  s = _mm256_madd_pd(_mm256_cvtepi32_pd(q), _mm256_set1_pd(-L2Lf), s);
+
+  u = _mm256_set1_pd(0.00136324646882712841033936f);
+  u = _mm256_madd_pd(u, s, _mm256_set1_pd(0.00836596917361021041870117f));
+  u = _mm256_madd_pd(u, s, _mm256_set1_pd(0.0416710823774337768554688f));
+  u = _mm256_madd_pd(u, s, _mm256_set1_pd(0.166665524244308471679688f));
+  u = _mm256_madd_pd(u, s, _mm256_set1_pd(0.499999850988388061523438f));
+
+  u = _mm256_add_pd(_mm256_set1_pd(1.0f), _mm256_madd_pd(_mm256_mul_pd(s, s), u, s));
+
+  // Not implemented
+  u = _mm256_ldexpd(u, q);
+
+  u = _mm256_andnot_pd(_mm256_is_minfinity(d), u);
+#endif
   return u;
 }
 
@@ -892,6 +979,36 @@ STATIC_INLINE_BEGIN __m128 _mm_ldexpf(__m128 x, __m128i q)
   u = _mm_castsi128_ps((_mm_slli_epi32(_mm_add_epi32(q, _mm_set1_epi32(0x7f)), 23)));
   return _mm_mul_ps(x, u);
 }
+
+// TODO: This is wrong
+STATIC_INLINE_BEGIN __m256d _mm256_ldexpd(__m256d x, __m128i q)
+{
+  SPS_UNREFERENCED_PARAMETERS(x, q);
+  // SVML provides _mm256_exp_pd
+  return _mm256_setzero_pd();
+#if 0
+  __m128 u;
+  __m128i m = _mm_srai_epi32(q, 31);
+  // 31 is size without sign-bit, 23 is size of mantissa
+
+  m = _mm_slli_epi32(_mm_sub_epi32(_mm_srai_epi32(_mm_add_epi32(m, q), 6), m), 4);
+  q = _mm_sub_epi32(q, _mm_slli_epi32(m, 2));
+  m = _mm_add_epi32(m, _mm_set1_epi32(0x7f));
+
+  m = _mm_and_si128(_mm_cmpgt_epi32(m, _mm_set1_epi32(0)), m);
+  __m128i n = _mm_cmpgt_epi32(m, _mm_set1_epi32(0xff));
+  m = _mm_or_si128(_mm_andnot_si128(n, m), _mm_and_si128(n, _mm_set1_epi32(0xff)));
+
+  // Sign of mantissa is 23
+  u = _mm_castsi128_ps(_mm_slli_epi32(m, 23));
+  x = _mm_mul_ps(_mm_mul_ps(_mm_mul_ps(_mm_mul_ps(x, u), u), u), u);
+  u = _mm_castsi128_ps((_mm_slli_epi32(_mm_add_epi32(q, _mm_set1_epi32(0x7f)), 23)));
+  return _mm_mul_ps(x, u);
+#endif
+}
+
+
+
 
 /**
  * Cubic root

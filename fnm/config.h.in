@@ -1,5 +1,5 @@
 /**
-* @file   config.h
+* @file   <fnm/config.h>
 * @author Jens Munk Hansen <jens.munk.hansen@gmai.com>
 * @date   Tue Apr 29 19:46:27 2014
 *
@@ -18,4 +18,7 @@
 
 #cmakedefine FNM_PULSED_WAVE @FNM_PULSED_WAVE@
 
-#define FNM_ENABLE_ATTENUATION @FNM_ENABLE_ATTENUATION@
+#cmakedefine FNM_PHASED_FOCUS @FNM_PHASED_FOCUS@
+
+#cmakedefine FNM_ENABLE_ATTENUATION @FNM_ENABLE_ATTENUATION@
+

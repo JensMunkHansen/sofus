@@ -1,3 +1,4 @@
+#include <fnm/config.h>
 #include <fnm/fnm_data.hpp>
 #include <sps/smath.hpp>
 #include <sps/debug.h>
@@ -9,23 +10,29 @@ namespace fnm {
   template <class T>
   size_t ApertureData<T>::nextID = 0;
 
-  // TODO: Fix tolerance for zero elements
   template <class T>
   ApertureData<T>::ApertureData() : m_nelements(0), m_nsubelements(0), m_npos(0)
   {
 
-    m_elements = sps::deleted_aligned_multi_array_create<sps::element_t<T>, 2>(m_nelements,m_nsubelements);
+    m_elements     = element_array(m_nelements,m_nsubelements);
 
-    m_pos = sps::deleted_aligned_array_create<sps::point_t<T> >(m_npos);
+    m_pos          = sps::deleted_aligned_array_create<sps::point_t<T> >(m_npos);
     m_apodizations = sps::deleted_aligned_array_create<T>(m_npos);
-    m_phases       = sps::deleted_aligned_array_create<T>(m_npos*m_nsubelements);
-    m_delays       = sps::deleted_aligned_array_create<T>(m_npos*m_nsubelements);
-    m_rectangles   = sps::deleted_aligned_array_create<sps::rect_t<T>>(m_npos);
+    m_phases       = sps::deleted_aligned_array_create<T>(m_nelements*m_nsubelements);
+    m_delays       = sps::deleted_aligned_array_create<T>(m_npos);
+    m_rectangles   = sps::deleted_aligned_array_create<sps::rect_t<T>>(m_nelements*m_nsubelements);
+    m_boxes        = sps::deleted_aligned_array_create<sps::bbox_t<T>>(m_nelements);
+    m_h_xyz[0]     = T(0.0);
+    m_h_xyz[1]     = T(0.0);
+    m_h_xyz[2]     = T(0.0);
 
     m_f0 = T(1e6);
 
     m_focus = sps::point_t<T>();
     memset(&this->m_focus[0],0,3*sizeof(T));
+
+    m_center_focus = sps::point_t<T>();
+    memset(&this->m_center_focus[0],0,3*sizeof(T));
 
     m_focus_type = FocusingType::Rayleigh;
 
@@ -35,10 +42,6 @@ namespace fnm {
     m_id = nextID;
     nextID++;
 
-    if (m_npos > 0) {
-      memset(&(m_pos.get()[0][0]),0,m_npos*sizeof(sps::point_t<T>));
-    }
-
   }
 
   template <class T>
@@ -46,24 +49,34 @@ namespace fnm {
   {
   }
 
-#ifdef FNM_PULSED_WAVE
-  // TODO: Dangerous!!!! Temporary function for getting elements as a std::vector of std::vector
   template <class T>
-  std::vector<std::vector<sps::element_t<T> > > ApertureData<T>::ElementsVectorGet() const
+  int ApertureData<T>::DelaysRefGet(size_t* nElements, const T*& delays) const
   {
-    auto elements = std::vector< std::vector<sps::element_t<T> > >(m_nelements, std::vector<sps::element_t<T> >(m_nsubelements));
-
-    for (size_t iElement=0 ; iElement < m_nelements ; iElement++) {
-      for (size_t jElement = 0 ; jElement < m_nsubelements ; jElement++) {
-        elements[iElement][jElement] = m_elements[iElement][jElement];
-      }
-    }
-    return elements;
+    *nElements = m_nelements;
+    delays = m_delays.get();
+    return 0;
   }
-#endif
 
   template <class T>
-  void ApertureData<T>::ElementsSet(sps::deleted_aligned_multi_array<sps::element_t<T>,2> &&elements,
+  int ApertureData<T>::ApodizationsRefGet(size_t* nElements, const T*& apodizations) const
+  {
+    *nElements   = m_nelements;
+    apodizations = m_apodizations.get();
+    return 0;
+  }
+
+  template <class T>
+  int ApertureData<T>::ElementsRefGet(size_t* nElements, size_t* nSubElements,
+                                      const sps::element_t<T>**& elements) const
+  {
+    *nElements    = m_nelements;
+    *nSubElements = m_nsubelements;
+    elements      = m_elements.get();
+    return 0;
+  }
+
+  template <class T>
+  void ApertureData<T>::ElementsSet(element_array &&elements,
                                     const size_t& nRows,
                                     const size_t& nCols)
   {
@@ -86,9 +99,16 @@ namespace fnm {
   }
 
   template <class T>
+  void ApertureData<T>::ElementExtentGet(const size_t iElement, sps::bbox_t<T>& bbox) const
+  {
+    assert(iElement < m_nelements);
+    bbox = m_boxes[iElement];
+  }
+
+  template <class T>
   void ApertureData<T>::ExtentGet(sps::bbox_t<T>& bbox) const
   {
-
+    // TODO: Consider caching this box
     sps::point_t<T> h_dir,w_dir;
 
     // Coordinate of lower left position reference
@@ -102,8 +122,8 @@ namespace fnm {
       for(size_t jElement = 0 ; jElement < m_nsubelements ; jElement++) {
         const sps::element_t<T>& element = elements[iElement][jElement];
 
-        basis_vectors(w_dir,element.euler,0);
-        basis_vectors(h_dir,element.euler,1);
+        sps::basis_vectors<T, sps::EulerIntrinsicYXY>(w_dir,element.euler,0);
+        sps::basis_vectors<T, sps::EulerIntrinsicYXY>(h_dir,element.euler,1);
 
         for(size_t i_xyz=0 ; i_xyz < 3 ; i_xyz++) {
 
@@ -164,7 +184,7 @@ namespace fnm {
     const size_t nElements              = m_nelements;
     const size_t nSubElementsPerElement = m_nsubelements;
 
-    sps::deleted_aligned_multi_array<sps::element_t<T>,2>& elements = m_elements;
+    element_array& elements = m_elements;
 
     // Will never fail. Consider removing m_nelements and m_nsubelements
     debug_print("nElements: %zu, nSubElementsPerElement: %zu, m: %zu, n: %zu\n",
@@ -175,6 +195,7 @@ namespace fnm {
     for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
       for (size_t jElement = 0 ; jElement < nSubElementsPerElement ; jElement++) {
         auto& element = elements[iElement][jElement];
+        // Try replace this
         sps::basis_vectors((T*)&element.uvector[0],
                            (T*)&element.vvector[0],
                            (T*)&element.normal[0],
@@ -227,7 +248,7 @@ namespace fnm {
     // Not used right now
     const size_t nSubH           = 1;
     const size_t nSubW           = 1;
-    const size_t nSubSubElements = 1;
+    const size_t nSubSubElements = nSubH*nSubW;
 
     auto& elements = m_elements;
 
@@ -239,7 +260,12 @@ namespace fnm {
     // Lower left position reference
     T pos_ll;
 
+    // Maximum width or height used for memory allocation
+    m_h_xyz[0] = m_h_xyz[1] = m_h_xyz[2] = T(0.0);
+
     m_rectangles   = sps::deleted_aligned_array_create<sps::rect_t<T> >(nElements*nSubElements*nSubSubElements);
+
+    m_boxes        = sps::deleted_aligned_array_create<sps::bbox_t<T> >(nElements);
 
     for(size_t iElement=0 ; iElement < nElements ; iElement++) {
       for(size_t jElement=0 ; jElement < nSubElements ; jElement++) {
@@ -252,18 +278,30 @@ namespace fnm {
         dh = 2*element.hh/nSubH;
         dw = 2*element.hw/nSubW;
 
-        // Maximum width or height used for memory allocation
         for(size_t i_xyz=0 ; i_xyz < 3 ; i_xyz++) {
+
+          T hh_vec = element.hh*h_dir[i_xyz];
+          T hw_vec = element.hw*w_dir[i_xyz];
+
+          // Maximum half width or height used for memory allocation
+          m_h_xyz[i_xyz] = std::max<T>(m_h_xyz[i_xyz], fabs(hh_vec));
+          m_h_xyz[i_xyz] = std::max<T>(m_h_xyz[i_xyz], fabs(hw_vec));
 
           // Corner position of rectangle (lower left)
           pos_ll =
             element.center[i_xyz]
-            - element.hh*h_dir[i_xyz]
-            - element.hw*w_dir[i_xyz];
+            - hh_vec
+            - hw_vec;
 
-          T pos_ul = pos_ll+2*element.hh*h_dir[i_xyz];
-          T pos_lr = pos_ll+2*element.hw*w_dir[i_xyz];
-          T pos_ur = pos_ll+2*element.hh*h_dir[i_xyz]+2*element.hw*w_dir[i_xyz];
+          T pos_ul = pos_ll + T(2.0)*hh_vec;
+          T pos_lr = pos_ll + T(2.0)*hw_vec;
+          T pos_ur = pos_ll + T(2.0)*hh_vec + T(2.0)*hw_vec;
+
+          // Vertices of any sub-element are stored.
+          element.vertices[i_xyz][0] = pos_ur;
+          element.vertices[i_xyz][1] = pos_ul;
+          element.vertices[i_xyz][2] = pos_ll;
+          element.vertices[i_xyz][3] = pos_lr;
 
           // Compute coordinates for corners of mathematical elements
           for(size_t i_subh=0 ; i_subh < nSubH ; i_subh++) {
@@ -291,24 +329,33 @@ namespace fnm {
             } // for i_subw
           } // for i_subh
 
-          // Vertices of any sub-element are be stored.
-          element.vertices[i_xyz][0] = pos_ur;
-          element.vertices[i_xyz][1] = pos_ul;
-          element.vertices[i_xyz][2] = pos_ll;
-          element.vertices[i_xyz][3] = pos_lr;
+          // Test: Caching bounding box for sub-elements
+          if (jElement == 0) {
+            m_boxes[iElement].min[i_xyz] = pos_ur;
+            m_boxes[iElement].max[i_xyz] = pos_ur;
+          }
+
+          m_boxes[iElement].min[i_xyz] = std::min<T>(m_boxes[iElement].min[i_xyz],pos_ur);
+          m_boxes[iElement].min[i_xyz] = std::min<T>(m_boxes[iElement].min[i_xyz],pos_ul);
+          m_boxes[iElement].min[i_xyz] = std::min<T>(m_boxes[iElement].min[i_xyz],pos_ll);
+          m_boxes[iElement].min[i_xyz] = std::min<T>(m_boxes[iElement].min[i_xyz],pos_lr);
+          m_boxes[iElement].max[i_xyz] = std::max<T>(m_boxes[iElement].max[i_xyz],pos_ur);
+          m_boxes[iElement].max[i_xyz] = std::max<T>(m_boxes[iElement].max[i_xyz],pos_ul);
+          m_boxes[iElement].max[i_xyz] = std::max<T>(m_boxes[iElement].max[i_xyz],pos_ll);
+          m_boxes[iElement].max[i_xyz] = std::max<T>(m_boxes[iElement].max[i_xyz],pos_lr);
         } // for i_xyz
       } // jElement
     } // iElement
   }
 
-  //  template struct element_t<float>;
+  // If this was header-only, we could export it
   template class ApertureData<float>;
 
 #ifdef FNM_DOUBLE_SUPPORT
-  template struct sps::element_t<double>;
   template class ApertureData<double>;
 #endif
 }
+
 /* Local variables: */
 /* indent-tabs-mode: nil */
 /* tab-width: 2 */

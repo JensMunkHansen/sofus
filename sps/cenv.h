@@ -10,15 +10,22 @@
  */
 #pragma once
 
-//TODO:
-#if 0
-#if __cplusplus <= 199711L
-#error This library needs at least a C++11 compliant compiler
-#endif
-// 201103L is C++11
+#ifdef _WIN32
+# define __restrict
 #endif
 
-#include <cstdarg>
+//TODO:
+#if 0
+# if __cplusplus <= 199711L
+#  error This library needs at least a C++11 compliant compiler
+# endif
+#endif
+
+#ifdef __cplusplus
+# include <cstdarg>
+#else
+# include <stdarg.h>
+#endif
 
 // TODO: Add other OS'es
 #if defined(_WIN32) || defined(WIN32) || defined(__CYGWIN__) || defined(__MINGW32__) || defined(__BORLANDC__)
@@ -29,18 +36,31 @@
 # include <features.h>
 #endif
 
+/*
+MSVC++ 14.0 _MSC_VER == 1900 (Visual Studio 2015)
+MSVC++ 12.0 _MSC_VER == 1800 (Visual Studio 2013)
+MSVC++ 11.0 _MSC_VER == 1700 (Visual Studio 2012)
+MSVC++ 10.0 _MSC_VER == 1600 (Visual Studio 2010)
+MSVC++ 9.0  _MSC_VER == 1500 (Visual Studio 2008)
+MSVC++ 8.0  _MSC_VER == 1400 (Visual Studio 2005)
+MSVC++ 7.1  _MSC_VER == 1310 (Visual Studio 2003)
+MSVC++ 7.0  _MSC_VER == 1300
+MSVC++ 6.0  _MSC_VER == 1200
+MSVC++ 5.0  _MSC_VER == 1100
+*/
+
 #if defined(__STDC__)
-# define C89
+# define C89   /* ANSI X3.159-1989 */
 # if defined(__STDC_VERSION__)
-#  define C90
+#  define C90  /* ISO/IEC 9899:1990 */
 #  if (__STDC_VERSION__ >= 199409L)
-#   define C94
+#   define C94 /* ISO/IEC 9899-1:1994 */
 #  endif
 #  if (__STDC_VERSION__ >= 199901L)
-#   define C99
+#   define C99 /* ISO/IEC 9899:1999 */
 #  endif
 #  if (__STDC_VERSION__ >= 201112L)
-#   define C11
+#   define C11 /* ISO/IEC 9899:2011 */
 #  endif
 # elif defined(__cplusplus)
 #  ifdef __USE_ISOC99
@@ -49,7 +69,34 @@
 # endif
 #endif
 
+#if defined(__cplusplus)
+# if (__cplusplus >= 201103L)
+#  define CXX11
+# endif
+#endif
+/*
+C++98 __cplusplus = 199711L ISO/IEC 14882:1998
+C++11 __cplusplus = 201103L ISO/IEC 14882:2011
+C++14 __cplusplus = 201402L ISO/IEC 14882:2014
+C++/CLI __cplusplus_cli = 200406L ECMA-372
+DSP-C   ISO/IEC JTC1/SC22 WG14/N854
+EC++  __embedded_cplusplus  Embedded C++
+ */
+
 // Alignment, TODO: Use alignas if present
+
+/*
+
+ TODO: Consider using a construction like
+
+ template <class T>
+ struct __attribute__((aligned(4*sizeof(T)))) Data
+ {
+   T a;
+ };
+
+*/
+
 #if (defined(_MSC_VER) && defined(_WIN32))
 # define ALIGN16_BEGIN __declspec(align(16))
 # define ALIGN16_END
@@ -74,6 +121,14 @@
 # else
 #  define STATIC_INLINE_END /* Work on this */ //__attribute__ ((always_inline))
 # endif
+#endif
+
+#ifdef __GNUG__
+# define SPS_LIKELY(x)       __builtin_expect((x),1)
+# define SPS_UNLIKELY(x)     __builtin_expect((x),0)
+#else
+# define SPS_LIKELY(x)       (x)
+# define SPS_UNLIKELY(x)     (x)
 #endif
 
 #define __BEGIN__       {
@@ -239,6 +294,40 @@
 #ifndef SPS_UNREFERENCED_PARAMETERS
 #  define SPS_UNREFERENCED_PARAMETERS(...) FOR_EACH( SPS_UNREFERENCED_PARAMETER, __VA_ARGS__)
 #endif
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4324)
+ALIGN16_BEGIN struct ALIGN16_END sps_base_align16 {
+  /*
+    Empty classes are "special" because the standard requires that no complete object have size 0,
+    so a class with no data members or bases always requires some padding if it doesn't have a vtable.
+   */
+  /*
+   Apparently, MSVC creates a struct of size 16, if a struct of size 16 is derived from a struct of
+   size 0, so we should remove this and ignore warnings instead.
+
+  */
+#ifndef __cplusplus
+  // C requires has at least one member
+  char dummy[16];
+#endif
+
+};
+ALIGN32_BEGIN struct ALIGN32_END sps_base_align32 {
+  /*
+   Apparently, MSVC creates a struct of size 16, if a struct of size 16 is derived from a struct of
+   size 0, so we should remove this and ignore warnings instead.
+
+  char dummy[32];
+
+  */
+  // C requires has at least one member
+  char dummy[32];
+};
+#pragma warning(pop)
+#endif
+
 
 
 /* Local variables: */

@@ -1,6 +1,16 @@
+/**
+ * @file   sps_threads.hpp
+ * @author Jens Munk Hansen <jens.munk.hansen@gmail.com>
+ * @date   Thu Jun 16 00:05:13 2016
+ *
+ * @brief
+ *
+ *
+ */
 #pragma once
 
 // Assume pthreads available
+#include <sps/cenv.h>
 #include <sps/cerr.h>
 #include <sps/config.h>
 
@@ -22,24 +32,30 @@
 #  include <pthread.h>
 # endif
 # include <unistd.h>
-# include <sys/syscall.h>
+# ifndef __CYGWIN__
+#  include <sys/syscall.h>
+# endif
 #endif
 
 #ifdef __linux__
-static pid_t gettid( void ) {
-    pid_t pid;
-    CallErr(pid = syscall, (__NR_gettid));
-    return pid;
+STATIC_INLINE_BEGIN pid_t gettid( void )
+{
+  pid_t pid;
+  CallErr(pid = syscall, (__NR_gettid));
+  return pid;
 }
 #endif
 
-static int setcpuid(int cpu_id) {
+STATIC_INLINE_BEGIN int setcpuid(int cpu_id)
+{
 #ifdef __GNUG__
+# ifndef __CYGWIN__
   cpu_set_t set;
   CPU_ZERO( &set );
   CPU_SET( cpu_id, &set );
   CallErrReturn(sched_setaffinity,
                 (gettid(), sizeof(cpu_set_t), &set), -1);
+# endif
 #elif defined(_WIN32)
   HANDLE hThread = GetCurrentThread();
   SetThreadIdealProcessor(hThread,cpu_id);
@@ -47,14 +63,15 @@ static int setcpuid(int cpu_id) {
   return 0;
 }
 
-static int getncpus() {
-  int nproc;
+STATIC_INLINE_BEGIN int getncpus()
+{
+  int nproc = 0;
 #if defined(__linux__)
   cpu_set_t cpuset;
   CPU_ZERO( &cpuset );
   CallErr(sched_getaffinity,
           (gettid(), sizeof( cpu_set_t ), &cpuset));
-  
+
   nproc = CPU_COUNT(&cpuset);
 #elif defined(_WIN32)
   SYSTEM_INFO info;
@@ -71,14 +88,20 @@ namespace sps {
 #elif defined(_WIN32)
   template<class T, unsigned int(__stdcall T::*thread_func)(void*)>
 #endif
-  
+
   class pthread_launcher {
   public:
     pthread_launcher(T* obj=NULL, void* arg=NULL) : _obj(obj), _arg(arg) {}
 #if defined(HAVE_PTHREAD_H)
-    void *launch() { return (_obj->*thread_func)(_arg);}
+    void *launch()
+    {
+      return (_obj->*thread_func)(_arg);
+    }
 #elif defined(_WIN32)
-    unsigned int launch() { return (_obj->*thread_func)(_arg);}
+    unsigned int launch()
+    {
+      return (_obj->*thread_func)(_arg);
+    }
 #endif
   private:
     /// Object pointer
@@ -86,13 +109,13 @@ namespace sps {
     /// Command argument for member function
     void *_arg;
   };
-  
-  // Launch thread function
+
+// Launch thread function
   template<class T>
 #if defined(HAVE_PTHREAD_H)
   void *launch_member_function(void *obj)
 #elif defined(_WIN32)
-    unsigned int __stdcall launch_member_function(void *obj)
+  unsigned int __stdcall launch_member_function(void *obj)
 #endif
   {
     T* launcher = reinterpret_cast<T*>(obj);

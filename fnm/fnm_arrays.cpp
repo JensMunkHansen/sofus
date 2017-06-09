@@ -1,66 +1,137 @@
+#include <fnm/config.h>
 #include <fnm/fnm_arrays.hpp>
 #include <sps/smath.hpp>
-
 #include <cassert>
+
 namespace fnm {
+
+  template <class T>
+  void MatrixArray(const size_t nRows,
+                   const size_t nCols,
+                   const T rowWidth,
+                   const T rowKerf,
+                   const T colWidth,
+                   const T colKerf,
+                   sps::deleted_aligned_multi_array<sps::element_t<T>, 2> &&elements)
+  {
+    elements      = sps::deleted_aligned_multi_array_create<sps::element_t<T>,2>(nRows*nCols,1);
+    T rowPitch = rowWidth + rowKerf;
+    T colPitch = colWidth + colKerf;
+    T hh = T(0.5) * colWidth;
+    T hw = T(0.5) * rowWidth;
+
+    for (size_t iRow=0 ; iRow < nRows ; iRow++) {
+      sps::point_t<T> center;
+      center[1] = (T(iRow) - T(0.5)*(T(nRows)-T(1.0)))*rowPitch;
+      center[2] = T(0.0);
+      for (size_t iCol=0 ; iCol < nCols ; iCol++) {
+        auto& element = elements[iRow*nCols + iCol][0];
+
+        sps::point_t<T> center1 = center;
+        center1[0] =  (T(iCol) - T(0.5)*(T(nCols)-T(1.0)))*colPitch;
+        element.hh     = hh;
+        element.hw     = hw;
+        element.center = center1;
+        element.euler.alpha = T(0.0);
+        element.euler.beta  = T(0.0);
+        element.euler.gamma = T(0.0);
+      }
+    }
+  }
+
   template <class T>
   void FocusedLinearArray(const size_t nElements,
-                          const size_t nSubH, // Elevation
-                          const size_t nSubW,
-                          const T pitch,
+                          const size_t nSubH, // Elevation (minimum is 1)
+                          const size_t nSubW, // Sub-elements in azimuth (=1)
+                          const T width,
                           const T kerf,
                           const T height,
-                          const T efocus,
+                          const T eFocus,
                           const int arcPlacement,
                           sps::deleted_aligned_multi_array<sps::element_t<T>, 2> &&elements)
   {
+    assert(nSubH>0);
 
-    // TODO: Support nSubW != 1
-    assert(nSubW==1);
     elements      = sps::deleted_aligned_multi_array_create<sps::element_t<T>,2>(nElements,nSubH);
 
-    T focus = efocus;
+    T focus = eFocus;
     T halfHeight = T(0.5)*height;
 
     T R = sqrt(SQUARE(focus)+SQUARE(halfHeight));
 
-    T elSector = T(2.0)*atan2(halfHeight,focus);
+    T elSector = T(2.0)*atan2(halfHeight,focus); /* equals pi if focus is 0.0 */
 
     T dEl = elSector / T(nSubH);
+    T pitch = width + kerf;
     T hw  = T(0.5)*(pitch - kerf);
 
     T chordLength = T(2.0) * R * sin(T(0.5)*dEl);
-    T tanLength   = T(2.0) * R * tan(T(0.5)*dEl);
+    T tanLength;
+
+    if (nSubH == 1) {
+      /* We do not allow focusing using a single element - design decision */
+      tanLength   = height;
+      chordLength = height;
+    } else {
+      if (eFocus < std::numeric_limits<T>::epsilon()) {
+        /* We can focus at 0.0, but decide not to. */
+        /* This can be skipped if we allow focusing at 0.0 */
+        dEl = T(0.0);
+        tanLength   = height / T(nSubH);
+        chordLength = height / T(nSubH);
+      } else {
+        /* Infinity, when focus is 0.0 and nSubH == 1 */
+        tanLength = T(2.0) * R * tan(T(0.5)*dEl);
+      }
+    }
 
     T hh = T(0.0);
 
     if (arcPlacement == 0) {
+      // Outer
       hh = T(0.5)*tanLength;
     } else {
+      // Inner
       hh = T(0.5)*chordLength;
     }
 
     T elAngle     = T(0.0);
     T lastElAngle = T(0.0);
 
+    // Get z-coordinate right, we cannot focus using a single element
+    if (nSubH == 1) {
+      R = focus;
+    }
+
+    // We decide not to allow focusing at 0.0
+    if (eFocus < std::numeric_limits<T>::epsilon()) {
+      /* This can be skipped if we allow focusing at 0.0 */
+      R = focus;
+    }
+
     if (arcPlacement == 0) {
-      // Placement outside arc
+      // Placement outside arc (default)
       for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
 
         for (size_t iSubH = 0 ; iSubH < nSubH ; iSubH++) {
-          elAngle = (T(iSubH) - T(0.5)*(T(nSubH)-T(1.0)))*dEl;
+          elAngle = (T(iSubH) - T(0.5)*(T(nSubH)-T(1.0))) * dEl;
           sps::point_t<T> center;
           center[0] = (T(iElement) - T(0.5)*(T(nElements)-T(1.0)))*pitch;
-          center[1] = sin(elAngle)*R;
-          center[2] = -(cos(elAngle)*R-focus);
-
+          if (eFocus < std::numeric_limits<T>::epsilon()) {
+            /* This can be skipped if we allow focusing at 0.0 */
+            center[1] = (T(iSubH) - T(0.5)*(T(nSubH)-T(1.0))) * T(2.0) * hh;
+          } else {
+            center[1] = sin(elAngle)*R;
+          }
+          // For z-coordinate R must equal focus if nSub == 1
+          center[2] = - (cos(elAngle)*R - focus)  +  (R-focus);/* Added + (R-focus) */
           for (size_t iSubW = 0 ; iSubW < nSubW ; iSubW++) {
-            // TODO: Consider allowing nSubW > 1
+
             sps::point_t<T> center1 = center;
-            center1[0] = center1[0] + T(2.0)*hw/T(nSubW)*(T(iSubW)-T(0.5)*(T(nSubW)-T(1.0)));
+            center1[0] = center1[0] + T(2.0) * hw/T(nSubW) * (T(iSubW) - T(0.5)*(T(nSubW)-T(1.0)) );
 
             elements[iElement][iSubH].hh     = hh;
-            elements[iElement][iSubH].hw     = hw/T(nSubW);
+            elements[iElement][iSubH].hw     = hw / T(nSubW);
             elements[iElement][iSubH].center = center1;
             elements[iElement][iSubH].euler.alpha = T(0.0);
             elements[iElement][iSubH].euler.beta  = elAngle;
@@ -79,11 +150,15 @@ namespace fnm {
 
           sps::point_t<T> center;
           center[0] = (T(iElement) - T(0.5)*(T(nElements)-T(1.0)))*pitch;
-          center[1] = T(0.5)*(sin(elAngle)+sin(lastElAngle))*R;
+          if (eFocus < std::numeric_limits<T>::epsilon()) {
+            /* This can be skipped if we allow focusing at 0.0 */
+            center[1] = (T(iSubH) - T(0.5)*(T(nSubH)-T(1.0))) * T(2.0) * hh;
+          } else {
+            center[1] = T(0.5)*(sin(elAngle)+sin(lastElAngle))*R;
+          }
           center[2] = -(T(0.5)*(cos(elAngle)+cos(lastElAngle))*R-focus);
 
           for (size_t iSubW = 0 ; iSubW < nSubW ; iSubW++) {
-            // TODO: Consider allowing nSubW > 1
             sps::point_t<T> center1 = center;
             center1[0] = center1[0] + T(2.0)*hw/T(nSubW)*(T(iSubW)-T(0.5)*(T(nSubW)-T(1.0)));
 
@@ -104,22 +179,23 @@ namespace fnm {
   void FocusedConvexArray(const size_t nElements,
                           const size_t nSubH, // Elevation
                           const size_t nSubW,
-                          const T pitch,
+                          const T width,
                           const T kerf,
                           const T height,
                           const T radius,
-                          const T efocus,
+                          const T eFocus,
                           const int arcPlacement,
                           sps::deleted_aligned_multi_array<sps::element_t<T>, 2> &&elements)
   {
-
+    SPS_UNREFERENCED_PARAMETER(nSubW);
     assert(nSubW==1);
     assert(arcPlacement==0);
 
     elements      = sps::deleted_aligned_multi_array_create<sps::element_t<T>,2>(nElements,nSubH);
 
     T halfHeight = T(0.5)*height;
-    T focus = efocus;
+    T focus = eFocus;
+    T pitch = width + kerf;
     if (focus < T(0.0))
       focus = T(0.0);
 
@@ -134,8 +210,6 @@ namespace fnm {
 
     T azTanLength   = T(2.0) * T(azR) * tan(T(0.5)*T(dAz));
 
-    //azAngles = (np.r_[0:opt.nElements] - (opt.nElements - 1.0)/2) * dAz
-
     T elR = sqrt(SQUARE(focus)+SQUARE(T(0.5)*height));
 
     // Sector from outer edge to outer edge
@@ -149,7 +223,7 @@ namespace fnm {
     if (focus != 0.0) {
       elTanLength   = T(2.0) * elR * tan(T(0.5)*dEl);
     } else {
-      elTanLength   = T(0.5)*height;
+      elTanLength   = height;
     }
 
     T hh;
@@ -158,11 +232,11 @@ namespace fnm {
       hh = T(0.5)*elTanLength;
     } else {
       // Inner
-      //elAngles = (np.r_[0:(opt.nSubH+1)] - opt.nSubH/2.0) * dEl
       hh = T(0.5)*elChordLength;
     }
 
-    T hw = T(0.5)*azTanLength;
+    SPS_UNREFERENCED_PARAMETER(azTanLength);
+    T hw = T(0.5)*(pitch - kerf);
 
     if (arcPlacement == 0) {
       // Outer radius
@@ -185,7 +259,7 @@ namespace fnm {
 
           sps::point_t<T> center1;
           // Rotate about origin
-          sps::basis_rotate<T>(center,euler,center1);
+          sps::basis_rotate<T, sps::EulerIntrinsicYXY>(center,euler,center1);
           center1[2] = center1[2] - azR;
 
           elements[iAz][iEl].hh     = hh;
@@ -199,27 +273,72 @@ namespace fnm {
     }
   }
 
-  template void FNM_EXPORT FocusedLinearArray(const size_t nElements,
-      const size_t nSubH, // Elevation
-      const size_t nSubW,
-      const float pitch,
-      const float kerf,
-      const float height,
-      const float efocus,
-      const int arcPlacement,
-      sps::deleted_aligned_multi_array<sps::element_t<float>, 2> &&elements);
+  template void
+  FocusedLinearArray(const size_t nElements,
+                     const size_t nSubH, // Elevation
+                     const size_t nSubW,
+                     const float pitch,
+                     const float kerf,
+                     const float height,
+                     const float eFocus,
+                     const int arcPlacement,
+                     sps::deleted_aligned_multi_array<sps::element_t<float>, 2> &&elements);
 
-  template void FNM_EXPORT FocusedConvexArray(const size_t nElements,
-      const size_t nSubH, // Elevation
-      const size_t nSubW,
-      const float pitch,
-      const float kerf,
-      const float height,
-      const float radius,
-      const float efocus,
-      const int arcPlacement,
-      sps::deleted_aligned_multi_array<sps::element_t<float>, 2> &&elements);
+  template void
+  FocusedConvexArray(const size_t nElements,
+                     const size_t nSubH, // Elevation
+                     const size_t nSubW,
+                     const float pitch,
+                     const float kerf,
+                     const float height,
+                     const float radius,
+                     const float eFocus,
+                     const int arcPlacement,
+                     sps::deleted_aligned_multi_array<sps::element_t<float>, 2> &&elements);
 
+  template void
+  MatrixArray(const size_t nRows,
+              const size_t nCols,
+              const float rowWidth,
+              const float rowKerf,
+              const float colWidth,
+              const float colKerf,
+              sps::deleted_aligned_multi_array<sps::element_t<float>, 2> &&elements);
+
+#ifdef FNM_DOUBLE_SUPPORT
+  template void
+  FocusedLinearArray(const size_t nElements,
+                     const size_t nSubH, // Elevation
+                     const size_t nSubW,
+                     const double pitch,
+                     const double kerf,
+                     const double height,
+                     const double eFocus,
+                     const int arcPlacement,
+                     sps::deleted_aligned_multi_array<sps::element_t<double>, 2> &&elements);
+
+  template void
+  FocusedConvexArray(const size_t nElements,
+                     const size_t nSubH, // Elevation
+                     const size_t nSubW,
+                     const double pitch,
+                     const double kerf,
+                     const double height,
+                     const double radius,
+                     const double eFocus,
+                     const int arcPlacement,
+                     sps::deleted_aligned_multi_array<sps::element_t<double>, 2> &&elements);
+
+  template void
+  MatrixArray(const size_t nRows,
+              const size_t nCols,
+              const double rowWidth,
+              const double rowKerf,
+              const double colWidth,
+              const double colKerf,
+              sps::deleted_aligned_multi_array<sps::element_t<double>, 2> &&elements);
+
+#endif
 
 }
 
