@@ -15,6 +15,7 @@
 #if FNM_PULSED_WAVE
   #include <sofus/sofus_types.hpp>
 #endif
+  #include <fnm/fnm_types.h>
   #include <fnm/fnm_types.hpp>
   #include <fnm/fnm.hpp>
   #include <gl/gl.hpp>
@@ -96,13 +97,15 @@ namespace sps {
 
 %include <gl/gl_export.h>
 
-%rename(FocusingType) FocusingTypeNS;
-%rename(TimeDomainCalcType) TimeDomainCalcTypeNS;
-%rename(PulsedWaveIntOrder) PulsedWaveIntOrderNS;
+%rename(FocusingType) FNM_FocusingTypeNS;
+%rename(TimeDomainCalcType) SOFUS_TimeDomainCalcTypeNS;
+%rename(TimeDomainIntOrder) SOFUS_TimeDomainIntOrderNS;
 
 #if FNM_PULSED_WAVE
+%include <sofus/sofus_types.h>
 %include <sofus/sofus_types.hpp>
 #endif
+%include <fnm/fnm_types.h>
 %include <fnm/fnm_types.hpp>
 %include <fnm/fnm.hpp>
 %include <gl/gl.hpp>

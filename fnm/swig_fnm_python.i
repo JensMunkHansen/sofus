@@ -1,3 +1,16 @@
+%insert("python") %{
+from mpl_toolkits.mplot3d import art3d
+import matplotlib.colors as colors
+import matplotlib.pyplot as plt
+import itertools
+import numpy as np
+
+from dicts import dotdict
+
+plt.ion()
+%}
+
+
 /* %fnm_typemaps() macro
  *
  * This macro applies a long list of typemaps for templated functions. It is meant
@@ -9,10 +22,15 @@
 %apply (DATA_TYPE ARGOUT_ARRAY1[ANY]) {(DATA_TYPE oFocus[3])}
 %apply (DATA_TYPE IN_ARRAY1[ANY])     {(const DATA_TYPE iFocus[3])}
 
+%apply (DATA_TYPE* INPLACE_ARRAY1, size_t DIM1) \
+{(DATA_TYPE* ioData, size_t nIOdata)}
+
 %apply (DATA_TYPE* IN_ARRAY1, int DIM1) \
 {(const DATA_TYPE* data, const size_t nData)}
 %apply (DATA_TYPE* IN_ARRAY2, int DIM1, int DIM2) \
 {(const DATA_TYPE* pos, const size_t nPositions, const size_t nDim)};
+%apply (DATA_TYPE* IN_ARRAY2, int DIM1, int DIM2) \
+{(const DATA_TYPE* iData, const size_t nChannels, const size_t nSamples)};
 %apply (DATA_TYPE* IN_ARRAY3, int DIM1, int DIM2, int DIM3) \
 {(const DATA_TYPE* pos, const size_t nElements, const size_t nSubElementsPerElement, const size_t nDim)};
 
@@ -20,14 +38,27 @@
 
 %apply (DATA_TYPE** ARGOUTVIEWM_ARRAY1, size_t* DIM1) \
 {(DATA_TYPE** odata, size_t* nData)}
+
+%apply (int** ARGOUTVIEWM_ARRAY1, size_t* DIM1) \
+{(int** offsets, size_t* nOffsets)}
+
+%apply (int** ARGOUTVIEWM_ARRAY1, size_t* DIM1) \
+{(int** lengths, size_t* nLengths)}
+
+%apply (int** ARGOUTVIEWM_ARRAY2, size_t* DIM1, size_t* DIM2) \
+{(int** sizeAndOffsets, size_t* nFilters, size_t* nTwo)}
+
 %apply (DATA_TYPE** ARGOUTVIEWM_ARRAY2, size_t* DIM1, size_t* DIM2) \
 {(DATA_TYPE** out, size_t* nElements, size_t* nParams)}
-%apply (DATA_TYPE** ARGOUTVIEWM_ARRAY2, size_t* DIM1, size_t* DIM2) {(DATA_TYPE** coordinates, size_t* nDim, size_t* nLimits)}
-%apply (DATA_TYPE** ARGOUTVIEWM_ARRAY2, size_t* DIM1, size_t* DIM2) {(DATA_TYPE** odata, size_t* nSignals, size_t* nSamples)}
+%apply (DATA_TYPE** ARGOUTVIEWM_ARRAY2, size_t* DIM1, size_t* DIM2) \
+{(DATA_TYPE** coordinates, size_t* nDim, size_t* nLimits)}
+%apply (DATA_TYPE** ARGOUTVIEWM_ARRAY2, size_t* DIM1, size_t* DIM2) \
+{(DATA_TYPE** odata, size_t* nSignals, size_t* nSamples)}
 %apply (DATA_TYPE** ARGOUTVIEWM_ARRAY3, size_t* DIM1, size_t* DIM2, size_t* DIM3) \
 {(DATA_TYPE** out, size_t* nElements, size_t* nSubElements, size_t* nParams)}
 
-%apply (std::complex<DATA_TYPE>** ARGOUTVIEWM_ARRAY1, size_t* DIM1) {(std::complex<DATA_TYPE>** odata, size_t* nOutPositions)};
+%apply (std::complex<DATA_TYPE>** ARGOUTVIEWM_ARRAY1, size_t* DIM1) \
+{(std::complex<DATA_TYPE>** odata, size_t* nOutPositions)};
 
 // TEST
 %apply (std::complex<DATA_TYPE>** ARGOUTVIEWM_ARRAY3, size_t* DIM1,
@@ -36,6 +67,29 @@
 %apply (DATA_TYPE* IN_ARRAY2, int DIM1, int DIM2) \
 {(const DATA_TYPE* p0, const size_t nx, const size_t ny)};
 
+/********************************
+ *  Used for static constructors
+ ********************************/
+%typemap(in, numinputs=0) fnm::Aperture<DATA_TYPE> **obj (fnm::Aperture<DATA_TYPE> *temp) {
+  $1 = &temp;
+}
+
+%typemap(argout) fnm::Aperture<DATA_TYPE> ** {
+  PyObject* temp = NULL;
+  if (!PyList_Check($result)) {
+    temp = $result;
+    $result = PyList_New(1);
+    PyList_SetItem($result, 0, temp);
+  }
+  
+  // Create shadow object (do not use SWIG_POINTER_NEW)
+  temp = SWIG_NewPointerObj(SWIG_as_voidptr(*$1),
+			    $descriptor(fnm::Aperture<DATA_TYPE>*),
+			    SWIG_POINTER_OWN | 0);
+
+  PyList_Append($result, temp);
+  Py_DECREF(temp);
+}
 
 %enddef    /* %fnm_typemaps() */
 
@@ -121,23 +175,56 @@ __swig_dir__ = dict(__swig_getmethods__.items() + __swig_setmethods__.items()).k
 def __dir__(self):
   return self.__dict__.keys() + ApertureFloat.__swig_dir__
 
-def show_rect(self,ax,corners,color):
-  from mpl_toolkits.mplot3d import art3d
-  import matplotlib.colors as colors
-  import numpy as np
-  rect = art3d.Poly3DCollection([np.roll(corners,-2,axis=0)])
+def show_rect(self, ax, corners, color, trans):
+  if (trans):
+    rect = art3d.Poly3DCollection([np.roll(corners,-2,axis=0)],alpha=0.1)
+  else:
+    rect = art3d.Poly3DCollection([np.roll(corners,-2,axis=0)],alpha=0.9)
   if color == None:
     rect.set_color(colors.rgb2hex([0.60,0.05,0.65]))
   else:
     rect.set_color(color)
   rect.set_edgecolor('k')
   ax.add_collection3d(rect)
+  return rect
+
+def show_box(self,**kwargs):
+  # TODO: Introduce function in fnm_data returning rectangles of box
+
+  opt = dotdict({'ax' : None,
+                 'color' : None})
+  opt.update(**kwargs)
+  ax = opt.ax
+  if (ax==None):
+    if len(plt.get_fignums()) > 0:
+      ax = plt.gca()
+      if (type(ax).name != '3d'):
+        print('Current axis is not 3d')
+        return None
+    else:
+      fig = plt.figure()
+      ax = fig.add_subplot(111, projection='3d')
+      self.show(ax=ax)
+
+  e = self.extent
+  _min = e[:,0]
+  _max = e[:,1]
+
+  allcorners = np.array(list(itertools.product(*zip(_min,_max))))
+
+  # Positive orientation
+  orient = [1, 0, 2, 1]
+  
+  for iXYZ in range(e.shape[0]):
+    for iMinMax in range(e.shape[1]):
+      indices = np.where(allcorners[:,iXYZ] == e[iXYZ,iMinMax])[0]
+      corners = sorted(allcorners[indices,:],
+                       key=lambda x: np.arctan2(x[orient[2-iXYZ]],
+                                                x[orient[3-iXYZ]]))
+      self.show_rect(ax, corners, None, True)
+  plt.draw()
 
 def show(self,**kwargs):
-  import numpy as np
-  import matplotlib.pyplot as plt
-  from mpl_toolkits.mplot3d import art3d
-  from dicts import dotdict
   opt = dotdict({'ax' : None,
                  'color' : None})
   opt.update(**kwargs)
@@ -155,10 +242,9 @@ def show(self,**kwargs):
   for i in range(nElements):
     for j in range(nSub):
       corners = _rectangles[i,j,:,:]
-      corners = corners[[0,1,3,2],:]
       _min = np.minimum(np.min(corners,axis=0),_min)
       _max = np.maximum(np.max(corners,axis=0),_max)
-      self.show_rect(ax,corners,opt.color)
+      self.show_rect(ax,corners,opt.color,None)
 
   _min = _min - np.finfo(np.float32).eps
   _max = _max + np.finfo(np.float32).eps
@@ -169,7 +255,30 @@ def show(self,**kwargs):
   ax.set_ylabel('y')
   ax.set_zlabel('z')
   ax.set_aspect('auto')
-  #ax.set_aspect('equal')
+  return ax
+def __getstate__(self):
+  args = (self.FsGet(),
+          self.CGet(),
+          self.SubElementsGet(),
+          self.ApodizationGet(),
+          self.ExcitationGet(),
+          self.ImpulseGet(),
+          self.FocusGet(),
+          self.CenterFocusGet(),
+          self.DelaysGet())
+  return args
+def __setstate__(self, state):
+  self.__init__()
+  (fs, c, subelements, apodization, excitation, impulse, focus, center_focus, delays) = state
+  self.FsSet(fs)
+  self.CSet(c)
+  self.SubElementsSet(subelements)
+  self.ApodizationSet(apodization)
+  self.ExcitationSet(excitation)
+  self.ImpulseSet(impulse)
+  self.FocusSet(focus)
+  self.CenterFocusSet(center_focus)
+  self.DelaysSet(delays)
 %}
 };
 %enddef    /* %fnm_extensions() */

@@ -70,36 +70,25 @@ class Worker(QRunnable):
     try:
       if not(self.data.has_key('M')):
         self.data.M = 1
+      M = max(1,self.data.M)
       
       if not(self.data.has_key('efocus')):
-        self.data.efocus = None
+        self.data.efocus = 0.0
+      efocus = self.data.efocus
+      if (efocus == None):
+        efocus = 0.0
           
       if self.data.has_key('radius'):
-        a = convex_array3(nElements = self.data.N,
-                          nSubH     = self.data.M,
-                          pitch     = self.data.pitch,
-                          kerf      = self.data.kerf,
-                          height    = self.data.height,
-                          efocus    = self.data.efocus,
-                          radius    = self.data.radius)
-      elif self.data.M > 1:
-        a = linear_array3(nElements = self.data.N,
-                          nSubH     = self.data.M,
-                          pitch     = self.data.pitch,
-                          kerf      = self.data.kerf,
-                          height    = self.data.height,
-                          efocus    = self.data.efocus,
-                          elePlacement = self.data.elePlacement)
+        Main.a = fnm.ApertureFloat.FocusedConvexArrayCreate(self.data.N,
+                                                            self.data.pitch - self.data.kerf, self.data.kerf,
+                                                            self.data.height,
+                                                            self.data.radius, M, efocus)[1]
       else:
-        a = linear_array(nElements = self.data.N,
-                         nSubH     = self.data.M,
-                         pitch     = self.data.pitch,
-                         kerf      = self.data.kerf,
-                         height    = self.data.height,
-                         efocus    = self.data.efocus)
-      
+        Main.a = fnm.ApertureFloat.FocusedLinearArrayCreate(self.data.N, self.data.pitch - self.data.kerf, self.data.kerf,
+                                                            self.data.height,
+                                                            M, efocus)[1]
       self.data.ax.clear()
-      a.show(ax=self.data.ax)
+      Main.a.show(ax=self.data.ax)
     except Exception as inst:
       exc_type, exc_obj, exc_tb = sys.exc_info()
       print(str(type(inst)))
@@ -151,10 +140,6 @@ class ComputeField(QRunnable):
     if not(self.data.has_key('M')):
         self.data.M = 1
 
-    nx = self.data.nx
-    ny = self.data.ny
-    nz = self.data.nz
-    
     N  = self.data.N
     nCycles = self.data.nCycles
     f0 = self.data.f0
@@ -162,44 +147,43 @@ class ComputeField(QRunnable):
     if not(self.data.has_key('efocus')):
       self.data.efocus = 0.0
 
+    M = max(self.data.M,1)
     if (self.data.has_key('radius')):
-      print('convex')
-      a = convex_array3(nElements = self.data.N,
-                        nSubH     = self.data.M,
-                        pitch     = self.data.pitch,
-                        kerf      = self.data.kerf,
-                        height    = self.data.height,
-                        efocus    = self.data.efocus,
-                        radius    = self.data.radius)
+      Main.a1 = fnm.ApertureFloat_FocusedConvexArrayCreate(self.data.N, self.data.pitch - self.data.kerf,
+                                                           self.data.kerf, self.data.height,
+                                                           self.data.radius, M, self.data.efocus)[1]
+      # Testing (subelements -> elements)
+      if (0):
+        subs = Main.a1.subelements
+        Main.a1.elements = np.reshape(subs,(np.prod(subs.shape[:-1]),8))
+      
     else:
-      a = linear_array3(nElements = self.data.N,
-                        nSubH     = self.data.M,
-                        pitch     = self.data.pitch,
-                        kerf      = self.data.kerf,
-                        height    = self.data.height,
-                        efocus    = self.data.efocus,
-                        elePlacement = self.data.elePlacement)
-    a.f0 = f0
-    a.c  = 1500
-    a.nDivW = self.data.order
-    a.nDivH = self.data.order
-    a.nthreads = multiprocessing.cpu_count()
+      M = max(self.data.M,1)
+      Main.a1 = fnm.ApertureFloat_FocusedLinearArrayCreate(self.data.N, self.data.pitch - self.data.kerf,
+                                                           self.data.kerf, self.data.height,
+                                                           M, self.data.efocus)[1]
+        
+    Main.a1.f0 = f0
+    Main.a1.c  = 1500
+    Main.a1.nDivW = self.data.order
+    Main.a1.nDivH = self.data.order
+    Main.a1.nthreads = multiprocessing.cpu_count()
     focus   = [0,0, self.data.focus]
-    a.focus = focus 
+    Main.a1.focus = focus 
 
-    a.att_enabled = self.data.use_att
-    a.alpha       = self.data.alpha
-    a.beta        = self.data.beta
+    Main.a1.att_enabled = self.data.use_att
+    Main.a1.alpha       = self.data.alpha
+    Main.a1.beta        = self.data.beta
 
-    a.focus_type = fnm.FocusingType.Pythagorean
+    Main.a1.focus_type = fnm.FocusingType.Pythagorean
     if (self.data.focus < 0.0):
-      delays = np.sqrt(np.sum((a.pos - np.r_[self.data.N*[focus]])**2,axis=1)) / a.c
+      delays = np.sqrt(np.sum((a.pos - np.r_[self.data.N*[focus]])**2,axis=1)) / Main.a1.c
       dmin   = np.min(delays)
       delays = -(dmin - delays)
-      a.delays = delays.astype(np.float32)
-      a.focus_type = fnm.FocusingType.Delays
+      Main.a1.delays = delays.astype(np.float32)
+      Main.a1.focus_type = fnm.FocusingType.Delays
     
-    apodization = a.apodization
+    apodization = Main.a1.apodization
     nActive = int((self.data.focus / self.data.f) / self.data.pitch)
     apodization = np.zeros(apodization.shape,np.float32)
 
@@ -207,56 +191,99 @@ class ComputeField(QRunnable):
       apodization[N/2] = 1.0
     apodization[N/2:int(N/2 + nActive/2)]      = 1.0
     apodization[max(N/2-int(nActive/2),0):N/2] = 1.0
-    a.apodization = apodization
+    Main.a1.apodization = apodization
 
       
+    nx = self.data.nx
+    ny = self.data.ny
+    nz = self.data.nz
+
+    # Find dimension which are not singleton
+    iSingleton = [i for i, x in enumerate([nx,ny,nz]) if x == 1]
+
+    if len(iSingleton) == 0:
+      self.signals.result.emit(self.task)
+      raise Exception("There must be at least one singleton dimension")
+    
+    offset_x = self.data.offset_x
+    offset_y = self.data.offset_y
+    offset_z = self.data.offset_z
+      
+    dx = self.data.dx
+    dy = self.data.dy
+    dz = self.data.dz
+
     # TODO: Support any plane
-    xs1 = (np.r_[0:nx] - (nx-1.0)/2.0 + self.data.offset_x) * self.data.dx
-    zs1 = (np.r_[0:nz] - (nz-1.0)/2.0 + self.data.offset_z) * self.data.dz
+    xs1 = (np.r_[0:nx] - (nx-1.0)/2.0 + offset_x) * dx
+    ys1 = (np.r_[0:ny] - (ny-1.0)/2.0 + offset_y) * dy
+    zs1 = (np.r_[0:nz] - (nz-1.0)/2.0 + offset_z) * dz
 
-    xs,zs = np.meshgrid(xs1,zs1,indexing='ij')
+    # y -> x,z, z -> y, x, x -> z, y
+    if iSingleton[0] == 1:
+      us1 = xs1
+      vs1 = zs1
+      nu = nx
+      nv = nz
+    elif iSingleton[0] == 2:
+      us1 = ys1
+      vs1 = xs1
+      nu = ny
+      nv = nx
+    else:
+      us1 = zs1
+      vs1 = ys1
+      nu = nz
+      nv = ny
+      
+    us,vs = np.meshgrid(us1,vs1,indexing='ij')
 
-    pos = np.c_[xs.flatten(), np.zeros(nx*nz), zs.flatten()].astype(np.float32)
+    if iSingleton[0] == 1:
+      pos = np.c_[us.flatten(), np.zeros(nu*nv), vs.flatten()].astype(np.float32)
+    elif iSingleton[0] == 2:
+      pos = np.c_[vs.flatten(), us.flatten(), np.zeros(nu*nv)].astype(np.float32)
+    else:
+      pos = np.c_[ np.zeros(nu*nv), vs.flatten(), us.flatten()].astype(np.float32)
 
-    a.focus = [0,0,self.data.focus]
+    Main.a1.focus = [0,0,self.data.focus]
+    Main.a1.FocusUpdate()
 
     if self.data.simtype == 0:
-      a.focus_type = fnm.FocusingType.Rayleigh
-      out = a.CalcCwFast(pos)[1]
+      Main.a1.focus_type = fnm.FocusingType.Rayleigh
+      out = Main.a1.CalcCwFast(pos)[1]
       result3 = np.squeeze(out.reshape((nx,ny,nz)))
 
       rho = 10000
       omega = 2*np.pi*1e6#f0
       pressure = -1j * omega * rho * np.exp(1j * omega * 0) * result3
     else:
-      a.fs = fs
-      a.c  = 1540.0
+      Main.a1.fs = fs
+      Main.a1.c  = 1540.0
 
       # Set order
       sysparm   = fnm.SysParmFloat()
       sysparm.c = 1540.0
       sysparm.pulseWaveIntOrder  = int(self.data.order)
       sysparm.timeDomainCalcType = int(self.data.proptype)  
-      a.SysParmSet(sysparm)
+      Main.a1.SysParmSet(sysparm)
       
       impulse_response = np.sin(np.linspace(0, nCycles * 2 * np.pi, round(nCycles * fs / f0)))
       impulse_response = impulse_response * np.hamming(len(impulse_response))
       excitation       = np.sin(np.linspace(0, nCycles * 2 * np.pi, round(nCycles * fs / f0)))
       if not(len(excitation) < 2):
-        a.excitation = excitation.astype(np.float32)
-        a.impulse    = impulse_response.astype(np.float32)
+        Main.a1.excitation = excitation.astype(np.float32)
+        Main.a1.impulse    = impulse_response.astype(np.float32)
 
       # Consider setting callback outside
       #QObject.connect(emitter(cb), SIGNAL('test'), main, SLOT('on_progress(float)'), Qt.QueuedConnection)
       # AutoConnection, DirectConnection, QueuedConnection, BlockingQueuedConnection, UniqueConnection, AutoCompatConnection
 
       if multithreaded:
-        tstart, hp1 = a.CalcPwFieldThreaded(pos)
+        tstart, hp1 = Main.a1.CalcPwFieldThreaded(pos)
       else:
         cb = Callback()
-        a.ProgressBarSet(cb)
+        Main.a1.ProgressBarSet(cb)
         QObject.connect(emitter(cb), SIGNAL('test'), main.on_progress)
-        tstart, hp1 = a.CalcPwField(pos)        
+        tstart, hp1 = Main.a1.CalcPwField(pos)        
       hp = np.sum(hp1**2,axis=1)
       hp = np.sqrt(hp)
       pressure = np.squeeze(hp.reshape((nx,ny,nz)))
@@ -273,15 +300,31 @@ class ComputeField(QRunnable):
     indices = [i for i, x in enumerate([nx,ny,nz]) if x == 1]
     
     if nDim == 2:
-      self.data.ax.imshow(logp,extent=[zs.min(),zs.max(),xs.min(),xs.max()],aspect='auto')
-      self.data.ax.set_xlabel('Depth [m]')
-      self.data.ax.set_ylabel('Width [m]')
-    elif nDim == 1:
-      if nx == 1:
-        self.data.ax.plot(zs1, logp.flatten())
+      self.data.ax.imshow(logp,extent=[vs.min(),vs.max(), us.min(), us.max()],aspect='auto')
+      if iSingleton[0] == 1:
         self.data.ax.set_xlabel('Depth [m]')
-        self.data.ax.set_ylabel('Gain [dB]')
-
+        self.data.ax.set_ylabel('Width [m]')
+      elif iSingleton[0] == 0:
+        # TODO: Flip y-axis
+        self.data.ax.set_xlabel('Elevation [m]')
+        #self.data.ax.invert_yaxis()
+        self.data.ax.set_ylabel('Depth [m]')
+      else:
+        self.data.ax.set_xlabel('Width [m]')
+        self.data.ax.set_ylabel('Elevation [m]')        
+    elif nDim == 1:
+      self.data.ax.set_ylabel('Gain [dB]')
+      if nu == 1:
+        self.data.ax.plot(vs1, logp.flatten())
+      else:
+        self.data.ax.plot(us1, logp.flatten())
+      if iSingleton.count(2) == 0:
+        self.data.ax.set_xlabel('Depth [m]')
+      elif iSingleton.count(1) == 0:
+        self.data.ax.set_xlabel('Elevation [m]')
+      else:
+        self.data.ax.set_xlabel('Width [m]')
+        
     # Plot shit
     self.signals.result.emit(self.task)
       
@@ -289,7 +332,23 @@ class Main(QMainWindow, ui):
 
   orderCW = 20
   orderPW = 3
-  
+  # Apertures (for display and computation)
+  a  = None
+  a1 = None
+  def save(self):
+    print("Saving")
+    import pickle
+    h = file('./aperture0.bin','wb')
+    pickle.dump(Main.a,h)
+    h.close()
+    h = file('./aperture1.bin','wb')
+    pickle.dump(Main.a1,h)
+    h.close()
+    grid = self.gridXYZ.getData()
+    h = file('./grid.bin','wb')
+    pickle.dump(grid,h)
+    h.close()
+
   def __init__(self, ):
     # Consider using multiple QStringListModels
     # QVXYModelMapper can map columns or rows to an xy-model
