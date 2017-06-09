@@ -142,9 +142,9 @@ double ndist(double x, void* args)
 }
 //! [GL_normal example]
 
+//! [GL_erf example]
 TEST(gl_test, gl_erf)
 {
-  //! [GL_erf example]
   const size_t nMaxOrder = 33;
 
   const double arg = 10.0;
@@ -152,11 +152,11 @@ TEST(gl_test, gl_erf)
   // Integral of normal distribution must equal the error function, erf
   double quad = gl::GLQuad(nMaxOrder, ndist, NULL, 0.0, arg);
   double refval = std::erf(arg);
-  //! [GL_erf example]
 
   EXPECT_EQ(true,almost_equal<double>(quad,refval,1));
 
 }
+//! [GL_erf example]
 
 int main(int argc, char* argv[])
 {

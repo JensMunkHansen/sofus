@@ -1,11 +1,10 @@
 #include <gl/gl.hpp>
+
 #include <sps/math.h>
 #include <stddef.h>
 
 #include <gl/gl_lut.hpp>
 #include <gl/bessel_lut.hpp>
-
-// TODO: Introduce dummy gl_lut.cpp file to support version without LUT
 
 //
 // Anonymous namespace for non-public functions

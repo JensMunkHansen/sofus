@@ -15,7 +15,7 @@
 #include <stddef.h>
 
 /** @defgroup GL Gauss-Legendre library
- *  @brief Nodes and weight for quadrature
+ *  @brief A library for computing nodes and weights for quadrature using Gauss-Legendre polynomials.
  *
  * @section gl_abstract Abstract
  *
@@ -24,7 +24,7 @@
  * concept adapted from the paper.
  *
  * I. Bogaert, "Iteration-Free Computation of Gauss-Legendre Quadrature Nodes and Weights",
- * SIAM Journal of Scientific Computing.
+ * SIAM Journal of Scientific Computing \cite ignace_2014 .
  *
  * The first number of nodes and weights are precomputed using a
  * iterative approach and tabulated. The remaining nodes and weights
@@ -41,10 +41,10 @@
  * of function values at specified points within the domain of
  * integration. An n-point Gaussian quadrature rule, named after Carl
  * Friedrich Gauss, is a quadrature rule constructed to yield an exact
- * result for polynomials of degree 2n − 1 or less by a suitable
- * choice of the points xi and weights wi for i = 1, ..., n. The
+ * result for polynomials of degree 2n - 1 or less by a suitable
+ * choice of the points xi and weights wi for \f$i = 1,\ldots,n\f$. The
  * domain of integration for such a rule is conventionally taken as
- * [−1, 1], so the rule is stated as
+ * \f$[-1,1]\f$, so the rule is stated as
  *
  * \f[
  * \int_{-1}^{1} f(x) dx = \sum_{i=1}^{n} \omega_i f(x_i)
@@ -52,7 +52,7 @@
  *
  * Gaussian quadrature as above will only produce good results if the
  * function \f$f(x)\f$ is well approximated by a polynomial function
- * within the range \f$[−1, 1]\f$. The method is not, for example,
+ * within the range \f$[-1, 1]\f$. The method is not, for example,
  * suitable for functions with singularities. However, if the
  * integrated function can be written as \f$ f(x)=\omega (x)g(x)\,\f$,
  * where \f$g(x)\f$ is approximately polynomial and \f$\omega(x)\f$ is
@@ -86,7 +86,7 @@
  *
  * @subsection gl_change_of_interval Change of interval
  *
- * An integral over [a, b] must be changed into an integral over \f$[−1,
+ * An integral over \f$[a,b]\f$ must be changed into an integral over \f$[-1,
  * 1]\f$ before applying the Gaussian quadrature rule. This change of
  * interval can be done in the following way:
  *

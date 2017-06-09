@@ -12,10 +12,16 @@
 #include <gl/config.h>
 #include <gl/gl_export.h>
 
+/** @addtogroup GL */
+/*@{*/
+
 namespace gl {
+  /// Weight used for Gauss-Legendre integration
   extern const double* weights[_GL_LUT_TABLE_SIZE];
+  /// Abcissae or coordinates used for Gauss-Legendre integration
   extern const double* abcissas[_GL_LUT_TABLE_SIZE];
 }
+/*@}*/
 
 /* Local variables: */
 /* indent-tabs-mode: nil */
