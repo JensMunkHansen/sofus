@@ -62,6 +62,7 @@ xs = (np.r_[0:nx] - (nx-1.0)/2.0) * dx
 zs = (np.r_[0:nz]) * dz
 
 factor = int(height / width) # 16
+factor = 1
 ndiv = 4
 
 k = (2*np.pi)/lamda
@@ -112,10 +113,9 @@ a.nDivH = ndiv
 a.nDivW = ndiv*factor
 
 start = timer()
-#out = a.CalcCwFast(pos)[1]
-out = a.CalcCwFieldRef(pos)[1] # Wrong
-#out = a.CalcCwField2(pos)[1] # Looks okay
-#out = a.CalcCwField(pos)[1] # Looks okay
+out = a.CalcCwFast(pos)[1]                # New version without errors
+#out = a.CalcCwFieldRef(pos)[1]           # 0.87s
+#out = a.CalcCwFieldNaiveFast(pos)[1]     # Looks okay
 end = timer()
 timeString = create_time_string(end-start)
 print(timeString)

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# TODO: Use CwFieldRef and CwFieldFast
+
 import sys
 import re
 import numpy as np
@@ -7,17 +9,13 @@ import numpy as np
 import unittest
 import subprocess
 
-import matplotlib.pyplot as plt
-
 import addpaths
 
 import swig_fnm as fnm
 
 from euler import euler2rot
 
-plt.ion()
-
-class SofusSymTest(unittest.TestCase):
+class FnmSymTest(unittest.TestCase):
   staticData = None
   def setUp(self):
     width  = 1.0
@@ -39,10 +37,8 @@ class SofusSymTest(unittest.TestCase):
     self.a.focus = self.pos.flatten()
 
     # Disable phase calculation
-    self.a.focus_type = fnm.FocusingType.Delays
     
-    retval, self.ref = self.a.CalcCwFieldRef(self.pos)
-
+    retval, self.ref = self.a.CalcCwFieldNaive(self.pos)
   def rotate_axes(self, limits):
     retval = True
     maxdiff = 0.0
@@ -58,7 +54,7 @@ class SofusSymTest(unittest.TestCase):
           self.a.elements = elements
     
           self.a.focus = pos2.flatten()
-          _, hp2 = self.a.CalcCwFieldRef(pos2)
+          _, hp2 = self.a.CalcCwFieldNaive(pos2)
           hp2 = hp2.flatten()
           diff = np.abs(self.ref-hp2) / (np.abs(self.ref)+np.abs(hp2))
           maxdiff = max(maxdiff, diff[0])

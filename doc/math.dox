@@ -1,0 +1,66 @@
+/**
+ * @page pagemath Building Blocks
+ *
+ * 
+ * @section section_building_block Building Blocks
+ *
+ * The core functionality is implemented using a number of
+ * mathematical structures or primitives. The structures are templated
+ * to facilitate both single and double precision and alignments to
+ * support SIMD instructions - either as a result of a compiler
+ * optimizing the code or as a results of the programmers use of
+ * intrinsics or inline assembly.
+ *
+ * @subsection section_primitives Mathematical primitives
+ * The mathematical primitives are:
+ *
+ *   - @ref sps::point_t
+ *
+ *     Vector used for either positions or directions
+ *   - @ref sps::rect_t
+ *
+ *     Rectangle made up of four positions (vertices)
+ *   - @ref sps::euler_t
+ *
+ *     A set of 3 Euler angles for intrinsic rotations using the
+ *     y-x-y'-convention.
+ *   - @ref sps::bbox_t
+ *
+ *     Axis-parallel bounding box used for fast parallel computation and to optimize
+ *     the cache usage. It is represented using two points for minimum and maximum
+ *     range of x,y, and z.
+ *   - @ref sps::element_t
+ *
+ *     Element represented using two scalars for its half width,
+ *     and half height, a center position, and a set of Euler
+ *     angles for its orientation.
+ *       - sps::element_t::hw
+ *       - sps::element_t::hh
+ *       - sps::element_t::center
+ *       - sps::element_t::euler
+ *
+ *     The structure further contains a number of variables used for
+ *     caching, vectors used for orientation and vertices for display. These
+ *     structures are read-only for the user.
+ *       - sps::element_t::normal
+ *       - sps::element_t::uvector
+ *       - sps::element_t::vvector
+ *       - sps::element_t::vertices
+ *
+ * @subsection section_transducers Transducer representation
+ *
+ * @subsection section_fd_responses Frequency domain responses
+ * 
+ * A transducer or transducer array can be constructed using a number
+ * of primitives. Explain how:
+ *   - Elements carry apodization
+ *   - Elements have phase and delay
+ *   - fnm::FocusingType fnm::FocusingTypeNS::Pythagorean, fnm::FocusingType::Delays, fnm::FocusingType::Rayleigh
+ *   - Sub-elements shared delay and apodization
+ *   - fnm::Aperture<T>::FocusUpdate
+ *   - fnm::FocusingTypeNS::Value
+ *   - fnm::FocusingTypeNS::Rayleigh
+ *   - Use DoxyPy to refer to @ref fnm_calc_functions
+ *
+ * @snippet hej.py CreateArray example
+ */

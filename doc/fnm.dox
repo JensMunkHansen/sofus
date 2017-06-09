@@ -1,0 +1,99 @@
+/**
+ * @mainpage SOFUS (SIMD Optimized Fast Ultrasound Simulator)
+ * @author Jens Munk Hansen
+ * @date 2017
+ *
+ *
+ * @section section_toc Table of contents
+ * <ul>
+ *   <li> @ref section_intro
+ *   <li> @subpage release_notes
+ *   <li> @subpage build
+ *   <li> @subpage pagemath
+ *   <ul>
+ *     <li> @ref section_primitives
+ *     <li> @ref section_transducers
+ *     <li> @ref section_fd_responses
+ *   </ul>
+ *   <li> @ref section_gui
+ *   <ul>
+ *     <li> @ref subsection_gui_usage
+ *   </ul>
+ *   <li> @subpage article
+ *   <li> @ref section_other
+ *   <ul>
+ *     <li> @ref subsection_req_functional
+ *   </ul>
+ *   <li> @ref subsection_examples
+ *   <ul>
+ *     <li> @ref subsection_cpp_examples
+ *     <li> @ref subsection_c_examples
+ *   </ul>
+ * </ul>
+ *
+ * @section section_intro Introduction
+ *
+ *
+ 
+ * SOFUS is a framework and an application for simulating ultrasonic
+ * fields in frequency or time domain. The first part of this work was
+ * published in 2016 \cite hansen2016 . The work is made primarily is
+ * C++ and is wrapped for use in Python with the extensible compiler,
+ * simplified wrapper and interface generator (SWIG) \cite beazley2003
+ * . The program is implemented to support modern single instruction,
+ * multiple data (SIMD) architectures - hence it's name SIMD Optimized
+ * Fast Ultrasound Simulator (SOFUS).
+ *
+ * @section section_gui Graphical User Interface
+ *
+ * An initial user interface has been created with Python using
+ * PyQt4. The intention is to make a native application, which is
+ * easier to distribute. For now, this is the only graphical interface
+ * to the library.
+ *
+ *
+ * The GUI consists of a number of tabs, where each tab is used for a
+ * given purpose.
+ *   - Simulation
+ *   
+ *     This tab is used for setting simulation parameters,
+ *     e.g. integration order for time or frequency domain
+ *     simulations. Global parameters such as speed-of-sound is also
+ *     set here.
+ *     
+ *   - Transducer
+ *   
+ *     This tab is used for defining the transducer by
+ *     specifying a number of parameters and using one of the
+ *     supported geometries
+ *     \image html xdc_geometry.png
+ *
+ *   - Field
+ *
+ *     The transmitted field can be computed on any axis-parallel 2D
+ *     grid. If two singleton dimensions are selected, a 1D curve will
+ *     be computed.
+ *     \image html cw_field.png
+ *
+ * @subsection subsection_gui_usage Usage
+ *
+ * Bla bla bla
+ *
+ * 
+ *
+ *
+ * @section section_other Other Stuff
+ *
+ * @subsection subsection_req_functional Functional requirements
+ *
+ * @subsection subsection_examples Examples of usage
+ *
+ * @subsubsection subsection_cpp_examples C++ example
+ * Below, the continuous wave field is computed for a 128-element linear array.
+ * @snippet main.cpp LinearArray example
+ *
+ * @subsubsection subsection_c_examples ANSI-C example
+ * Below, the continuous wave field is computed for a 128-element linear array.
+ * @snippet ctest.c LinearArrayC example
+ *
+ */

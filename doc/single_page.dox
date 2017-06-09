@@ -1,0 +1,23 @@
+page.dox:
+
+/** 
+@page mypage Page title
+Introduction text
+*/
+section1.dox:
+
+/** 
+@page mypage
+@section mysection1 First section
+First section text
+*/
+section2.dox:
+
+/** 
+@page mypage
+@section mysection2 Second section
+Second section text
+*/
+With the config file specifying:
+
+INPUT                  = page.dox section1.dox section2.dox

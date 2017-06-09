@@ -1,0 +1,69 @@
+/**
+ * @page build Build and Run
+ *
+ * @section sec_build_top Build And Run
+ *
+ * <ul>
+ *   <li> @ref sec_build_requirements
+ *   <li> @ref sec_build_compile
+ * </ul>
+ *
+ * @section sec_build_requirements Requirements
+ * The following are required to build the program
+ * - A C++ compiler GCC (4.9.2 or newer) or Microsoft Visual Studio 2013 (or newer)
+ *
+ *   The only compilers tested are gcc 4.9.2 and Microsoft Visual Studio 2013
+ *
+ * - SWIG 3.02 (or newer)
+ *
+ *   The only version which is tested is 3.0.2
+ *
+ * - Python 2.7.XX
+ *
+ *   The only version which is tested is Python 2.7.9
+ *
+ * - FFTW 3.3.4
+ *
+ *   FFTW is needed for time-domain simulations
+ *
+ * - CMake 3.0.2 (or newer)
+ *
+ *   The only version tested is 3.0.2
+ *
+ * - Doxygen 1.8.8
+ *
+ * - LaTeX distribution
+ *
+ * - Graphviz 2.38.0
+ *
+ * - Git
+ *
+ * @section sec_build_compile Compilation
+ * @subsection sub_compile_unix *NIX
+ * To compile the library follow the following procedure:
+ * - Create Make files
+ *
+ *\verbatim
+ cmake -B/path/to/build/folder -H/path/to/source/folder [-G{Generator}]
+ \endverbatim
+ *   Specify the generator if different from your default generator
+ * - Compile the sources 
+ *
+ *\verbatim
+ make
+ \endverbatim
+ * @subsection sub_compile_win Windows
+ * To compile the library on Windows, follow this procedure.
+ * - Open a DOS prompt
+ * - Create Microsoft Visual Studio solution
+ *
+ *\verbatim
+ cmake -B/path/to/build/folder -H/path/to/source/folder -G "Visual Studio 12 2013 Win64"
+ \endverbatim
+ * - Compile the sources
+ *
+ *\verbatim
+ "C:\Program Files (x86)\Microsoft Visual Studio 13.0\VC\vcvarsall.bat" x86_amd64
+ msbuild fnm.sln
+ \endverbatim
+ */
