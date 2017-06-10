@@ -7,6 +7,22 @@
  *
  *
  */
+/*
+ *  This file is part of SOFUS.
+ *
+ *  SOFUS is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  SOFUS is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with SOFUS.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #pragma once
 #include <sps/cenv.h>
 #include <sps/math.h>
@@ -63,7 +79,7 @@ STATIC_INLINE_BEGIN __m128 _mm_arccos_ps(__m128 x) STATIC_INLINE_END;
  * @return
  */
 STATIC_INLINE_BEGIN __m256d _mm256_arccos_pd(__m256d x) STATIC_INLINE_END;
-  
+
 /**
  * Arcsine function. Handbook of Mathematical Functions M. Abramowitz
  * and I.A. Stegun, Ed. Absolute error <= 6.7e-5.
@@ -116,14 +132,14 @@ STATIC_INLINE_BEGIN __m256d _mm256_arccos_pd(__m256d x)
 #if 1
   v4d _x;
   _x.v = x;
-  
-	return _mm256_set_pd(acos(_x.f64[3]), acos(_x.f64[2]), acos(_x.f64[1]), acos(_x.f64[0]));
+
+  return _mm256_set_pd(acos(_x.f64[3]), acos(_x.f64[2]), acos(_x.f64[1]), acos(_x.f64[0]));
 #else
   __m256d mask = _mm256_cmp_pd(x, _mm256_setzero_pd(), _CMP_LT_OQ); // TODO: Manage signals and ordering
 
   x = _mm256_fabs_pd(x);
 
-  __m256d ret = _mm256_set1_pd(-0.0187293f); 
+  __m256d ret = _mm256_set1_pd(-0.0187293f);
   ret = _mm256_mul_pd(ret,x);
   ret = _mm256_add_pd(ret,_mm256_set1_pd(0.0742610f));
   ret = _mm256_mul_pd(ret,x);
@@ -135,7 +151,7 @@ STATIC_INLINE_BEGIN __m256d _mm256_arccos_pd(__m256d x)
   return _mm256_sel_pd(ret,_mm256_sub_pd(_m256_pi_pd,ret),mask);
 #endif
 }
-  
+
 STATIC_INLINE_BEGIN __m128 _mm_arccos_ps(__m128 x)
 {
   __m128 mask = _mm_cmplt_ps(x,_mm_setzero_ps());
@@ -686,11 +702,12 @@ STATIC_INLINE_BEGIN __m128 _mm_exp_ps(__m128 d)
 
 /*
 STATIC_INLINE_BEGIN __m256i _mm256_cvtpd_epi64(__m256d d) {
-  
+
 }
 */
 
-STATIC_INLINE_BEGIN __m256d _mm256_madd_pd(__m256d a, __m256d b, __m256d c) {
+STATIC_INLINE_BEGIN __m256d _mm256_madd_pd(__m256d a, __m256d b, __m256d c)
+{
   return _mm256_add_pd(_mm256_mul_pd(a,b),c);
 }
 
@@ -699,9 +716,9 @@ STATIC_INLINE_BEGIN __m256d _mm256_exp_pd(__m256d d)
   __m256d u;
   v4d _d;
   _d.v = d;
-  
+
   u = _mm256_set_pd(exp(_d.f64[3]),exp(_d.f64[2]),exp(_d.f64[1]),exp(_d.f64[0]));
-  
+
 #if 0
   // Need AVX-512 for _mm256_cvtpd_epi64
   __m128i q = _mm256_cvtpd_epi32(_mm256_mul_pd(d, _mm256_set1_pd(R_LN2f)));
