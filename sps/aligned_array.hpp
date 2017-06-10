@@ -9,6 +9,22 @@
  *
  */
 
+/*
+ *  This file is part of SOFUS.
+ *
+ *  SOFUS is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  SOFUS is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with SOFUS.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #pragma once
 
 #include <sps/cenv.h>
@@ -41,7 +57,7 @@ namespace std {
     typedef std::size_t    size_type;
     typedef std::ptrdiff_t difference_type;
     ///@}
-    
+
     /** @name Iterator support
      *
      */
@@ -109,7 +125,7 @@ namespace std {
       return elems[i];
     }
     ///@}
-    
+
     /** @name front() and back()
      *
      */
@@ -147,11 +163,11 @@ namespace std {
     }
     enum { static_size = N };
 
-    /** 
+    /**
      * swap (note: linear complexity in N, constant for given instantiation)
-     * 
-     * @param T 
-     * @param y 
+     *
+     * @param T
+     * @param y
      */
     void swap (aligned_array<T,N>& y)
     {
@@ -163,35 +179,35 @@ namespace std {
 #endif
     }
 
-    /** 
+    /**
      * Direct access to data (read-only)
-     * 
-     * 
-     * @return 
+     *
+     *
+     * @return
      */
     const T* data() const
     {
       return elems;
     }
 
-    /** 
+    /**
      * Use array as C array (direct read/write access to data)
-     * 
-     * 
-     * @return 
+     *
+     *
+     * @return
      */
     T* data()
     {
       return elems;
     }
 
-    /** 
+    /**
      * assignment with type conversion
-     * 
-     * @tparam T2 
-     * @param rhs 
-     * 
-     * @return 
+     *
+     * @tparam T2
+     * @param rhs
+     *
+     * @return
      */
     template <typename T2>
     aligned_array<T,N>& operator= (const aligned_array<T2,N>& rhs)
@@ -200,10 +216,10 @@ namespace std {
       return *this;
     }
 
-    /** 
+    /**
      * assign one value to all elements
-     * 
-     * @param value 
+     *
+     * @param value
      */
     void assign (const T& value)
     {
@@ -216,10 +232,10 @@ namespace std {
 
   private:
 
-    /** 
+    /**
      * check range (may be private because it is static)
-     * 
-     * @param i 
+     *
+     * @param i
      */
     static void rangecheck (size_type i)
     {
