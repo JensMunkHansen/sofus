@@ -148,9 +148,16 @@ if (BUILD_SWIG_INTERFACE)
   if (MSVC)
     add_definitions(-DSWIG_PYTHON_INTERPRETER_NO_DEBUG)
   endif()
-
+  if (UNIX AND NOT CYGWIN)
+    set(SWIG_EXECUTABLE swig3.0)
+  endif()
   find_package(SWIG REQUIRED)
   include(${SWIG_USE_FILE})
+
+  if (CYGWIN)
+    set(PYTHON_LIBRARY "/usr/lib/libpython2.7.dll.a")
+    set(PYTHON_INCLUDE_DIR "/usr/include/python2.7")
+  endif()
   
   find_package(PythonLibs REQUIRED)
   
@@ -168,7 +175,6 @@ if (BUILD_SWIG_INTERFACE)
       COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../bin/doxy2swig.py ${PROJECT_BINARY_DIR}/${CMAKE_DOXYGEN_OUT}/xml/index.xml ${CMAKE_CURRENT_BINARY_DIR}/documentation.i
       DEPENDS fnm doc
     )
-    add_definitions(-DSWIG_INCLUDE_DOCUMENTATION)
   endif()
 
   if (MSVC)
@@ -183,6 +189,10 @@ if (BUILD_SWIG_INTERFACE)
   
   set_source_files_properties(swig_fnm.i PROPERTIES OBJECT_DEPENDS "${DOXYSWIG_OUTPUT}")
 
+  if (BUILD_SWIG_DOCUMENTATION)
+    set(CMAKE_SWIG_FLAGS "${CMAKE_SWIG_FLAGS}-DSWIG_INCLUDE_DOCUMENTATION")
+  endif()
+  
   # TODO: Consider using swig_deps_actual here (without .i files)
   swig_add_module(swig_fnm python swig_fnm.i ${swig_fnm_HEADERS})# ${swig_deps_actual})
 
@@ -209,6 +219,23 @@ if (BUILD_SWIG_INTERFACE)
     # TODO: This makes configure run again, but does not regenerate the SWIG interface.
     set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${swig_deps_actual})
   endif()
+
+  # Removes generated file
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/swig.stamp
+    COMMAND ${CMAKE_COMMAND} -E remove ${swig_generated_file_fullname}
+    COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/swig.stamp
+    DEPENDS ${swig_deps_actual}
+    COMMENT "Removing old SWIG generated file" VERBATIM)
+
+  # Custom target for establishing dependency
+  add_custom_target(
+    swigtrick
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/swig.stamp
+    )
+  # Depedency
+  add_dependencies(_swig_fnm swigtrick)
+
   if (MSVC)
     # Potential uninitialized variable in SWIG_AsVal_
     set_source_files_properties( ${swig_generated_file_fullname} PROPERTIES COMPILE_FLAGS "/wd4701 /wd4127")
