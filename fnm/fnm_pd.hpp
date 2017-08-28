@@ -37,7 +37,7 @@
 
 template <>
 std::complex<double>
-inline CalcFourFast(const sps::element_t<double> &__restrict element,
+inline CalcFourFast(const sps::element_rect_t<double> &__restrict element,
                     const sps::point_t<double> &__restrict projection,
                     const double &__restrict k,
                     const double* __restrict uvs,
@@ -52,7 +52,7 @@ inline CalcFourFast(const sps::element_t<double> &__restrict element,
 // Works
 template <>
 std::complex<double>
-inline CalcHzFast(const sps::element_t<double> &__restrict element,
+inline CalcHzFast(const sps::element_rect_t<double> &__restrict element,
                   const sps::point_t<double> &__restrict projection,
                   const double &__restrict k,
                   const double* __restrict us,
@@ -462,7 +462,7 @@ inline CalcHzFast(const sps::element_t<double> &__restrict element,
 #if 0
 template <>
 std::complex<double>
-inline CalcHzFast(const sps::element_t<double>& element,
+inline CalcHzFast(const sps::element_rect_t<double>& element,
                   const sps::point_t<double>& projection,
                   const double& k,
                   const double* __restrict us,
@@ -857,6 +857,21 @@ inline CalcFastFourAny(const double& u,
   SPS_UNREFERENCED_PARAMETERS(u,v,hh,hw,z,k,s,weights,nS);
   std::complex<double> retval = std::complex<double>(0.0f,0.0f);
   return retval;
+}
+
+template <>
+std::complex<double>
+inline CalcFastFourAny2(const double& u,
+                        const double& v,
+                        const double& hw,
+                        const double& hh,
+                        const double& z,
+                        const double& __restrict k,
+                        const double* __restrict s,
+                        const double* __restrict weights,
+                        const size_t nS) {
+  SPS_UNREFERENCED_PARAMETERS(u,v,hh,hw,z,k,s,weights,nS);
+	return std::complex<double>();
 }
 
 /* Local variables: */
