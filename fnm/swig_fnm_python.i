@@ -27,6 +27,7 @@ plt.ion()
 
 %apply (DATA_TYPE* IN_ARRAY1, int DIM1) \
 {(const DATA_TYPE* data, const size_t nData)}
+
 %apply (DATA_TYPE* IN_ARRAY2, int DIM1, int DIM2) \
 {(const DATA_TYPE* pos, const size_t nPositions, const size_t nDim)};
 %apply (DATA_TYPE* IN_ARRAY2, int DIM1, int DIM2) \
@@ -60,7 +61,11 @@ plt.ion()
 %apply (std::complex<DATA_TYPE>** ARGOUTVIEWM_ARRAY1, size_t* DIM1) \
 {(std::complex<DATA_TYPE>** odata, size_t* nOutPositions)};
 
-// TEST
+%apply (std::complex<DATA_TYPE>** ARGOUTVIEWM_ARRAY2, size_t* DIM1, size_t* DIM2) \
+{(std::complex<DATA_TYPE>** odata, size_t* nOutPositions, size_t* nSamples)};
+
+
+// TEST (for angular spectrum approach)
 %apply (std::complex<DATA_TYPE>** ARGOUTVIEWM_ARRAY3, size_t* DIM1,
  size_t* DIM2, size_t* DIM3) {(std::complex<DATA_TYPE>** p1, size_t*
  onx, size_t* ony, size_t* onz)};
@@ -95,7 +100,7 @@ plt.ion()
 
 /* %fnm_extensions() macro
  *
- * Macro for extending the Python class fnm
+ * Macro for extending the Python classes Aperture<DATA_TYPE>
  */
 %define %fnm_extensions(DATA_TYPE)
 
@@ -112,6 +117,8 @@ __swig_getmethods__["nDivH"]        = NDivHGet
 __swig_setmethods__["nDivH"]        = NDivHSet
 __swig_getmethods__["focus"]        = FocusGet
 __swig_setmethods__["focus"]        = FocusSet
+__swig_getmethods__["center_focus"] = CenterFocusGet
+__swig_setmethods__["center_focus"] = CenterFocusSet
 __swig_getmethods__["focus_type"]   = FocusingTypeGet
 __swig_setmethods__["focus_type"]   = FocusingTypeSet
 __swig_getmethods__["att_enabled"]  = AttenuationEnabledGet
@@ -120,6 +127,8 @@ __swig_getmethods__["alpha"]        = AlphaGet
 __swig_setmethods__["alpha"]        = AlphaSet
 __swig_getmethods__["beta"]         = BetaGet
 __swig_setmethods__["beta"]         = BetaSet
+__swig_getmethods__["w"]            = WGet
+__swig_setmethods__["w"]            = WSet
 
 __swig_getmethods__["nthreads"]     = NThreadsGet
 __swig_setmethods__["nthreads"]     = NThreadsSet
@@ -137,14 +146,24 @@ __swig_setmethods__["delays"]       = DelaysSet
 
 # Branch in python on presence of pulsed-waves
 if 'FNM_PULSED_WAVE' in globals():
+  __swig_getmethods__["fc"]           = FCGet
+  __swig_setmethods__["fc"]           = FCSet
+  __swig_getmethods__["impulse_type"] = ImpulseTypeGet
+  __swig_setmethods__["impulse_type"] = ImpulseTypeSet
+  __swig_getmethods__["excitation_type"] = ExcitationTypeGet
+  __swig_setmethods__["excitation_type"] = ExcitationTypeSet
   __swig_getmethods__["fs"]           = FsGet
   __swig_setmethods__["fs"]           = FsSet
+  __swig_getmethods__["normalize"]    = NormalizeGet
+  __swig_setmethods__["normalize"]    = NormalizeSet
   __swig_getmethods__["excitation"]   = ExcitationGet
   __swig_setmethods__["excitation"]   = ExcitationSet
   __swig_getmethods__["impulse"]      = ImpulseGet
   __swig_setmethods__["impulse"]      = ImpulseSet
   __swig_getmethods__["sysparm"]      = SysParmGet
   __swig_setmethods__["sysparm"]      = SysParmSet
+  __swig_getmethods__["bandwidth"]    = BandWidthGet
+  __swig_setmethods__["bandwidth"]    = BandWidthSet
   
 
 # Read-only properties
@@ -157,23 +176,33 @@ __swig_getmethods__["area"]         = AreaGet
 
 if _newclass:
     # Read-write properties
-    f0       = property(F0Get, F0Set)
-    c        = property(CGet, CSet)
-    nDivW    = property(NDivWGet, NDivWSet)
-    nDivH    = property(NDivHGet, NDivHSet)
-    nthreads = property(NThreadsGet, NThreadsSet)
+  f0       = property(F0Get, F0Set)
+
+  if 'FNM_PULSED_WAVE' in globals():
+    fs       = property(FsGet, FsSet)
+
+  c        = property(CGet, CSet)
+  w        = property(WGet, WSet)
+  nDivW    = property(NDivWGet, NDivWSet)
+  nDivH    = property(NDivHGet, NDivHSet)
+  nthreads = property(NThreadsGet, NThreadsSet)
     # Not necessary to keep as class property
-    focus    = property(FocusGet, FocusSet)
-    focus_type = property(FocusingTypeGet, FocusingTypeSet)
-    rectangles = property(RectanglesGet)
-    extent     = property(ExtentGet)
-    area       = property(AreaGet)
+  focus    = property(FocusGet, FocusSet)
+  center_focus = property(CenterFocusGet, CenterFocusSet)
+  focus_type = property(FocusingTypeGet, FocusingTypeSet)
+  rectangles = property(RectanglesGet)
+  extent     = property(ExtentGet)
+  area       = property(AreaGet)
       
 # Merge the two method dictionaries, and get the keys
 __swig_dir__ = dict(__swig_getmethods__.items() + __swig_setmethods__.items()).keys()
 # Implement __dir__() to return it plus all of the other members
 def __dir__(self):
   return self.__dict__.keys() + ApertureFloat.__swig_dir__
+
+if 'FNM_CLOSURE_FUNCTIONS' in globals():
+  # An error was introduced in SWIG 3.0.10
+  def RwFloatParamSetMulti(self, *args): return _swig_fnm.ApertureFloat_RwFloatParamSet(self, *args)
 
 def show_rect(self, ax, corners, color, trans):
   if (trans):
@@ -282,6 +311,38 @@ def __setstate__(self, state):
 %}
 };
 %enddef    /* %fnm_extensions() */
+
+/* %fnm_circular() macro
+ *
+ * Macro for extending the Python classes CircularAperture<DATA_TYPE>
+ */
+%define %fnm_circular(DATA_TYPE)
+
+%extend fnm::CircularAperture<DATA_TYPE> {
+%pythoncode %{
+# Read-write properties
+__swig_getmethods__["f0"]           = F0Get
+__swig_setmethods__["f0"]           = F0Set
+__swig_getmethods__["fs"]           = FsGet
+__swig_setmethods__["radius"]       = RadiusSet
+__swig_getmethods__["radius"]       = RadiusGet
+__swig_setmethods__["fs"]           = FsSet
+__swig_getmethods__["w"]            = WGet
+__swig_setmethods__["w"]            = WSet
+__swig_getmethods__["nDivA"]        = NMaxDivAGet
+__swig_setmethods__["nDivA"]        = NMaxDivASet
+__swig_getmethods__["gridSectorScale"] = GridSectorScaleGet
+__swig_setmethods__["gridSectorScale"] = GridSectorScaleSet
+if _newclass:
+    # Read-write properties
+  f0       = property(F0Get, F0Set)
+  nDivA    = property(NMaxDivAGet, NMaxDivASet)
+  radius   = property(RadiusGet, RadiusSet)
+  gridSectorScale = property(GridSectorScaleGet, GridSectorScaleSet)
+%}
+};
+%enddef    /* %fnm_circular() */
+
 
 /* Local variables: */
 /* mode: text */

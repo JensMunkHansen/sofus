@@ -46,6 +46,12 @@ option(BUILD_SWIG_INTERFACE "Build SWIG interface" ON)
 
 set(FNM_MULTI_ARRAYS 1)
 
+set(FNM_CLOSURE_FUNCTIONS 0)
+option (FNM_ENABLE_Closures "FNM Enable closure functions" OFF)
+if (FNM_ENABLE_Closures)
+  set(FNM_CLOSURE_FUNCTIONS 1)
+endif()
+
 set(N_MAX_THREADS 8)
 set(ACCURATE_TRIGONOMETRICS 0)
 option (USE_Accurate_trigonometrics "Use scalar versions" OFF)
