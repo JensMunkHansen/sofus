@@ -33,8 +33,7 @@
  *  Continuous Wave (CW) pressure fields and gradient are computed in
  *  frequency domain using an expression, which is equivalent to the
  *  Fourier transform of the Rayleigh integral. The procedure is in
- *  the literature referred to as the Fast Near Field Method \cite
- *  mcgough2004rapid .
+ *  the literature referred to as the Fast Near Field Method \cite mcgough2004rapid .
  *
  */
 
@@ -43,7 +42,11 @@
 #include <fnm/fnm_export.h>
 #include <fnm/fnm_types.hpp>
 
-#include <sps/smath_types.hpp> // Consider forward declaring element_t
+#ifdef FNM_PULSED_WAVE
+# include <sofus/sofus_types.hpp>
+#endif
+
+#include <sps/smath_types.hpp> // Consider forward declaring element_rect_t
 
 #include <complex>
 
@@ -77,12 +80,19 @@ namespace sofus {
 }
 #endif
 
+extern char PerformanceInfo[32];
+extern double g_tStart;
 /*!
  * @addtogroup fnm
  * @{
  */
 
+FNM_EXPORT void ProfilerStart();
+FNM_EXPORT void ProfilerStop();
+FNM_EXPORT void ProfileInfoGet(char** ostring);
+
 namespace fnm {
+
 
 #ifdef USE_PROGRESS_BAR
   // TODO: Define functions using ProgIF
@@ -197,6 +207,8 @@ namespace fnm {
      */
     ~Aperture();
 
+    void /*const Aperture<T>&*/ SubToElements();
+
     /** @name Accessors to read-only attributes
      *
      */
@@ -274,7 +286,7 @@ namespace fnm {
      * @return
      */
     int ElementsRefGet(size_t* nElements, size_t* nSubElements,
-                       const sps::element_t<T>**& elements) const;
+                       const sps::element_rect_t<T>**& elements) const;
 
     /**
      * Get reference to apodizations
@@ -306,7 +318,7 @@ namespace fnm {
      * @param data
      * @param nData
      */
-    void DelaysSet(const T* data, const size_t nData);
+    int DelaysSet(const T* data, const size_t nData);
 
     /**
      * Enable attenuation
@@ -377,7 +389,7 @@ namespace fnm {
      * @param nPositions
      * @param nDim
      */
-    void PositionsSet(const T* pos, const size_t nPositions, const size_t nDim);
+    int PositionsSet(const T* pos, const size_t nPositions, const size_t nDim);
 
     /**
      * Get focus point or virtual source
@@ -433,7 +445,7 @@ namespace fnm {
      *
      * @param nThreads
      */
-    void NThreadsSet(const size_t &nThreads);
+    int NThreadsSet(const size_t &nThreads);
 
     /**
      * Get center frequency
@@ -457,7 +469,7 @@ namespace fnm {
     const T& WGet() const;
 
     /**
-     * Set width of pulse [s]
+     * Set width of pulse [s]. TODO: Figure this out
      *
      * @param w
      */
@@ -493,6 +505,10 @@ namespace fnm {
      */
     void CSet(const T& c);
 
+    const T& FNumberGet() const;
+
+    void FNumberSet(const T& fnumber);
+
     /**
      * Get element definitions
      *
@@ -503,7 +519,7 @@ namespace fnm {
     void ElementsGet(T** out, size_t* nElements,
                      size_t* nParams) const;
 
-    void ElementsSet(const T* pos, const size_t nPositions, const size_t nDim);// throw (std::runtime_error);
+    int ElementsSet(const T* pos, const size_t nPositions, const size_t nDim) throw (std::runtime_error);
 
     /*! \fn bool Aperture::ElementsSet(const T* pos, const size_t nPositions, const size_t nDim)
      *  \brief Set element positions
@@ -535,8 +551,8 @@ namespace fnm {
      *
      * @return true on success
      */
-    bool SubElementsSet(const T* pos, const size_t nElements,
-                        const size_t nSubElementsPerElement, const size_t nDim);
+    int SubElementsSet(const T* pos, const size_t nElements,
+                       const size_t nSubElementsPerElement, const size_t nDim);
 
     /**
      * Get apodization
@@ -552,24 +568,63 @@ namespace fnm {
      * @param data
      * @param nData
      */
-    void ApodizationSet(const T* data, const size_t nData);
+    int ApodizationSet(const T* data, const size_t nData);
+
+    /**
+     * Get apodization type
+     *
+     */
+    int ApodizationTypeGet() const;
+
+    /**
+     * Set apodization
+     *
+     * @param iApodizationType
+     */
+    void ApodizationTypeSet(const int iApodizationType);
 
     ///@}
 
 #if FNM_PULSED_WAVE
     /**
-     * Get sampling frequency
+     * Get pulsecenter frequency
      *
      * @return
      */
+    const T& FCGet() const;
+
+    /**
+     * Set pulse center frequency
+     *
+     * @param fc
+     */
+    void FCSet(const T& fc);
+
+    const T& BandWidthGet() const;
+
+    void BandWidthSet(const T& value);
+
+    int ImpulseTypeGet() const;
+
+    void ImpulseTypeSet(const int iImpulseType);
+
+    int ExcitationTypeGet() const;
+
+    void ExcitationTypeSet(const int iExcitationType);
+
+    /**
+       * Get sampling frequency
+       *
+       * @return
+       */
     const T& FsGet() const;
 
     /**
      * Set sampling frequency
      *
-     * @param f0
+     * @param fs
      */
-    void FsSet(const T& f0);
+    int FsSet(const T& fs);
 
     /**
      * Get normalization state
@@ -582,9 +637,9 @@ namespace fnm {
     /**
      * Enable normalization of convolutions
      *
-     * @param normalize
+     * @param value
      */
-    void NormalizeSet(const bool& normalize);
+    void NormalizeSet(const bool& value);
 
     /**
      * Get excitation (reference to or view of)
@@ -600,8 +655,8 @@ namespace fnm {
      * @param data
      * @param nData
      */
-    void ExcitationSet(const T* data,
-                       const size_t nData);
+    int ExcitationSet(const T* data,
+                      const size_t nData);
 
     /**
      * Get impulse (reference to or view of)
@@ -617,8 +672,8 @@ namespace fnm {
      * @param data
      * @param nData
      */
-    void ImpulseSet(const T* data,
-                    const size_t nData);
+    int ImpulseSet(const T* data,
+                   const size_t nData);
 
 #endif
 
@@ -635,7 +690,7 @@ namespace fnm {
      *
      * @param nDivW
      */
-    void NDivWSet(const size_t& nDivW);
+    int NDivWSet(const size_t& nDivW);
 
     /**
      * Get number of height abcissas
@@ -650,7 +705,7 @@ namespace fnm {
      *
      * @param nDivH
      */
-    void NDivHSet(const size_t& nDivH);
+    int NDivHSet(const size_t& nDivH);
 
 #ifdef USE_PROGRESS_BAR
     /**
@@ -661,22 +716,22 @@ namespace fnm {
     void ProgressBarSet(sps::ProgressBarInterface* pbar);
 #endif
 
-#if !(defined(_MSC_VER) && _MSC_VER < 1900)
-# ifndef _SWIG_WIN32
+#ifdef FNM_CLOSURE_FUNCTIONS
 
 #  ifndef SWIG_VERSION
-    int RwFloatParamSet(int fsel, const T* f, size_t nDim, va_list args);
-    int RwFloatParamGet(int fsel, T** f, size_t nDim, va_list args);
+    int RwFloatParamSet(int pSel, const T* f, size_t nDim, va_list args);
+    int RwFloatParamGet(int pSel, T** f, size_t nDim, va_list args);
 #  endif
-    int RwFloatParamSet(int fsel, const T* f, size_t nDim, ...);
-    int RwFloatParamGet(int fsel, T** f, size_t nDim, ...);
+    int RwFloatParamSet(int fsel, const T* iMultiData, size_t nDim, ...);
+    int RwFloatParamGet(int fsel, T** oMultiData, size_t nDim, ...);
 
     void RwBooleanParamSet0D(int fsel, const bool& value);
     void RwSizeTParamSet0D(int fsel, const size_t& value);
     void RwIntegerParamSet0D(int fsel, const int& value);
 
     int ParameterInfoGet(const RwParamType& param, ScalarType* type, size_t* nDims);
-# endif
+
+    // TODO: Expose list of parameters
 #endif
 
     /** @name Static variables
@@ -689,7 +744,6 @@ namespace fnm {
     static const size_t nElementPosParameters = 8; /**< Number of parameters for an element */
 
 #if FNM_PULSED_WAVE
-    static T fs;           ///< Sample frequency
     static bool normalize; ///< Normalize responses
 #endif
     static size_t nthreads; ///< Number of threads
@@ -734,6 +788,9 @@ namespace fnm {
      */
     T CalcFdTransientRef(const T* pos, const size_t nPositions, const size_t nDim,
                          T** odata, size_t* nSignals, size_t* nSamples);
+
+    T CalcTransientSingleElementNoDelay(const T* pos, const size_t nPositions, const size_t nDim,
+                                        T** odata, size_t* nSignals, size_t* nSamples);
 #endif
 
     /** @name FNM Calculation functions
@@ -924,7 +981,7 @@ namespace fnm {
                      T** odata, size_t* nSignals, size_t* nSamples);
 
 
-# ifndef FNM_DOUBLE_SUPPORT
+    //# ifndef FNM_DOUBLE_SUPPORT
 
     /**
      * Threaded version of Aperture::CalcPwField. \bug: Sometimes to little memory is allocated
@@ -940,7 +997,7 @@ namespace fnm {
      */
     T CalcPwFieldThreaded(const T* pos, const size_t nPositions, const size_t nDim,
                           T** odata, size_t* nSignals, size_t* nSamples);
-# endif
+    //# endif
 #endif
     /*** @} */
 
@@ -983,17 +1040,17 @@ namespace fnm {
 
 #endif
 
-  private:
     /**
-     * Get default system parameters. The system parameters are shared among
-     * all apertures, unless system paramters are changed using
-     * Aperture::SysParmGet and Aperture::SysParmSet for a specific array.
-     *
-     *
-     * @return
-     */
+    * Get default system parameters. The system parameters are shared among
+    * all apertures, unless system paramters are changed using
+    * Aperture::SysParmGet and Aperture::SysParmSet for a specific array.
+    *
+    *
+    * @return
+    */
     static sysparm_t<T>* DefaultSysParmGet();
 
+  private:
     /**
      * Internal function for getting elements or sub-elements. The
      * function is used by Aperture::ElementsGet and

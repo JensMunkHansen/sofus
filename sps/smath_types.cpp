@@ -11,6 +11,9 @@
 #include <algorithm>
 
 namespace sps {
+
+  point_t<T> point_t::xaxis = {T(1.0), T(0.0), T(0.0)};
+
   template <class T>
   void element_t<T>::edges(__m128* dx, __m128* dy, __m128* dz)
   {
@@ -173,7 +176,7 @@ namespace sps {
 
   template struct point_t<float>;
   template struct element_t<float>;
-  
+
   template struct point_t<double>;
   template struct element_t<double>;
 }

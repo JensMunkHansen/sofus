@@ -64,13 +64,6 @@
 # include <immintrin.h> // AVX
 #endif
 
-#ifndef WIN32
-# ifdef HAVE_ZMMINTRIN_H
-#  include <zmmintrin.h> // AVX2
-# endif
-#else
-#endif
-
 #ifdef HAVE_STDINT_H
 # include <stdint.h>
 #endif
@@ -822,9 +815,13 @@ STATIC_INLINE_BEGIN __m128i _mm_sel_epi32(__m128i a, __m128i b, __m128i mask )
 #ifdef __GNUC__
 # define INFINITYf __builtin_inff()
 # define INFINITYd __builtin_inf()
-#elif defined(_WIN32)
+#elif defined(_MSC_VER)
 # define INFINITYf   HUGE_VALF
-# define INFINITYd   HUGE_VALD
+# if _MSC_VER < 1900
+#  define INFINITYd   HUGE_VALD
+# else
+#  define INFINITYd   HUGE_VAL
+# endif
 #endif
 
 #ifdef _MSC_VER

@@ -1,0 +1,55 @@
+#pragma once
+
+#ifndef __cplusplus
+# error This header requires C++
+#endif
+
+#include <algorithm>
+
+namespace std {
+  template <typename T>
+  T clamp(T in, const T& low, const T& high) {
+    return std::min<T>(std::max<T>(in, low), high);	
+  }
+#if defined(_MSC_VER)
+# if (_MSC_VER == 1700)
+  template<typename T> void swap(T& t1, T& t2) {
+    T temp = std::move(t1); // or T temp(std::move(t1));
+    t1 = std::move(t2);
+    t2 = std::move(temp);
+  }
+# elif (_MSC_VER < 1700)
+  template<typename T> void swap(T& t1, T& t2) {
+    T tmp(t1);
+    t1=t2;
+    t2=tmp;
+  }
+# endif
+#endif
+}
+
+// For some reason std::swap does not work on _MSC_VER == 1800
+namespace sps {
+  template<typename T> void swap(T& t1, T& t2) {
+#ifdef __GNUC__
+    return std::swap<T>(t1, t2);
+#elif defined(_MSC_VER)
+# if (_MSC_VER >= 1800)
+    T temp = std::move(t1); // or T temp(std::move(t1));
+    t1 = std::move(t2);
+    t2 = std::move(temp);
+# elif (_MSC_VER < 1800)
+      T tmp(t1);
+      t1 = t2;
+      t2 = tmp;
+# endif
+#endif
+  }
+}
+
+/* Local variables: */
+/* indent-tab-mode: nil */
+/* tab-width: 2 */
+/* c-basic-offset: 2 */
+/* indent-tabs-mode: nil */
+/* End: */

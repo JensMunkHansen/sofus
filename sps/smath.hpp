@@ -252,8 +252,8 @@ namespace sps {
    * @return
    */
   template <typename T>
-  inline T dist_to_line(const point_t<T>& point, const point_t<T>& pointOnLine,
-                        const point_t<T>& direction)
+  inline T dist_point_to_line(const point_t<T>& point, const point_t<T>& pointOnLine,
+                              const point_t<T>& direction)
   {
     return norm(cross(direction, point - pointOnLine));
   }
@@ -274,6 +274,23 @@ namespace sps {
   {
     return dot((point - pointOnPlane),unitNormal);
   }
+
+  /**
+   * Distance from point to circle
+   *
+   * @param point
+   * @param circle
+   *
+   * @return
+   */
+  template <typename T>
+  T dist_point_to_circle(const point_t<T>& point, const circle_t<T>& circle);
+
+  template <typename T>
+  void dist_point_to_circle_local(const point_t<T>& point, const circle_t<T>& circle, T* r, T* z, T* distNear);
+
+  template <typename T>
+  void dist_point_to_circle_local(const point_t<T>& point, const circle_t<T>& circle, T* r, T* z, T* distNear, T* distFar);
 
   /**
    * Clamp a vector inside a box
@@ -324,6 +341,13 @@ namespace sps {
     }
   }
 
+  template <typename T>
+  inline bool point_inside_box(const sps::point_t<T>& point, const sps::bbox_t<T>& box)
+  {
+    return ((point[0] > box.min[0]) && (point[0] < box.max[0]) &&
+            (point[1] > box.min[1]) && (point[1] < box.max[1]) &&
+            (point[2] > box.min[2]) && (point[2] < box.max[2]));
+  }
 
 
   /**
@@ -372,6 +396,8 @@ namespace sps {
    * @param box1
    * @param distNear Shortest distance
    * @param distFar  Longest distance
+   *
+   * TODO: Verify if point is inside a box
    */
   template <typename T>
   inline
@@ -440,19 +466,6 @@ namespace sps {
   } RotationConvention;
 
   /**
-   * Rotate point using 3 Euler angles according to the @ref conv convention.
-   *
-   * @tparam conv Rotation convention
-   * @param input
-   * @param euler
-   * @param output
-   *
-   * @return
-   */
-  template <typename T, RotationConvention conv>
-  void SPS_EXPORT basis_rotate(const sps::point_t<T>& input, const euler_t<T>& euler, sps::point_t<T>& output);
-
-  /**
    * Function for returning the basis vector for a given coordinate
    * system defined using 3 Euler angles according to the the z-x-z'
    * or y-x-y' convention.
@@ -464,6 +477,19 @@ namespace sps {
    */
   template <typename T, RotationConvention conv>
   void SPS_EXPORT basis_vectors(sps::point_t<T>& output, const sps::euler_t<T>& euler, size_t index);
+
+  /**
+   * Rotate point using 3 Euler angles according to the convention.
+   *
+   * @tparam conv Rotation convention
+   * @param input
+   * @param euler
+   * @param output
+   *
+   * @return
+   */
+  template <typename T, RotationConvention conv>
+  void SPS_EXPORT basis_rotate(const sps::point_t<T>& input, const euler_t<T>& euler, sps::point_t<T>& output);
 
   /**
   * Function for returning the basis vector for a given coordinate
@@ -493,6 +519,26 @@ namespace sps {
     return out;
   }
 
+  template<typename T>
+  void compute_bounding_box_circle(const sps::circle_t<T>& circle, sps::bbox_t<T>* box)
+  {
+    sps::point_t<T> u, v;
+    basis_vectors<T,sps::EulerIntrinsicYXY>(u, circle.euler, 0);
+    basis_vectors<T,sps::EulerIntrinsicYXY>(v, circle.euler, 1);
+
+    T hw = circle.radius * fabs(dot(sps::point_t<T>::xaxis, u));
+    T hh = circle.radius * fabs(dot(sps::point_t<T>::yaxis, v));
+    box->min[0] = circle.center[0] - hw;
+    box->max[0] = circle.center[0] + hw;
+    box->min[1] = circle.center[1] - hh;
+    box->max[1] = circle.center[1] + hh;
+
+    T hd = std::max<T>(fabs(dot(sps::point_t<T>::zaxis, u)),
+                       fabs(dot(sps::point_t<T>::zaxis, v)));
+
+    box->min[2] = circle.center[2] - hd;
+    box->max[2] = circle.center[2] + hd;
+  }
 }
 
 /*@}*/

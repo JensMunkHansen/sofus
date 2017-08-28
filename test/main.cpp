@@ -3,8 +3,10 @@
 #include <sps/memory>
 #include <sps/win32/memory>
 #include <sps/unix/memory>
+#include <fnm/config.h>
 #include <fnm/fnm_data.hpp>
 #include <fnm/fnm.hpp>
+#include <fnm/circular.hpp>
 
 // No leaks
 TEST(fnm_test, test_nothing)
@@ -26,10 +28,10 @@ class B {
 public:
   B() : m_data(2,2)
   {
-    m_data = sps::win32::deleted_aligned_multi_array<sps::element_t<float>, 2>(4,4);
+    m_data = sps::win32::deleted_aligned_multi_array<sps::element_rect_t<float>, 2>(4,4);
   }
 private:
-  sps::win32::deleted_aligned_multi_array<sps::element_t<float>, 2> m_data;
+  sps::win32::deleted_aligned_multi_array<sps::element_rect_t<float>, 2> m_data;
 };
 
 // No leaks
@@ -46,7 +48,6 @@ public:
   sps::nix::deleted_aligned_multi_array<float,2> m_data;
 };
 
-// No leaks
 TEST(fnm_test, multi_arrays)
 {
   auto arr1 = sps::win32::deleted_aligned_multi_array<float, 2>(3,4);
@@ -94,7 +95,6 @@ TEST(fnm_test, multi_arrays)
       arr3(i,j) =  float(i*10 + j);
     }
   }
-
   EXPECT_EQ(1,1);
 }
 
@@ -108,6 +108,72 @@ TEST(fnm_test, allocate)
   fnm::Aperture<float> d;
 
   EXPECT_EQ(1,1);
+}
+
+TEST(fnm_test, elements_get)
+{
+  auto aperture = fnm::Aperture<float>(64,1.0f,0.0f,1.0f);
+  const sps::element_rect_t<float>** elements = NULL;
+  size_t nElements, nSubElements;
+  aperture.ElementsRefGet(&nElements, &nSubElements, elements);
+  EXPECT_EQ(elements[0][0].center[0], -31.5f);
+}
+
+TEST(fnm_test, scalar_float_set)
+{
+#ifdef FNM_CLOSURE_FUNCTIONS
+
+  const size_t nElements = 12;
+  auto aperture = fnm::Aperture<float>(nElements,1.0f,0.0f,1.0f);
+
+  float alpha = 4.0f;
+
+  aperture.RwFloatParamSet(fnm::RwParamType::Alpha,&alpha,0);
+
+  alpha = 7.0f;
+  aperture.RwFloatParamSet(fnm::RwParamType::Beta,&alpha,0);
+
+  float* fDelays = (float*)malloc(12 * sizeof(float));
+
+  fDelays[2] = 2.0f;
+  aperture.RwFloatParamSet(fnm::RwParamType::ElementDelays, fDelays, 1, nElements);
+  free(fDelays);
+
+  float* pfDelays = NULL;
+  size_t nOutElements;
+  aperture.RwFloatParamGet(fnm::RwParamType::ElementDelays, &pfDelays, 1, &nOutElements);
+
+  if (pfDelays) {
+    free(pfDelays);
+  }
+
+  aperture.RwFloatParamGet(fnm::RwParamType::Alpha, &pfDelays, 0, &nOutElements);
+  if (pfDelays) {
+    free(pfDelays);
+  }
+
+  aperture.RwFloatParamGet(fnm::RwParamType::Beta, &pfDelays, 0, &nOutElements);
+
+  if (pfDelays) {
+    free(pfDelays);
+  }
+
+  float* focus = (float*) malloc(3*sizeof(float));
+  focus[0] = 1.0f;
+  focus[1] = 2.0f;
+  focus[2] = 3.0f;
+  aperture.RwFloatParamSet(fnm::RwParamType::Focus, focus, 1, 3);
+
+  aperture.RwFloatParamGet(fnm::RwParamType::Focus, &pfDelays, 1, &nOutElements);
+  if (pfDelays) {
+    free(pfDelays);
+  }
+
+  aperture.RwBooleanParamSet0D(fnm::RwParamType::AttenuationEnabled, true);
+
+  bool enabled = aperture.AttenuationEnabledGet();
+  SPS_UNREFERENCED_PARAMETER(enabled);
+#endif
 }
 
 TEST(fnm_test, pressure_linear_array)
@@ -159,12 +225,11 @@ TEST(fnm_test, pressure_linear_array)
 
   // Stack is fucked up (valgrind says leaks if we allocate here)
 
-  // TODO: Consider implementing meshgrid
   for (size_t i = 0 ; i < nx ; i++) {
     for (size_t j = 0 ; j < nz ; j++) {
-      pos[i*nz+j + 0] = xs[i];
-      pos[i*nz+j + 1] = 0.0f;
-      pos[i*nz+j + 2] = zs[j];
+      pos[3*(i*nz+j) + 0] = xs[i];
+      pos[3*(i*nz+j) + 1] = 0.0f;
+      pos[3*(i*nz+j) + 2] = zs[j];
     }
   }
 
@@ -173,7 +238,8 @@ TEST(fnm_test, pressure_linear_array)
   std::complex<float>* results = NULL;
 
   // Compute pressure
-  int err = a.CalcCwFast(pos.get(), nx*nz, 3, &results, &nresults);
+  int err;
+  err = a.CalcCwFast(pos.get(), nx*nz, 3, &results, &nresults);
   SPS_UNREFERENCED_PARAMETER(err);
 
   // Clean-up
@@ -181,6 +247,10 @@ TEST(fnm_test, pressure_linear_array)
   //! [LinearArray example]
 }
 
+TEST(fnm_test, circular_array)
+{
+	fnm::CircularAperture<float> aperture(1.2f);
+}
 
 int main(int argc, char* argv[])
 {

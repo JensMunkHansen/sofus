@@ -1,5 +1,5 @@
 /**
- * @file   memory
+ * @file   <sps/memory>
  * @author Jens Munk Hansen <jmh@jmhlaptop>
  * @date   Sun May  7 10:34:25 2017
  * 
@@ -11,7 +11,7 @@
 
 #include <sps/cenv.h>
 #include <sps/mm_malloc.h>
-#include <malloc.h>
+#include <sps/malloc.h>
 
 #ifndef __cplusplus
 # error This is a C++ header
@@ -21,23 +21,6 @@
 #include <functional>
 
 namespace sps {
-  /** 
-   * Return size of allocated memory
-   * 
-   * @param data 
-   * 
-   * @return 
-   */
-  STATIC_INLINE_BEGIN size_t msize(void* data) {
-#ifdef _WIN32
-    return _msize(data);
-#elif __APPLE__
-    return malloc_size(data);
-#elif defined(__GNUG__)
-    return malloc_usable_size(data);
-#endif
-  }
-  
   /*! \brief aligned struct
    *
    * @tparam A alignment
@@ -70,7 +53,6 @@ namespace sps {
    *
    */
 #ifdef _MSC_VER
-# if _MSC_VER < 1900
 #  pragma warning(push)
 #  pragma warning(disable:4324)
   __declspec(align(1)) struct align1 {};
@@ -87,15 +69,6 @@ namespace sps {
   template<> struct aligned<16> : align16 {};
   template<> struct aligned<32> : align32 {};
 #  pragma warning(pop)
-# else
-  template<int A> struct aligned;
-  template<> struct aligned<1>  { } __declspec(align(1));
-  template<> struct aligned<2>  { } __declspec(align(2));
-  template<> struct aligned<4>  { } __declspec(align(4));
-  template<> struct aligned<8>  { } __declspec(align(8));
-  template<> struct aligned<16> { } __declspec(align(16));
-  template<> struct aligned<32> { } __declspec(align(32));
-# endif
 #else
   template<int A> struct aligned;
   template<> struct __attribute__((aligned(1))) aligned<1>   { };
@@ -129,6 +102,32 @@ namespace sps {
   using sps::nix::deleted_aligned_multi_array;
   using sps::nix::deleted_aligned_multi_array_create;
 
+  // Alias type to unique_multi_array
+  template <class T, size_t I>
+  using unique_multi_array = sps::nix::deleted_aligned_multi_array<T, I>;
+
+  // Alias function to unique_multi_array_create (TODO: Do this correctly)
+#if 0
+  template <class T, size_t I>
+  inline typename std::enable_if<I==2, deleted_aligned_multi_array<T,2> >::type
+  unique_multi_array_create(size_t m, size_t n) {
+    return sps::nix::deleted_aligned_multi_array_create<T,I>(m,n);
+  }
+#elif 1
+  // Works
+  template <class T, size_t I, typename... Args>
+  auto unique_multi_array_create(Args&&... args) -> decltype(sps::nix::deleted_aligned_multi_array_create<T,I>(std::forward<Args>(args)...)) {
+    return sps::nix::deleted_aligned_multi_array_create<T,I>(args...);
+  }
+#else
+  // How
+  template <typename ...ExplicitArgs, typename... Args>
+  auto unique_multi_array_create(Args&&... args) -> decltype(sps::nix::deleted_aligned_multi_array_create<ExplicitArgs...>(std::forward<Args>(args)...)) {
+    return sps::nix::deleted_aligned_multi_array_create<ExplicitArgs...>(args...);
+  }  
+#endif
+  
+  
   // Leveled pointers and pointer levels
   template <typename T> 
   struct ptr_depth_impl

@@ -27,8 +27,6 @@
 #include <sps/signals.hpp>
 #include <sps/debug.h>
 
-#include <sofus/sofus_types.hpp> // sofus::proj_limit_dist_t<T>
-
 #include <gl/gl.hpp>
 
 #include <cassert>

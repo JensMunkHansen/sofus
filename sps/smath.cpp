@@ -317,6 +317,65 @@ namespace sps {
 #endif
   }
 
+  template <typename T>
+  void dist_point_to_circle_local(const point_t<T>& point, const circle_t<T>& circle, T* r, T* z, T* distNear)
+  {
+
+    sps::point_t<T> normal, uvector, vvector;
+    sps::basis_vectors<T, sps::EulerIntrinsicYXY>(uvector, circle.euler, 0);
+    sps::basis_vectors<T, sps::EulerIntrinsicYXY>(vvector, circle.euler, 1);
+    sps::basis_vectors<T, sps::EulerIntrinsicYXY>(normal, circle.euler,  2);
+
+    sps::point_t<T> r2p = point - circle.center;
+
+    *z = fabs(dot(r2p, normal));
+    T dist2center = norm(r2p);
+
+    // r-coordinate, r^2 = u^2 + v^2
+    *r = sqrt(std::max<T>(SQUARE(dist2center) - SQUARE(*z),T(0.0)));
+
+    if (*r < circle.radius) {
+      // Projection is inside circle
+      *distNear = fabs(*z);
+    } else {
+      *distNear = sqrt(std::max<T>(SQUARE(*z) + SQUARE(*r - circle.radius),T(0.0)));
+    }
+  }
+
+  template <typename T>
+  void dist_point_to_circle_local(const point_t<T>& point, const circle_t<T>& circle, T* r, T* z, T* distNear, T* distFar)
+  {
+
+    sps::point_t<T> normal, uvector, vvector;
+    sps::basis_vectors<T, sps::EulerIntrinsicYXY>(uvector, circle.euler, 0);
+    sps::basis_vectors<T, sps::EulerIntrinsicYXY>(vvector, circle.euler, 1);
+    sps::basis_vectors<T, sps::EulerIntrinsicYXY>(normal, circle.euler,  2);
+
+    sps::point_t<T> r2p = point - circle.center;
+
+    *z = fabs(dot(r2p, normal));
+    T dist2center = norm(r2p);
+
+    // r-coordinate, r^2 = u^2 + v^2
+    *r = sqrt(std::max<T>(SQUARE(dist2center) - SQUARE(*z),T(0.0)));
+
+    if (*r < circle.radius) {
+      *distFar = sqrt(std::max<T>(SQUARE(*z) + SQUARE(circle.radius + *r),T(0.0)));
+      *distNear = *z;
+    } else {
+      *distNear = sqrt(std::max<T>(SQUARE(*z) + SQUARE(*r - circle.radius),T(0.0)));
+      *distFar = sqrt(std::max<T>(SQUARE(*z) + SQUARE(circle.radius + *r),T(0.0)));
+    }
+  }
+
+  template <typename T>
+  T dist_point_to_circle(const point_t<T>& point, const circle_t<T>& circle)
+  {
+    T distNear, r, z;
+    dist_point_to_circle_local(point, circle, &r, &z, &distNear);
+    return distNear;
+  }
+
 #ifdef _WIN32
   template class std::aligned_array<float,4U>;
   template class std::aligned_array<double,4U>;
@@ -324,7 +383,7 @@ namespace sps {
 
   template struct euler_t<float>;
   template struct point_t<float>;
-  template struct element_t<float>;
+  template struct element_rect_t<float>;
 
 #ifdef _WIN32
   // Not possible to move to fnm library
@@ -338,8 +397,8 @@ namespace sps {
   template float dot(const point_t<float> &a, const point_t<float> &b);
   template point_t<float> cross(const point_t<float> &a, const point_t<float> &b);
   template float norm(const point_t<float> &a);
-  template float dist_to_line(const point_t<float>& point, const point_t<float>& pointOnLine,
-                              const point_t<float>& direction);
+  template float dist_point_to_line(const point_t<float>& point, const point_t<float>& pointOnLine,
+                                    const point_t<float>& direction);
 
   template void SPS_EXPORT basis_vectors<float, sps::EulerIntrinsicYXY>(sps::point_t<float>& output, const sps::euler_t<float>& euler, size_t index);
 
@@ -360,9 +419,14 @@ namespace sps {
   // Is this a problem, when it is exported (it must be export using SOFUS_EXPORT when used in SOFUS)
   template std::pair<float,float> minmax_delay<float,float>(const float* xs, const float* ws, size_t nData);
 
+  template float dist_point_to_circle<float>(const sps::point_t<float>& point, const sps::circle_t<float>& circle);
+  template void dist_point_to_circle_local<float>(const sps::point_t<float>& point, const sps::circle_t<float>& circle, float *r, float *z, float *distNear, float *distFar);
+  template void dist_point_to_circle_local<float>(const sps::point_t<float>& point, const sps::circle_t<float>& circle, float *r, float *z, float *distNear);
+
+
   //template struct SPS_EXPORT euler_t<double>;
   //template struct SPS_EXPORT point_t<double>; // TODO: ??? Already defined
-  template struct SPS_EXPORT element_t<double>;
+  template struct SPS_EXPORT element_rect_t<double>;
 
   template point_t<double> operator-(const point_t<double> &a, const point_t<double> &b);
   template point_t<double> operator+(const point_t<double> &a, const point_t<double> &b);
@@ -370,8 +434,8 @@ namespace sps {
   template double dot(const point_t<double> &a, const point_t<double> &b);
   template point_t<double> cross(const point_t<double> &a, const point_t<double> &b);
   template double norm(const point_t<double> &a);
-  template double dist_to_line(const point_t<double>& point, const point_t<double>& pointOnLine,
-                               const point_t<double>& direction);
+  template double dist_point_to_line(const point_t<double>& point, const point_t<double>& pointOnLine,
+                                     const point_t<double>& direction);
 
 
   template void SPS_EXPORT basis_vectors<double, EulerIntrinsicYXY>(sps::point_t<double>& output, const sps::euler_t<double>& euler, size_t index);
@@ -383,6 +447,11 @@ namespace sps {
       const sps::bbox_t<double> &box1,
       double* distNear,
       double* distFar);
+
+  template double dist_point_to_circle<double>(const sps::point_t<double>& point, const sps::circle_t<double>& circle);
+  template void dist_point_to_circle_local<double>(const sps::point_t<double>& point, const sps::circle_t<double>& circle, double *r, double *z, double *distNear, double *distFar);
+  template void dist_point_to_circle_local<double>(const sps::point_t<double>& point, const sps::circle_t<double>& circle, double *r, double *z, double *distNear);
+
 
   template std::pair<double,double> minmax_delay<double,double>(const double* xs, const double* ws, size_t nData);
 }

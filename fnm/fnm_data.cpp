@@ -53,7 +53,11 @@ namespace fnm {
 
     m_focus_type = FocusingType::Rayleigh;
 
+    m_apodization_type = ApodizationType::ApodizationTypeNonParametric;
+
     m_focus_valid = FocusingType::FocusingTypeCount;
+
+    m_fnumber = T(1.0);
 
     // Set unique identifier
     m_id = nextID;
@@ -84,12 +88,67 @@ namespace fnm {
 
   template <class T>
   int ApertureData<T>::ElementsRefGet(size_t* nElements, size_t* nSubElements,
-                                      const sps::element_t<T>**& elements) const
+                                      const sps::element_rect_t<T>**& elements) const
   {
     *nElements    = m_nelements;
     *nSubElements = m_nsubelements;
     elements      = m_elements.get();
     return 0;
+  }
+
+  // TODO: Make more general (this is stupid)
+  template <class T>
+  int ApertureData<T>::ApodizationSet(const sps::point_t<T>& direction, const T& depth, const ApodizationType& type)
+  {
+    const size_t nElements = this->m_nelements;
+    const T eps = std::numeric_limits<T>::epsilon();
+
+    int retval = -1;
+
+    sps::point_t<T> center = this->m_center_focus;
+
+    if (this->m_fnumber > eps) {
+      retval = 0;
+    }
+
+    T apSize = depth / std::max<T>(this->m_fnumber, eps);
+
+    for (size_t iElement = 0; iElement < nElements; iElement++) {
+      T val = T(0.0);
+      T dist2line = dist_point_to_line(m_pos[iElement], center, direction);
+
+      T indexNorm = dist2line * T(2.0) / std::max<T>(apSize, eps);
+
+      switch (type) {
+      case ApodizationType::ApodizationTypeRectangular:
+        if (indexNorm < T(1.0)) {
+          val = T(1.0);
+        }
+        break;
+      case ApodizationType::ApodizationTypeHamming:
+        if (indexNorm < T(1.0)) {
+          val = T(0.54) + T(0.46)*cos(T(M_PI)*indexNorm);
+        }
+        break;
+      default:
+        break;
+      }
+      this->m_apodizations[iElement] = val;
+    }
+    return retval;
+  }
+
+  template <class T>
+  int ApertureData<T>::ApodizationSet(sps::deleted_aligned_array<T> &&apodization,
+                                      const size_t nElements)
+  {
+    int retval = -1;
+
+    if (nElements == this->m_nelements) {
+      this->m_apodizations = std::move(apodization);
+      retval = 0;
+    }
+    return retval;
   }
 
   template <class T>
@@ -98,7 +157,7 @@ namespace fnm {
                                     const size_t& nCols)
   {
     if (nRows * nCols > 0) {
-      assert(nCols == elements.n);
+      assert(nCols == elements.m_n);
       this->m_nelements    = nRows;
       this->m_nsubelements = nCols;
       this->m_elements     = std::move(elements);
@@ -137,7 +196,7 @@ namespace fnm {
 
     for(size_t iElement = 0 ; iElement < nElements ; iElement++) {
       for(size_t jElement = 0 ; jElement < m_nsubelements ; jElement++) {
-        const sps::element_t<T>& element = elements[iElement][jElement];
+        const sps::element_rect_t<T>& element = elements[iElement][jElement];
 
         sps::basis_vectors<T, sps::EulerIntrinsicYXY>(w_dir,element.euler,0);
         sps::basis_vectors<T, sps::EulerIntrinsicYXY>(h_dir,element.euler,1);
@@ -185,7 +244,7 @@ namespace fnm {
 
     for(size_t iElement = 0 ; iElement < nElements ; iElement++) {
       for(size_t jElement = 0 ; jElement < m_nsubelements ; jElement++) {
-        const sps::element_t<T>& element = elements[iElement][jElement];
+        const sps::element_rect_t<T>& element = elements[iElement][jElement];
         area = area + T(4.0) * element.hh * element.hw;
       }
     }
@@ -205,9 +264,9 @@ namespace fnm {
 
     // Will never fail. Consider removing m_nelements and m_nsubelements
     debug_print("nElements: %zu, nSubElementsPerElement: %zu, m: %zu, n: %zu\n",
-                nElements, nSubElementsPerElement, elements.m, elements.n);
-    assert(elements.m == nElements);
-    assert(elements.n == nSubElementsPerElement);
+                nElements, nSubElementsPerElement, elements.m_m, elements.m_n);
+    assert(elements.m_m == nElements);
+    assert(elements.m_n == nSubElementsPerElement);
 
     for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
       for (size_t jElement = 0 ; jElement < nSubElementsPerElement ; jElement++) {
@@ -286,7 +345,7 @@ namespace fnm {
 
     for(size_t iElement=0 ; iElement < nElements ; iElement++) {
       for(size_t jElement=0 ; jElement < nSubElements ; jElement++) {
-        sps::element_t<T>& element = elements[iElement][jElement];
+        sps::element_rect_t<T>& element = elements[iElement][jElement];
 
         sps::euler_t<T> euler;
         memcpy((void*)&euler,(void*)&element.euler,sizeof(sps::euler_t<T>));

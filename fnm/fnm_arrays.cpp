@@ -29,16 +29,16 @@ namespace fnm {
                    const T rowKerf,
                    const T colWidth,
                    const T colKerf,
-                   sps::deleted_aligned_multi_array<sps::element_t<T>, 2> &&elements)
+                   sps::deleted_aligned_multi_array<sps::element_rect_t<T>, 2> &&elements)
   {
-    elements      = sps::deleted_aligned_multi_array_create<sps::element_t<T>,2>(nRows*nCols,1);
+    elements      = sps::deleted_aligned_multi_array_create<sps::element_rect_t<T>,2>(nRows*nCols,1);
     T rowPitch = rowWidth + rowKerf;
     T colPitch = colWidth + colKerf;
     T hh = T(0.5) * colWidth;
     T hw = T(0.5) * rowWidth;
 
     for (size_t iRow=0 ; iRow < nRows ; iRow++) {
-      sps::point_t<T> center;
+      sps::point_t<T> center = sps::point_t<T>(); // Only to avoid warnings
       center[1] = (T(iRow) - T(0.5)*(T(nRows)-T(1.0)))*rowPitch;
       center[2] = T(0.0);
       for (size_t iCol=0 ; iCol < nCols ; iCol++) {
@@ -65,11 +65,11 @@ namespace fnm {
                           const T height,
                           const T eFocus,
                           const int arcPlacement,
-                          sps::deleted_aligned_multi_array<sps::element_t<T>, 2> &&elements)
+                          sps::deleted_aligned_multi_array<sps::element_rect_t<T>, 2> &&elements)
   {
     assert(nSubH>0);
 
-    elements      = sps::deleted_aligned_multi_array_create<sps::element_t<T>,2>(nElements,nSubH);
+    elements      = sps::deleted_aligned_multi_array_create<sps::element_rect_t<T>,2>(nElements,nSubH);
 
     T focus = eFocus;
     T halfHeight = T(0.5)*height;
@@ -132,7 +132,7 @@ namespace fnm {
 
         for (size_t iSubH = 0 ; iSubH < nSubH ; iSubH++) {
           elAngle = (T(iSubH) - T(0.5)*(T(nSubH)-T(1.0))) * dEl;
-          sps::point_t<T> center;
+          sps::point_t<T> center = sps::point_t<T>(); // Only to avoid warnings
           center[0] = (T(iElement) - T(0.5)*(T(nElements)-T(1.0)))*pitch;
           if (eFocus < std::numeric_limits<T>::epsilon()) {
             /* This can be skipped if we allow focusing at 0.0 */
@@ -165,7 +165,7 @@ namespace fnm {
           }
           elAngle = (T(iSubH+1) - T(0.5)*T(nSubH))*dEl;
 
-          sps::point_t<T> center;
+          sps::point_t<T> center = sps::point_t<T>();
           center[0] = (T(iElement) - T(0.5)*(T(nElements)-T(1.0)))*pitch;
           if (eFocus < std::numeric_limits<T>::epsilon()) {
             /* This can be skipped if we allow focusing at 0.0 */
@@ -202,13 +202,13 @@ namespace fnm {
                           const T radius,
                           const T eFocus,
                           const int arcPlacement,
-                          sps::deleted_aligned_multi_array<sps::element_t<T>, 2> &&elements)
+                          sps::deleted_aligned_multi_array<sps::element_rect_t<T>, 2> &&elements)
   {
     SPS_UNREFERENCED_PARAMETER(nSubW);
     assert(nSubW==1);
     assert(arcPlacement==0);
 
-    elements      = sps::deleted_aligned_multi_array_create<sps::element_t<T>,2>(nElements,nSubH);
+    elements      = sps::deleted_aligned_multi_array_create<sps::element_rect_t<T>,2>(nElements,nSubH);
 
     T halfHeight = T(0.5)*height;
     T focus = eFocus;
@@ -299,7 +299,7 @@ namespace fnm {
                      const float height,
                      const float eFocus,
                      const int arcPlacement,
-                     sps::deleted_aligned_multi_array<sps::element_t<float>, 2> &&elements);
+                     sps::deleted_aligned_multi_array<sps::element_rect_t<float>, 2> &&elements);
 
   template void
   FocusedConvexArray(const size_t nElements,
@@ -311,7 +311,7 @@ namespace fnm {
                      const float radius,
                      const float eFocus,
                      const int arcPlacement,
-                     sps::deleted_aligned_multi_array<sps::element_t<float>, 2> &&elements);
+                     sps::deleted_aligned_multi_array<sps::element_rect_t<float>, 2> &&elements);
 
   template void
   MatrixArray(const size_t nRows,
@@ -320,7 +320,7 @@ namespace fnm {
               const float rowKerf,
               const float colWidth,
               const float colKerf,
-              sps::deleted_aligned_multi_array<sps::element_t<float>, 2> &&elements);
+              sps::deleted_aligned_multi_array<sps::element_rect_t<float>, 2> &&elements);
 
 #ifdef FNM_DOUBLE_SUPPORT
   template void
@@ -332,7 +332,7 @@ namespace fnm {
                      const double height,
                      const double eFocus,
                      const int arcPlacement,
-                     sps::deleted_aligned_multi_array<sps::element_t<double>, 2> &&elements);
+                     sps::deleted_aligned_multi_array<sps::element_rect_t<double>, 2> &&elements);
 
   template void
   FocusedConvexArray(const size_t nElements,
@@ -344,7 +344,7 @@ namespace fnm {
                      const double radius,
                      const double eFocus,
                      const int arcPlacement,
-                     sps::deleted_aligned_multi_array<sps::element_t<double>, 2> &&elements);
+                     sps::deleted_aligned_multi_array<sps::element_rect_t<double>, 2> &&elements);
 
   template void
   MatrixArray(const size_t nRows,
@@ -353,7 +353,7 @@ namespace fnm {
               const double rowKerf,
               const double colWidth,
               const double colKerf,
-              sps::deleted_aligned_multi_array<sps::element_t<double>, 2> &&elements);
+              sps::deleted_aligned_multi_array<sps::element_rect_t<double>, 2> &&elements);
 
 #endif
 

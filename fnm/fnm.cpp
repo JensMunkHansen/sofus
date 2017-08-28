@@ -37,7 +37,7 @@
 #include <fnm/fnm_common.hpp>     // fnm::CalcWeightsAndAbcissae
 #include <fnm/fnm_calc.hpp>       // fnm::Calc routines
 #include <fnm/fnm_transient.hpp>  // fnm::CalcFd routines
-#include <fnm/fnm_arrays.hpp>
+#include <fnm/fnm_arrays.hpp>     // fnm::FocusedLinearArray, fnm::FocusedConvexArray
 
 #if FNM_PULSED_WAVE
 # include <sofus/sofus_types.hpp>
@@ -45,11 +45,8 @@
 # include <sofus/sofus_pulses.hpp>
 #endif
 
-#include <sps/memory>            // sps::deleted_aligned_array_create
+#include <sps/memory>          // sps::deleted_aligned_array_create
 #include <sps/sps_threads.hpp> // getncpus()
-
-
-// #include <sps/sps_mqueue.hpp> // TODO: Figure this out
 
 #include <sps/mm_malloc.h>
 #include <sps/cerr.h>
@@ -68,6 +65,8 @@
 
 #include <new>
 #include <stdexcept> // TODO: Avoid exceptions (leaks in Python)
+
+#include <algorithm>
 
 #include <assert.h>
 
@@ -97,7 +96,7 @@ template <typename T, template <typename> class V> V<T>* sps::globalstruct<T, V 
 // Question: Can we partially specialize this using sysparm_t
 
 template <class T>
-using element_array = sps::deleted_aligned_multi_array<sps::element_t<T>, 2>;
+using element_array = sps::deleted_aligned_multi_array<sps::element_rect_t<T>, 2>;
 
 #if defined(__GNUC__)
 # if !defined(__CYGWIN__)
@@ -169,6 +168,27 @@ BOOL APIENTRY DllMain(HANDLE hModule,
 }
 #endif
 
+char PerformanceInfo[32] = "\n";
+double g_tStart = 0.0;
+
+void ProfilerStart()
+{
+  g_tStart = sps::profiler::time();
+
+}
+void ProfilerStop()
+{
+  double duration = sps::profiler::time() - g_tStart;
+  sprintf(PerformanceInfo, "%3.2f seconds", duration);
+}
+
+void ProfileInfoGet(char** ostring)
+{
+  *ostring = (char*) malloc(32);
+  strncpy(*ostring, PerformanceInfo, 32);
+}
+
+
 namespace fnm {
 
 /////////////////////////////////////////////////
@@ -186,16 +206,23 @@ namespace fnm {
 /////////////////////////////////////////////////
 
 #if FNM_PULSED_WAVE
-// TODO: Remove
-  template <class T>
-  T Aperture<T>::fs = 100e6;
-
+  // TODO: Remove
   template <class T>
   bool Aperture<T>::normalize = true;
 #endif
 
   template <class T>
   size_t Aperture<T>::nthreads = getncpus();
+
+  template <class T>
+  sysparm_t<T>* Aperture<T>::DefaultSysParmGet()
+  {
+    // If non-existing create system parameters
+    if (!sps::globalstruct<T, fnm::sysparm_t>::pVar) {
+      sps::globalstruct<T, fnm::sysparm_t>::pVar = new sysparm_t<T>();
+    }
+    return sps::globalstruct<T, fnm::sysparm_t>::pVar;
+  }
 
 ////////////////////////////////
 // Implementation of interface
@@ -214,9 +241,9 @@ namespace fnm {
     m_pbar = nullptr;
 
     // Data needed for time-domain pulsed waves
-#ifdef FNM_PULSED_WAVE
+#if FNM_PULSED_WAVE
     m_pulses     = new sofus::AperturePulses<T>();
-    m_pulses->fs = Aperture<T>::fs;
+    m_pulses->m_fs = m_sysparm->fs;
 #endif
   }
 
@@ -228,7 +255,7 @@ namespace fnm {
     const size_t iSubElement = 0;
 
     if (nElements * nSubElements > 0) {
-      auto elements = sps::deleted_aligned_multi_array<sps::element_t<T>, 2>(nElements, nSubElements);
+      auto elements = sps::deleted_aligned_multi_array<sps::element_rect_t<T>, 2>(nElements, nSubElements);
 
       T wx = (T(nElements)-T(1))/2;
 
@@ -245,7 +272,7 @@ namespace fnm {
         elements[iElement][iSubElement].euler.beta   = T(0.0);
         elements[iElement][iSubElement].euler.gamma  = T(0.0);
       }
-      m_data->ElementsSet(std::forward<sps::deleted_aligned_multi_array<sps::element_t<T>,2> >(elements),
+      m_data->ElementsSet(std::forward<sps::deleted_aligned_multi_array<sps::element_rect_t<T>,2> >(elements),
                           nElements,
                           nSubElements);
     }
@@ -260,7 +287,7 @@ namespace fnm {
       m_data = nullptr;
     }
     // For time-domain pulsed-wave simulation, another data object is used
-#ifdef FNM_PULSED_WAVE
+#if FNM_PULSED_WAVE
     if (m_pulses) {
       delete m_pulses;
       m_pulses = nullptr;
@@ -272,14 +299,56 @@ namespace fnm {
     }
   }
 
+  // TODO: FIgure out hot to handle this: a = a.SubToElements()
   template <class T>
-  sysparm_t<T>* Aperture<T>::DefaultSysParmGet()
+  void /*const Aperture<T>&*/ Aperture<T>::SubToElements()
   {
-    // If non-existing create system parameters
-    if (!sps::globalstruct<T, fnm::sysparm_t>::pVar) {
-      sps::globalstruct<T, fnm::sysparm_t>::pVar = new sysparm_t<T>();
+
+    size_t nElements = 0, nSubElements = 0, nPositions = 0, nParams = 0;
+    T* pos = NULL;
+    T* delays = NULL;
+
+    // Allocates
+    this->DelaysGet(&delays, &nPositions);
+
+    // Allocates
+    this->MultiElementsGet(1, &pos, &nElements, &nSubElements, &nParams);
+
+    assert(nParams == 8);
+
+    debug_print("nElements: %zu, nSubElements: %zu\n", nElements, nSubElements);
+
+    size_t nNewElements = nElements * nSubElements;
+
+    this->SubElementsSet(pos, nNewElements, 1, 8);
+
+    T* newDelays;
+
+    if (NULL == (newDelays = (T*) malloc(nNewElements*sizeof(T)))) {
+      goto SubToElementsError;
     }
-    return sps::globalstruct<T, fnm::sysparm_t>::pVar;
+
+    for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
+      for (size_t jElement = 0 ; jElement < nSubElements ; jElement++) {
+        newDelays[iElement*nSubElements + jElement] = delays[iElement];
+      }
+    }
+
+    this->DelaysSet(newDelays, nNewElements);
+
+SubToElementsError:
+    // Freeing NULL is defined as a no-op, so no need to check pointers
+    if (pos) {
+      free(pos);
+    }
+    if (delays) {
+      free(delays);
+    }
+    if (newDelays) {
+      free(newDelays);
+    }
+    // TODO: Figure out to handle this in SWIG
+    //return *this;
   }
 
   template <class T>
@@ -345,7 +414,7 @@ namespace fnm {
 
       *obj = new Aperture<T>();
 
-      auto elements = sps::deleted_aligned_multi_array<sps::element_t<T>, 2>();
+      auto elements = sps::deleted_aligned_multi_array<sps::element_rect_t<T>, 2>();
 
       T pitch = width + kerf;
 
@@ -355,7 +424,7 @@ namespace fnm {
                          0, /* 0: Outer placement, 1: Inner placement */
                          std::move(elements));
 
-      (*obj)->m_data->ElementsSet(std::forward<sps::deleted_aligned_multi_array<sps::element_t<T>,2> >(elements),
+      (*obj)->m_data->ElementsSet(std::forward<sps::deleted_aligned_multi_array<sps::element_rect_t<T>,2> >(elements),
                                   nElements,
                                   nSubElements);
       retval = 0;
@@ -382,7 +451,7 @@ namespace fnm {
     if (nElements * nSubElements > 0) {
       *obj = new Aperture<T>();
 
-      auto elements = sps::deleted_aligned_multi_array<sps::element_t<T>, 2>();
+      auto elements = sps::deleted_aligned_multi_array<sps::element_rect_t<T>, 2>();
 
       T pitch = width + kerf;
 
@@ -392,7 +461,7 @@ namespace fnm {
                          0, /* 0: Outer placement, 1: Inner placement */
                          std::move(elements));
 
-      (*obj)->m_data->ElementsSet(std::forward<sps::deleted_aligned_multi_array<sps::element_t<T>,2> >(elements),
+      (*obj)->m_data->ElementsSet(std::forward<sps::deleted_aligned_multi_array<sps::element_rect_t<T>,2> >(elements),
                                   nElements,
                                   nSubElements);
     }
@@ -454,11 +523,15 @@ namespace fnm {
   }
 
   template <class T>
-  void Aperture<T>::NThreadsSet(const size_t &nThreads)
+  int Aperture<T>::NThreadsSet(const size_t &nThreads)
   {
     assert(nThreads <= N_MAX_THREADS);
-    if (nThreads <= N_MAX_THREADS)
+    int retval = -1;
+    if (nThreads <= N_MAX_THREADS) {
       Aperture<T>::nthreads = nThreads;
+      retval = 0;
+    }
+    return retval;
   }
 
   template <class T>
@@ -491,23 +564,31 @@ namespace fnm {
   {
 
     const size_t arrSize = 6;
-    T* arr = (T*)malloc(arrSize*sizeof(T));
-    memset(arr,0,arrSize);
 
-    sps::bbox_t<T> bbox;
-    this->m_data->ExtentGet(bbox);
+    *coordinates = nullptr;
+    *nDim = 0;
+    *nLimits = 0;
 
-    typedef T extent_t[3][2];
-    extent_t* extent = (extent_t*) arr;
+    T* arr = (T*) malloc(arrSize*sizeof(T));
 
-    for(size_t iDim = 0 ; iDim < 3 ; iDim++) {
-      (*extent)[iDim][0] = bbox.min[iDim];
-      (*extent)[iDim][1] = bbox.max[iDim];
+    if (arr) {
+      memset(arr,0,arrSize);
+
+      sps::bbox_t<T> bbox;
+      this->m_data->ExtentGet(bbox);
+
+      typedef T extent_t[3][2];
+      extent_t* extent = (extent_t*) arr;
+
+      for(size_t iDim = 0 ; iDim < 3 ; iDim++) {
+        (*extent)[iDim][0] = bbox.min[iDim];
+        (*extent)[iDim][1] = bbox.max[iDim];
+      }
+
+      *coordinates = arr;
+      *nDim        = 3;
+      *nLimits     = 2;
     }
-
-    *coordinates = arr;
-    *nDim        = 3;
-    *nLimits     = 2;
   }
 
   template <class T>
@@ -517,9 +598,10 @@ namespace fnm {
   }
 
   template <class T>
-  void Aperture<T>::PositionsSet(const T* pos, const size_t nPositions, const size_t nDim)
+  int Aperture<T>::PositionsSet(const T* pos, const size_t nPositions, const size_t nDim)
   {
     const size_t _nElements          = m_data->m_nelements;
+    int retval                       = -1;
     sps::point_t<T>* positions       = m_data->m_pos.get();
     if ((_nElements == nPositions) && (3 == nDim)) {
       // Consider creating and moving a unique_ptr here
@@ -528,16 +610,61 @@ namespace fnm {
         positions[i][1] = pos[i*3 + 1];
         positions[i][2] = pos[i*3 + 2];
       }
+      retval = 0;
     }
+    return retval;
   }
 
   template <class T>
   void Aperture<T>::FocusSet(const T iFocus[3])
   {
+    bool changed = false;
     if ((iFocus[0] != m_data->m_focus[0]) || (iFocus[0] != m_data->m_focus[0]) || (iFocus[0] != m_data->m_focus[0])) {
+      changed = true;
       m_data->m_focus_valid = FocusingType::FocusingTypeCount;
     }
     memcpy(&m_data->m_focus[0],&iFocus[0],3*sizeof(T));
+
+    if (changed) {
+      if (m_data->m_apodization_type > fnm::ApodizationType::ApodizationTypeNonParametric) {
+        // Update apodization using f-number
+      }
+    }
+  }
+
+  template <class T>
+  const T& Aperture<T>::FNumberGet() const
+  {
+    return m_data->m_fnumber;
+  }
+
+  // TODO: Don't do this!!!
+  template <class T>
+  void Aperture<T>::FNumberSet(const T& fnumber)
+  {
+    m_data->m_fnumber = fnumber;
+    if (m_data->m_apodization_type > ApodizationType::ApodizationTypeNonParametric) {
+      // Update apodization using f-number (UGLY). NOT GOOD
+      sps::point_t<T> direction;
+      sps::point_t<T> r2p = this->m_data->m_focus - this->m_data->m_center_focus;
+      T depth = sps::norm(r2p);
+      sps::point_t<T> uvector, vvector, normal;
+      uvector[0] = 1;
+      uvector[1] = 0;
+      uvector[2] = 0;
+      vvector[0] = 0;
+      vvector[1] = 1;
+      vvector[2] = 0;
+      normal[0] = 0;
+      normal[1] = 0;
+      normal[2] = T(1.0);
+
+      direction[0] = sps::dot(r2p, uvector);
+      direction[1] = sps::dot(r2p, vvector);
+      direction[2] = sps::dot(r2p, normal);
+
+      this->m_data->ApodizationSet(direction, depth, (ApodizationType) this->m_data->m_apodization_type);
+    }
   }
 
   template <class T>
@@ -564,16 +691,20 @@ namespace fnm {
   }
 
   template <class T>
-  void Aperture<T>::ApodizationSet(const T* data, size_t nData)
+  int Aperture<T>::ApodizationSet(const T* data, size_t nData)
   {
     const size_t nElements = m_data->m_nelements;
+    int retval = -1;
 
-    if (nData == m_data->m_nelements) {
-      // Consider creating and moving a unique_ptr here
+    if (nData == nElements) {
+      sps::deleted_aligned_array<T> apodization = sps::deleted_aligned_array_create<T>(nData);
+
       for (size_t iElement = 0 ; iElement < nElements ; iElement++) {
-        m_data->m_apodizations[iElement] = data[iElement];
+        apodization[iElement] = data[iElement];
       }
+      retval = m_data->ApodizationSet(std::move(apodization), nData);
     }
+    return retval;
   }
 
   template <class T>
@@ -582,6 +713,7 @@ namespace fnm {
     const size_t nElements = m_data->m_nelements;
 
     *data = (T*) malloc(nElements*sizeof(T));
+    // Perfectly valid to copy zero elements, so no need to do this
     if (nElements > 0) {
       memcpy(*data,m_data->m_apodizations.get(),nElements*sizeof(T));
       *nData = nElements;
@@ -637,15 +769,17 @@ namespace fnm {
   }
 
   template <class T>
-  void Aperture<T>::DelaysSet(const T* data, const size_t nData)
+  int Aperture<T>::DelaysSet(const T* data, const size_t nData)
   {
     const size_t nElements = m_data->m_nelements;
-
+    int retval = -1;
     if (nData == m_data->m_nelements) {
       memcpy(m_data->m_delays.get(), data, sizeof(T)*nElements);
       // Set focusing type to using delays
       m_data->m_focus_type = FocusingType::Delays;
+      retval = 0;
     }
+    return retval;
   }
 
   template <class T>
@@ -658,6 +792,18 @@ namespace fnm {
   void Aperture<T>::FocusingTypeSet(const int iFocusingType)
   {
     m_data->m_focus_type = iFocusingType;
+  }
+
+  template <class T>
+  int Aperture<T>::ApodizationTypeGet() const
+  {
+    return m_data->m_apodization_type;
+  }
+
+  template <class T>
+  void Aperture<T>::ApodizationTypeSet(const int iApodizationType)
+  {
+    m_data->m_apodization_type = iApodizationType;
   }
 
   template <class T>
@@ -678,6 +824,7 @@ namespace fnm {
     return m_data->m_f0;
   }
 
+  // TODO: Distinguish between f0 and xdcf0 (or fc) (introduce excitation object)
   template <class T>
   void Aperture<T>::F0Set(const T& f0)
   {
@@ -686,7 +833,7 @@ namespace fnm {
     assert(f0 > eps);
     if (f0 > eps) {
       // Invalidate focus
-      m_data->m_focus_valid = FocusingType::FocusingTypeCount;
+      m_data->m_focus_valid = ApodizationType::ApodizationTypeCount;
       m_data->m_f0 = f0;
     }
   }
@@ -694,6 +841,7 @@ namespace fnm {
   template <class T>
   const sysparm_t<T> Aperture<T>::SysParmGet() const
   {
+    // A copy is returned, so a new structure is created, when setting this again
     return (*this->m_sysparm);
   }
 
@@ -707,7 +855,55 @@ namespace fnm {
     (*this->m_sysparm) = *arg;
   }
 
-#ifdef FNM_PULSED_WAVE
+#if FNM_PULSED_WAVE
+  template <class T>
+  const T& Aperture<T>::FCGet() const
+  {
+    return m_pulses->m_f0;
+  }
+
+  template <class T>
+  void Aperture<T>::FCSet(const T& f0)
+  {
+    // Make static variable
+    const T eps = std::numeric_limits<T>::epsilon();
+    assert(f0 > eps);
+    if (f0 > eps) {
+      m_pulses->m_f0 = f0;
+      // Update parametric impulse
+      if (m_pulses->m_impulseType == sofus::ImpulseType::ImpulseTypeParametric) {
+        m_pulses->GaussPulseSet(this->FsGet(), this->FCGet(), this->BandWidthGet());
+      }
+    }
+  }
+
+  template <class T>
+  int Aperture<T>::ImpulseTypeGet() const
+  {
+    return m_pulses->m_impulseType;
+  }
+
+  template <class T>
+  void Aperture<T>::ImpulseTypeSet(const int iImpulseType)
+  {
+    m_pulses->m_impulseType = (sofus::ImpulseType) iImpulseType;
+    if (m_pulses->m_impulseType == sofus::ImpulseType::ImpulseTypeParametric) {
+      m_pulses->GaussPulseSet(this->FsGet(), this->FCGet(), this->BandWidthGet());
+    }
+  }
+
+  template <class T>
+  int Aperture<T>::ExcitationTypeGet() const
+  {
+    return m_pulses->m_excitationType;
+  }
+
+  template <class T>
+  void Aperture<T>::ExcitationTypeSet(const int iExcitationType)
+  {
+    m_pulses->m_excitationType = (sofus::ExcitationType) iExcitationType;
+  }
+
   template <class T>
   T Aperture<T>::CalcMatchedFilter(const Aperture<T>* other,
                                    const T iFocus[3],
@@ -726,7 +922,7 @@ namespace fnm {
 
     sofus::sysparm_t<T> sysparm;
     sysparm.c         = m_sysparm->c;
-    sysparm.fs        = Aperture<T>::fs;
+    sysparm.fs = m_sysparm->fs;
     sysparm.normalize = Aperture<T>::normalize;
     sysparm.att       = m_sysparm->att;
     sysparm.beta      = m_sysparm->beta;
@@ -768,7 +964,7 @@ namespace fnm {
 
     sofus::sysparm_t<T> sysparm;
     sysparm.c         = m_sysparm->c;
-    sysparm.fs        = Aperture<T>::fs;
+    sysparm.fs = m_sysparm->fs;
     sysparm.normalize = Aperture<T>::normalize;
     sysparm.att       = m_sysparm->att;
     sysparm.beta      = m_sysparm->beta;
@@ -820,7 +1016,7 @@ namespace fnm {
     // TODO: Find better way - agree on content of sysparm or split in two
     sofus::sysparm_t<T> sysparm;
     sysparm.c         = m_sysparm->c;
-    sysparm.fs        = Aperture<T>::fs;
+    sysparm.fs = m_sysparm->fs;
     sysparm.normalize = Aperture<T>::normalize;
 
     sysparm.att     = m_sysparm->att;
@@ -844,17 +1040,44 @@ namespace fnm {
   template <class T>
   const T& Aperture<T>::FsGet() const
   {
-    return Aperture<T>::fs;
+    return m_sysparm->fs;
   }
 
   template <class T>
-  void Aperture<T>::FsSet(const T& fs)
+  int Aperture<T>::FsSet(const T& value)
   {
-    assert(fs > T(1.0));
-    if (fs > T(1.0)) {
-      Aperture<T>::fs = fs;
-      m_pulses->fs = fs;
+    int retval = -1;
+    //assert(value > T(1.0));
+    if (value > T(1.0)) {
+      m_sysparm->fs = value;
+      m_pulses->m_fs = value;
+
+      // Update parametric impulse
+      if (m_pulses->m_impulseType == sofus::ImpulseType::ImpulseTypeParametric) {
+        m_pulses->GaussPulseSet(value, this->FCGet(), this->BandWidthGet());
+      }
+      retval = 0;
     }
+    return retval;
+  }
+
+  template <class T>
+  void fnm::Aperture<T>::BandWidthSet(const T& value)
+  {
+    const T fs = this->FsGet();
+    const T fc = this->FCGet();
+    const T bw = value;
+
+    // Update parametric impulse
+    if (m_pulses->m_impulseType == sofus::ImpulseType::ImpulseTypeParametric) {
+      m_pulses->GaussPulseSet(fs, fc, bw);
+    }
+  }
+
+  template <class T>
+  const T& fnm::Aperture<T>::BandWidthGet() const
+  {
+    return m_pulses->m_impulseBandwidth;
   }
 
   template <class T>
@@ -864,9 +1087,9 @@ namespace fnm {
   }
 
   template <class T>
-  void Aperture<T>::NormalizeSet(const bool& normalize)
+  void Aperture<T>::NormalizeSet(const bool& value)
   {
-    Aperture<T>::normalize = normalize;
+    Aperture<T>::normalize = value;
   }
 
   template <class T>
@@ -877,12 +1100,13 @@ namespace fnm {
   }
 
   template <class T>
-  void Aperture<T>::ImpulseSet(const T* data,
-                               const size_t nData)
+  int Aperture<T>::ImpulseSet(const T* data,
+                              const size_t nData)
   {
     m_pulses->impulse.ndata = nData;
     m_pulses->impulse.offset = 0;
     m_pulses->impulse.m_data = NULL;
+    int retval = -1;
 
     if (nData > 0) {
       m_pulses->impulse.m_data  =
@@ -890,21 +1114,25 @@ namespace fnm {
         _mm_free(p);
       });
       memcpy((void*)m_pulses->impulse.m_data.get(), data, nData*sizeof(T));
+      m_pulses->m_impulseType = sofus::ImpulseType::ImpulseTypeNonParametric;
+      retval = 0;
     }
+    return retval;
   }
 
   template <class T>
   void Aperture<T>::ExcitationGet(T** data, size_t* nData) const
   {
-    // A view is returned. TODO: Consider allocating (change to odata)
+    // A view is returned. We cannot delete this in the wrapper
     *nData = m_pulses->excitation.ndata;
     *data  = m_pulses->excitation.m_data.get();
   }
 
   template <class T>
-  void Aperture<T>::ExcitationSet(const T* data,
-                                  const size_t nData)
+  int Aperture<T>::ExcitationSet(const T* data,
+                                 const size_t nData)
   {
+    int retval = -1;
     m_pulses->excitation.ndata  = nData;
     m_pulses->excitation.offset = 0;
     m_pulses->excitation.m_data   = NULL;
@@ -915,7 +1143,9 @@ namespace fnm {
         _mm_free(p);
       });
       memcpy((void*)m_pulses->excitation.m_data.get(), data, nData*sizeof(T));
+      retval = 0;
     }
+    return retval;
   }
 #endif
 
@@ -952,9 +1182,14 @@ namespace fnm {
   }
 
   template <class T>
-  void Aperture<T>::NDivWSet(const size_t& nDivW)
+  int Aperture<T>::NDivWSet(const size_t& nDivW)
   {
-    this->m_sysparm->nDivW = nDivW;
+    int retval = -1;
+    if (nDivW > 1) {
+      this->m_sysparm->nDivW = nDivW;
+      retval = 0;
+    }
+    return retval;
   }
 
   template <class T>
@@ -964,9 +1199,14 @@ namespace fnm {
   }
 
   template <class T>
-  void Aperture<T>::NDivHSet(const size_t& nDivH)
+  int Aperture<T>::NDivHSet(const size_t& nDivH)
   {
-    this->m_sysparm->nDivH = nDivH;
+    int retval = -1;
+    if (nDivH > 1) {
+      this->m_sysparm->nDivH = nDivH;
+      retval = 0;
+    }
+    return retval;
   }
 
   template <class T>
@@ -998,7 +1238,7 @@ namespace fnm {
             }
             for (size_t iXYZ = 0 ; iXYZ < 3 ; iXYZ++) {
               arr[iElement * _nSubElements * Aperture<T>::nVerticesPerElement * 3 +
-                  iSubElement * Aperture<T>::nVerticesPerElement * 3 + iCorner*3 + iXYZ] =
+                           iSubElement * Aperture<T>::nVerticesPerElement * 3 + iCorner*3 + iXYZ] =
                     rectangles[iElement*_nSubElements +
                                iSubElement][iiCorner][iXYZ];
             }
@@ -1016,7 +1256,7 @@ namespace fnm {
 
   template <class T>
   int Aperture<T>::ElementsRefGet(size_t* nElements, size_t* nSubElements,
-                                  const sps::element_t<T>**& elements) const
+                                  const sps::element_rect_t<T>**& elements) const
   {
     return m_data->ElementsRefGet(nElements, nSubElements, elements);
   }
@@ -1077,7 +1317,7 @@ namespace fnm {
       memset(arr,0,arrSize);
 
       size_t __nElements, __nSubElements;
-      const sps::element_t<T>** elements = NULL;
+      const sps::element_rect_t<T>** elements = NULL;
 
       retval = m_data->ElementsRefGet(&__nElements, &__nSubElements, elements);
 
@@ -1112,33 +1352,33 @@ namespace fnm {
   }
 
   template <class T>
-  void Aperture<T>::ElementsSet(const T* pos, const size_t nPositions, const size_t nDim)// throw (std::runtime_error)
+  int Aperture<T>::ElementsSet(const T* pos, const size_t nPositions, const size_t nDim) throw (std::runtime_error)
   {
-    bool retval = this->SubElementsSet(pos,nPositions,1,nDim);
-    if (!retval) {
+    int retval = this->SubElementsSet(pos,nPositions,1,nDim);
+    if (retval) {
       // Causes SWIG to leak memory
       throw std::runtime_error("Elements improperly formatted");
     }
-    SPS_UNREFERENCED_PARAMETER(retval);
+    return retval;
   }
 
   template <class T>
-  bool Aperture<T>::SubElementsSet(const T* pos, const size_t nElements,
-                                   const size_t nSubElementsPerElement, const size_t nDim)
+  int Aperture<T>::SubElementsSet(const T* pos, const size_t nElements,
+                                  const size_t nSubElementsPerElement, const size_t nDim)
   {
-    bool retval = true;
+    int retval = 0;
 
     // We are not allowed to set 0 elements
     if ((nDim != Aperture<T>::nElementPosParameters) || (nSubElementsPerElement < 1)) {
-      retval = false;
+      retval = -1;
       return retval;
     }
 
     // Invalidate focus
     m_data->m_focus_valid = FocusingType::FocusingTypeCount;
 
-    sps::deleted_aligned_multi_array<sps::element_t<T>, 2> elements =
-      sps::deleted_aligned_multi_array_create<sps::element_t<T>, 2>(nElements,nSubElementsPerElement);
+    sps::deleted_aligned_multi_array<sps::element_rect_t<T>, 2> elements =
+      sps::deleted_aligned_multi_array_create<sps::element_rect_t<T>, 2>(nElements,nSubElementsPerElement);
 
     const size_t nElePosParams = Aperture<T>::nElementPosParameters;
 
@@ -1164,7 +1404,7 @@ namespace fnm {
     }
 
     // Set and initialize elements
-    this->m_data->ElementsSet(std::forward<sps::deleted_aligned_multi_array<sps::element_t<T>,2> >(elements),
+    this->m_data->ElementsSet(std::forward<sps::deleted_aligned_multi_array<sps::element_rect_t<T>,2> >(elements),
                               nElements, nSubElementsPerElement);
 
     return retval;
@@ -1178,7 +1418,7 @@ namespace fnm {
   }
 #endif
 
-#if !(defined(_MSC_VER) && _MSC_VER < 1900)
+#ifdef FNM_CLOSURE_FUNCTIONS
 
   // TODO: Add another template parameter and store typeid(U) in type
   template <class T>
@@ -1188,6 +1428,7 @@ namespace fnm {
     const char name[32];
     ScalarType type;
     size_t nDims;
+    bool allocates;
     std::function<void(Aperture<T>*)> get_ptr;
     std::function<void(Aperture<T>*)> set_ptr;
   };
@@ -1198,11 +1439,12 @@ namespace fnm {
     // TODO: Consider using a map instead or introduce std::map<string, RwParamType>
     static FunctionInfo<T> Info[];
 
-    /* Thread local variables */
+    /* Thread local variables: TODO: Move to object */
     static __THREAD size_t idims[3];
     static __THREAD size_t* odims[3];
   };
 
+  // TODO
   template <class U>
   class FunctionArguments {
   public:
@@ -1247,27 +1489,27 @@ namespace fnm {
   template <class T>
   FunctionInfo<T> FunctionSelectTable<T>::Info[] = {
     {
-      RwParamType::ElementDelays, "ElementDelays", ScalarType::Float,   1,
+      RwParamType::ElementDelays, "ElementDelays", ScalarType::Float, 1, false,
       [](Aperture<T>* a)->void{a->DelaysGet(&(fnm::FunctionArguments<T>::ptr), fnm::FunctionSelectTable<T>::odims[0]); },
       [](Aperture<T>* a)->void{a->DelaysSet(fnm::FunctionArguments<T>::iPtr, fnm::FunctionSelectTable<T>::idims[0]); }
     },
     {
-      RwParamType::AttenuationEnabled, "AttenuationEnabled", ScalarType::Bool, 0,
+      RwParamType::AttenuationEnabled, "AttenuationEnabled", ScalarType::Bool, 0, false,
       [](Aperture<T>* a)->void {*FunctionArguments<bool>::ptr = a->AttenuationEnabledGet();},
       [](Aperture<T>* a)->void {a->AttenuationEnabledSet(FunctionArguments<bool>::value);},
     },
     {
-      RwParamType::Alpha        , "Alpha", ScalarType::Float,   0,
+      RwParamType::Alpha, "Alpha", ScalarType::Float, 0, false,
       [](Aperture<T>* a)->void{*FunctionArguments<T>::ptr = a->AlphaGet();},
       [](Aperture<T>* a)->void{a->AlphaSet(FunctionArguments<T>::value);}
     },
     {
-      RwParamType::Beta         , "Beta", ScalarType::Float,   0,
+      RwParamType::Beta, "Beta", ScalarType::Float, 0, false,
       [](Aperture<T>* a)->void{*FunctionArguments<T>::ptr = a->BetaGet();},
       [](Aperture<T>* a)->void{a->BetaSet(FunctionArguments<T>::value);}
     },
     {
-      RwParamType::Positions    , "Positions", ScalarType::Float,   2,
+      RwParamType::Positions, "Positions", ScalarType::Float, 2, true,
       [](Aperture<T>* a)->void{
         a->PositionsGet(&(FunctionArguments<T>::ptr),
         FunctionSelectTable<T>::odims[0],
@@ -1280,12 +1522,14 @@ namespace fnm {
       },
     },
     {
-      RwParamType::Focus        , "Focus", ScalarType::Float,   1,
+      RwParamType::Focus, "Focus", ScalarType::Float, 1, true,
       [](Aperture<T>* a)->void{
         typedef T tre[3];
         tre* output = (tre*) malloc(3*sizeof(T));
         a->FocusGet(*output);
         FunctionArguments<T>::ptr = (T*) output;
+        // Need to set output dimensions
+        *FunctionSelectTable<T>::odims[0] = 3;
       },
       [](Aperture<T>* a)->void{
         typedef T tre[3];
@@ -1295,12 +1539,14 @@ namespace fnm {
       },
     },
     {
-      RwParamType::CenterFocus  , "CenterFocus", ScalarType::Float,   1,
+      RwParamType::CenterFocus, "CenterFocus", ScalarType::Float, 1, true,
       [](Aperture<T>* a)->void{
         typedef T tre[3];
         tre* output = (tre*) malloc(3*sizeof(T));
         a->CenterFocusGet(*output);
         FunctionArguments<T>::ptr = (T*) output;
+        // Need to set output dimensions
+        *FunctionSelectTable<T>::odims[0] = 3;
       },
       [](Aperture<T>* a)->void{
         typedef T tre[3];
@@ -1310,35 +1556,35 @@ namespace fnm {
       },
     },
     {
-      RwParamType::FocusingType , "FocusingType", ScalarType::Int32,   0,
+      RwParamType::FocusingType, "FocusingType", ScalarType::Int32, 0, false,
       [](Aperture<T>* a)->void{*FunctionArguments<int>::ptr = a->FocusingTypeGet();},
       [](Aperture<T>* a)->void{a->FocusingTypeSet(FunctionArguments<int>::value);}
     },
     {
-      RwParamType::NThreads     , "NThreads", ScalarType::SizeT,   0,
+      RwParamType::NThreads, "NThreads", ScalarType::SizeT, 0, false,
       [](Aperture<T>* a)->void{*FunctionArguments<size_t>::ptr = a->NThreadsGet();},
       [](Aperture<T>* a)->void{a->NThreadsSet(FunctionArguments<size_t>::value);}
     },
     {
-      RwParamType::F0           , "F0", ScalarType::Float,   0,
+      RwParamType::F0, "F0", ScalarType::Float, 0, false,
       [](Aperture<T>* a)->void{*FunctionArguments<T>::ptr = a->F0Get();},
       [](Aperture<T>* a)->void{a->F0Set(FunctionArguments<T>::value);}
     },
     {
-      RwParamType::W            , "W", ScalarType::Float,   0,
+      RwParamType::W, "W", ScalarType::Float, 0, false,
       [](Aperture<T>* a)->void{*FunctionArguments<T>::ptr = a->WGet();},
       [](Aperture<T>* a)->void{a->WSet(FunctionArguments<T>::value);}
     },
     {
-      RwParamType::SysParm      , "SysParm", ScalarType::Struct,  0, nullptr, nullptr
+      RwParamType::SysParm, "SysParm", ScalarType::Struct,  0, false, nullptr, nullptr
     },
     {
-      RwParamType::C            , "C", ScalarType::Float,   0,
+      RwParamType::C, "C", ScalarType::Float, 0, false,
       [](Aperture<T>* a)->void{*FunctionArguments<T>::ptr = a->CGet();},
       [](Aperture<T>* a)->void{a->CSet(FunctionArguments<T>::value);}
     },
     {
-      RwParamType::Elements     , "Elements", ScalarType::Float,   2,
+      RwParamType::Elements, "Elements", ScalarType::Float, 2, true,
       [](Aperture<T>* a)->void{
         a->ElementsGet(&(FunctionArguments<T>::ptr),
         FunctionSelectTable<T>::odims[0],
@@ -1351,7 +1597,7 @@ namespace fnm {
       },
     },
     {
-      RwParamType::SubElements  , "SubElements", ScalarType::Float,   3,
+      RwParamType::SubElements, "SubElements", ScalarType::Float, 3, true,
       [](Aperture<T>* a)->void{
         a->SubElementsGet(&(FunctionArguments<T>::ptr),
         FunctionSelectTable<T>::odims[0],
@@ -1366,38 +1612,38 @@ namespace fnm {
       },
     },
     {
-      RwParamType::Apodization  , "Apodization", ScalarType::Float,   1,
+      RwParamType::Apodization, "Apodization", ScalarType::Float, 1, false,
       [](Aperture<T>* a)->void{a->ApodizationGet(&(FunctionArguments<T>::ptr), FunctionSelectTable<T>::odims[0]);},
       [](Aperture<T>* a)->void{a->ApodizationSet(FunctionArguments<T>::iPtr, FunctionSelectTable<T>::idims[0]);}
     },
     {
-      RwParamType::NDivW        , "NDivW", ScalarType::SizeT,   0,
+      RwParamType::NDivW, "NDivW", ScalarType::SizeT, 0, false,
       [](Aperture<T>* a)->void{*FunctionArguments<size_t>::ptr = a->NDivWGet();},
       [](Aperture<T>* a)->void{a->NDivWSet(FunctionArguments<size_t>::value);}
     },
     {
-      RwParamType::NDivH        , "NDivH", ScalarType::SizeT,   0,
+      RwParamType::NDivH, "NDivH", ScalarType::SizeT, 0, false,
       [](Aperture<T>* a)->void{*FunctionArguments<size_t>::ptr = a->NDivHGet();},
       [](Aperture<T>* a)->void{a->NDivHSet(FunctionArguments<size_t>::value);}
     },
-#ifdef FNM_PULSED_WAVE
+#if FNM_PULSED_WAVE
     {
-      RwParamType::Fs           , "Fs", ScalarType::Float,   0,
+      RwParamType::Fs, "Fs", ScalarType::Float, 0, false,
       [](Aperture<T>* a)->void{*FunctionArguments<T>::ptr = a->FsGet();},
       [](Aperture<T>* a)->void{a->FsSet(FunctionArguments<T>::value);}
     },
     {
-      RwParamType::Normalize    , "Normalize", ScalarType::Bool,    0,
+      RwParamType::Normalize, "Normalize", ScalarType::Bool, 0, false,
       [](Aperture<T>* a)->void {*FunctionArguments<bool>::ptr = a->NormalizeGet();},
       [](Aperture<T>* a)->void {a->NormalizeSet(FunctionArguments<bool>::value);},
     },
     {
-      RwParamType::Excitation   , "Excitation", ScalarType::Float,   1,
+      RwParamType::Excitation, "Excitation", ScalarType::Float, 1, false,
       [](Aperture<T>* a)->void{a->ExcitationGet(&(FunctionArguments<T>::ptr), FunctionSelectTable<T>::odims[0]);},
       [](Aperture<T>* a)->void{a->ExcitationSet(FunctionArguments<T>::iPtr, FunctionSelectTable<T>::idims[0]);}
     },
     {
-      RwParamType::Impulse      , "Impulse", ScalarType::Float,   1,
+      RwParamType::Impulse, "Impulse", ScalarType::Float, 1, false,
       [](Aperture<T>* a)->void{a->ImpulseGet(&(FunctionArguments<T>::ptr), FunctionSelectTable<T>::odims[0]);},
       [](Aperture<T>* a)->void{a->ImpulseSet(FunctionArguments<T>::iPtr, FunctionSelectTable<T>::idims[0]);}
     },
@@ -1406,88 +1652,173 @@ namespace fnm {
 
   // TODO: This could be templated over U = T, bool, int, size_t
   template <class T>
-  int Aperture<T>::RwFloatParamGet(int fsel, T** f, size_t nDim, ...)
+  int Aperture<T>::RwFloatParamGet(int fsel, T** oMultiData, size_t nDim, ...)
   {
     va_list args;
     va_start(args,nDim);
-    int retval = this->RwFloatParamGet(fsel,f,nDim,args);
+    int retval = this->RwFloatParamGet(fsel, oMultiData, nDim, args);
     va_end(args);
     return retval;
   }
 
   template <class T>
-  int Aperture<T>::RwFloatParamSet(int fsel, const T* f, size_t nDim, ...)
+  int Aperture<T>::RwFloatParamSet(int fsel, const T* iMultiData, size_t nDim, ...)
   {
     va_list args;
     va_start(args,nDim);
-    int retval = this->RwFloatParamSet(fsel,f,nDim,args);
+    int retval = this->RwFloatParamSet(fsel, iMultiData, nDim, args);
     va_end(args);
     return retval;
   }
 
   template <class T>
-  int Aperture<T>::RwFloatParamSet(int fsel, const T* f, size_t nDim, va_list args)
+  int Aperture<T>::RwFloatParamSet(int pSel, const T* f, size_t nDim, va_list args)
   {
+    int retval = -1;
 
-    // Verify correct number of dimensions
-    if ((FunctionSelectTable<T>::Info[fsel].nDims != nDim) || (nDim > 3)) {
-      return -1;
+    for (size_t i = 0 ; i < 3 ; i++) {
+      FunctionSelectTable<T>::idims[i] = 0;
     }
 
-    // Read input dimensions
-    for (size_t i = 0; i < nDim ; i++) {
-      FunctionSelectTable<T>::idims[i] = va_arg(args,size_t);
+    auto pred = [&](const FunctionInfo<T>& item) {
+      return item.rw == pSel;
+    };
+
+#ifdef __GNUG__
+    auto it = std::find_if(std::begin(FunctionSelectTable<T>::Info),
+                           std::end(FunctionSelectTable<T>::Info), pred);
+    if (it != std::end(FunctionSelectTable<T>::Info))
+#else
+    auto it = std::find_if(FunctionSelectTable<T>::Info,
+                           FunctionSelectTable<T>::Info + 22, pred);
+    if (it != (FunctionSelectTable<T>::Info + 22))
+#endif
+    {
+
+#ifdef __GNUG__
+      // Index for parameters
+      int fsel = (int)std::distance(std::begin(FunctionSelectTable<T>::Info), it);
+#else
+      int fsel = (int)std::distance(FunctionSelectTable<T>::Info, it);
+#endif
+      // Verify correct number of dimensions
+      if ((FunctionSelectTable<T>::Info[fsel].nDims != nDim) || (nDim > 3)) {
+        // How to set empty array
+        printf("Wrong dimensions: %zu\n", nDim);
+        retval = -1;
+        return retval;
+      }
+
+      // Read input dimensions
+      for (size_t i = 0; i < nDim ; i++) {
+        FunctionSelectTable<T>::idims[i] = va_arg(args,size_t);
+      }
+
+      // No need to allocate for setting a scalar
+      FunctionArguments<T>::value = *f;
+
+      // Pointer used for inputs of 1, 2 dimensions
+      FunctionArguments<T>::iPtr = f;
+
+      // Check that the parameters are floating point (i.e. T)
+      if (FunctionSelectTable<T>::Info[fsel].type == ScalarType::Float) {
+        FunctionSelectTable<T>::Info[fsel].set_ptr(this);
+        retval = 0;
+      } else {
+        retval = -1;
+      }
     }
 
-    // No need to allocate for setting a scalar
-    FunctionArguments<T>::value = *f;
-
-    // Pointer used for inputs of 1, 2 dimensions
-    FunctionArguments<T>::iPtr = f;
-
-    // Check that the parameters are floating point (i.e. T)
-    if (FunctionSelectTable<T>::Info[fsel].type == ScalarType::Float) {
-      FunctionSelectTable<T>::Info[fsel].set_ptr(this);
-    }
-
-    return 0;
+    return retval;
   }
 
+  // Gives segmentation fault!!!
   template <class T>
-  int Aperture<T>::RwFloatParamGet(int fsel, T** f, size_t nDim, va_list args)
+  int Aperture<T>::RwFloatParamGet(int pSel, T** f, size_t nDim, va_list args)
   {
+    debug_print("nDim: %zu\n", nDim);
+    int retval = 0;
 
-    // Verify correct number of dimensions
-    if ((FunctionSelectTable<T>::Info[fsel].nDims != nDim) || (nDim > 3)) {
-      return -1;
-    }
-
-    // Read pointers for output dimensions
-    for (size_t i = 0; i < nDim ; i++) {
-      FunctionSelectTable<T>::odims[i] = va_arg(args,size_t*);
-    }
-
-    if (FunctionSelectTable<T>::Info[fsel].type == ScalarType::Float) {
-      // Dimensions 1 or 2
-      if (FunctionSelectTable<T>::Info[fsel].nDims > 0) {
-
-        // Call function
-        FunctionSelectTable<T>::Info[fsel].get_ptr(this);
-
-        // Assign output
-        *f = FunctionArguments<T>::ptr;
+    // Reset dimensions and pointers
+    for (size_t i = 0 ; i < 3 ; i++) {
+      if (FunctionSelectTable<T>::odims[i]) {
+        *(FunctionSelectTable<T>::odims[i]) = 0;
       }
-      // Scalars we also allocate (same interface)
-      else {
-        // Update static variables
-        *f = (T*) malloc(sizeof(T));
-        FunctionArguments<T>::ptr = *f;
-        // Call function
-        FunctionSelectTable<T>::Info[fsel].get_ptr(this);
+      FunctionSelectTable<T>::odims[i] = nullptr;
+    }
+    FunctionArguments<T>::ptr = nullptr;
+
+#ifdef __GNUC__
+    auto pred = [&](const FunctionInfo<T>& item) {
+      return item.rw == pSel;
+    };
+
+    auto it = std::find_if(std::begin(FunctionSelectTable<T>::Info),
+                           std::end(FunctionSelectTable<T>::Info), pred);
+
+    if (it != std::end(FunctionSelectTable<T>::Info)) {
+      // Index for parameters
+      int fsel = (int)std::distance(std::begin(FunctionSelectTable<T>::Info), it);
+#else
+    {
+      int fsel = pSel;
+#endif
+
+      // Verify correct number of dimensions
+      if ((FunctionSelectTable<T>::Info[fsel].nDims != nDim) || (nDim > 3)) {
+        *f = NULL;
+        retval = -1;
+        return retval;
+      }
+
+      // Read pointers for output dimensions
+      debug_print("nDim: %zu\n", nDim);
+      for (size_t i = 0; i < nDim ; i++) {
+        FunctionSelectTable<T>::odims[i] = va_arg(args,size_t*);
+      }
+
+      if (FunctionSelectTable<T>::Info[fsel].type == ScalarType::Float) {
+        // Dimensions 1 or 2
+        if (FunctionSelectTable<T>::Info[fsel].nDims > 0) {
+
+          // Call function
+          FunctionSelectTable<T>::Info[fsel].get_ptr(this);
+
+          // Assign output
+          *f = FunctionArguments<T>::ptr;
+
+          debug_print("odims[0]: %zu, odims[1]: %zu, odims[2]: %zu\n",
+                      FunctionSelectTable<T>::odims[0] != nullptr ? *(FunctionSelectTable<T>::odims[0]) : 0,
+                      FunctionSelectTable<T>::odims[1] != nullptr ? *(FunctionSelectTable<T>::odims[1]) : 0,
+                      FunctionSelectTable<T>::odims[2] != nullptr ? *(FunctionSelectTable<T>::odims[2]) : 0);
+
+          // If the function doesn't allocate and returns a view, allocate and copy
+          if (!FunctionSelectTable<T>::Info[fsel].allocates) {
+            // Compute size
+            size_t nData = 1;
+            for (size_t i = 0 ; i < nDim ; i++) {
+              nData *= *(FunctionSelectTable<T>::odims[i]);
+            }
+            // Allocate
+            *f = (T*) malloc(sizeof(T)*nData);
+            // Copy
+            memcpy(*f, FunctionArguments<T>::ptr, nData*sizeof(T));
+          }
+        }
+        // Scalar, we always allocate
+        else {
+
+          // Update static variables
+          *f = (T*) malloc(sizeof(T));
+          FunctionArguments<T>::ptr = *f;
+
+          // Call function
+          FunctionSelectTable<T>::Info[fsel].get_ptr(this);
+        }
       }
     }
 
-    return 0;
+    return retval;
   }
 
   template <class T>
@@ -1517,6 +1848,7 @@ namespace fnm {
     }
   }
 #endif
+
   template <class T>
   void Aperture<T>::FocusUpdateRef()
   {
@@ -1689,7 +2021,7 @@ namespace fnm {
     // TODO: Find better way - agree on content of sysparm or split in two
     sofus::sysparm_t<T> sysparm;
     sysparm.c        = m_sysparm->c;
-    sysparm.fs       = Aperture<T>::fs;
+    sysparm.fs = m_sysparm->fs;
     sysparm.normalize= Aperture<T>::normalize;
     sysparm.att      = m_sysparm->att;
     sysparm.beta     = m_sysparm->beta;
@@ -1733,7 +2065,7 @@ namespace fnm {
     // TODO: Find better way - agree on content of sysparm or split in two
     sofus::sysparm_t<T> sysparm;
     sysparm.c       = m_sysparm->c;
-    sysparm.fs      = Aperture<T>::fs;
+    sysparm.fs = m_sysparm->fs;
     sysparm.normalize=Aperture<T>::normalize;
 
     sysparm.att     = m_sysparm->att;
@@ -1753,7 +2085,7 @@ namespace fnm {
     return tStart;
   }
 
-# ifndef FNM_DOUBLE_SUPPORT
+  //# ifndef FNM_DOUBLE_SUPPORT
   template <class T>
   T Aperture<T>::CalcPwFieldThreaded(const T* pos, const size_t nPositions, const size_t nDim,
                                      T** odata, size_t* nSignals, size_t* nSamples)
@@ -1776,7 +2108,7 @@ namespace fnm {
 
     sofus::sysparm_t<T> sysparm;
     sysparm.c        = m_sysparm->c;
-    sysparm.fs       = Aperture<T>::fs;
+    sysparm.fs = m_sysparm->fs;
     sysparm.normalize= Aperture<T>::normalize;
     sysparm.nthreads = Aperture<T>::nthreads;
 
@@ -1797,7 +2129,7 @@ namespace fnm {
 
     return tStart;
   }
-# endif
+  //# endif
 #endif
 
   template <class T>
@@ -1852,6 +2184,15 @@ namespace fnm {
   }
 
 #if FNM_PULSED_WAVE
+
+  template <class T>
+  T Aperture<T>::CalcTransientSingleElementNoDelay(const T* pos, const size_t nPositions, const size_t nDim,
+      T** odata, size_t* nSignals, size_t* nSamples)
+  {
+    T tstart = fnm::TransientSingleRect<T>(this->m_sysparm, this->m_data, pos, nPositions, odata, nSamples);
+    *nSignals = nPositions;
+    return tstart;
+  }
 
   template <class T>
   T Aperture<T>::CalcFdTransientRef(const T* pos, const size_t nPositions, const size_t nDim,
@@ -2223,13 +2564,14 @@ namespace fnm {
 
 #ifdef FNM_DOUBLE_SUPPORT
   template class Aperture<double>;
-//  template void SysParmDestroy<double>();
-//  template void SysParmInitialize<double>();
 #endif
 
   template class Aperture<float>;
-//template void SysParmDestroy<float>();
-//template void SysParmInitialize<float>();
+
+#ifdef FNM_CLOSURE_FUNCTIONS
+  static_assert(RwParamType::RwParamTypeCount == sizeof(FunctionSelectTable<float>::Info) / sizeof(FunctionInfo<float>),
+                "Update table FunctionSelectTable, when adding new parameters in fnm_types.h");
+#endif
 
 }
 

@@ -69,6 +69,29 @@ endif()
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
 
+# TODO: Use this everywhere
+if (UNIX)
+  set(CMAKE_CXX_FLAGS "-std=c++11 -pedantic -Wall ${CMAKE_CXX_FLAGS}")  
+  if (ENABLE_SSE2)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2")
+  endif()
+  if (ENABLE_SSE3)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3")
+  endif()
+  if (ENABLE_SSE4)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4 -msse4.1")
+  endif()
+  if (ENABLE_AVX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx")
+  endif()
+  if (ENABLE_FMA)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfma")
+  endif()
+  if (ENABLE_AVX2)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
+  endif()
+endif()
+
 find_package(FFTW REQUIRED)
 include_directories(${FFTW_INCLUDES})
 
@@ -79,12 +102,16 @@ set(fnm_HEADERS
   fnm_calc.hpp
   fnm_data.hpp
   fnm_arrays.hpp
+  circular_data.hpp
+  circular_calc.hpp
+  circular.hpp
 )
 
 set(fnm_PUBLIC_HEADERS
   "${CMAKE_CURRENT_BINARY_DIR}/fnm_export.h"
   "${CMAKE_CURRENT_BINARY_DIR}/config.h"
   fnm.hpp
+  if_fnm.h
 )
 
 set(fnm_SOURCES
@@ -94,7 +121,14 @@ set(fnm_SOURCES
   fnm_calc.cpp
   fnm.cpp
   fnm_arrays.cpp
+  if_fnm.cpp
+  circular.cpp
+  circular_data.cpp
+  circular_calc.cpp
 )
+
+set(fnm_HEADERS "${fnm_HEADERS}" "fnm_transient.hpp")
+set(fnm_SOURCES "${fnm_SOURCES}" "fnm_transient.cpp")
 
 if (UNIX AND NOT WIN32)
   set(fnm_HEADERS "${fnm_HEADERS}" "../sps/strace.hpp")

@@ -134,6 +134,7 @@ namespace fnm {
     static T(*const TemporalBasisFunction[nTerms])(T, T, T);
   };
 
+#ifdef FNM_PULSED_WAVE
   template <class T>
   T TransientSingleRect(const sysparm_t<T>* sysparm,
                         const ApertureData<T>* data,
@@ -145,6 +146,7 @@ namespace fnm {
                        const ApertureData<T>* data,
                        const T* pos, const size_t nPositions, const size_t nDim,
                        T** odata, size_t* nSignals, size_t* nSamples);
+#endif
 }
 
 /* Local variables: */

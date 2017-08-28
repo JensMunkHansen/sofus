@@ -54,7 +54,7 @@ namespace fnm {
                    const T rowKerf,
                    const T colWidth,
                    const T colKerf,
-                   sps::deleted_aligned_multi_array<sps::element_t<T>, 2> &&elements);
+                   sps::deleted_aligned_multi_array<sps::element_rect_t<T>, 2> &&elements);
 
 
   /**
@@ -79,7 +79,7 @@ namespace fnm {
                           const T height,
                           const T eFocus,
                           const int arcPlacement,
-                          sps::deleted_aligned_multi_array<sps::element_t<T>, 2> &&elements);
+                          sps::deleted_aligned_multi_array<sps::element_rect_t<T>, 2> &&elements);
 
   /**
    * Compute focused convex array
@@ -107,7 +107,7 @@ namespace fnm {
                           const T radius,
                           const T eFocus,
                           const int arcPlacement,
-                          sps::deleted_aligned_multi_array<sps::element_t<T>, 2> &&elements);
+                          sps::deleted_aligned_multi_array<sps::element_rect_t<T>, 2> &&elements);
 
 }
 /* Local variables: */

@@ -65,7 +65,7 @@ STATIC_INLINE_BEGIN std::complex<T> CalcHzVecGL(const T& s,
  * @return
  */template <class T>
 STATIC_INLINE_BEGIN
-std::complex<T> CalcHzAll(const sps::element_t<T>& element,
+std::complex<T> CalcHzAll(const sps::element_rect_t<T>& element,
                           const sps::point_t<T>& projection,
                           const T& k,
                           const T* us,
@@ -93,7 +93,7 @@ std::complex<T> CalcHzAll(const sps::element_t<T>& element,
  */
 template <class T>
 STATIC_INLINE_BEGIN
-std::complex<T> CalcHzFast(const sps::element_t<T> &__restrict element,
+std::complex<T> CalcHzFast(const sps::element_rect_t<T> &__restrict element,
                            const sps::point_t<T> &__restrict projection,
                            const T &__restrict k,
                            const T* __restrict us,
@@ -130,7 +130,7 @@ std::complex<T> CalcFastFourAny2(const T& u,
 
 template <class T>
 STATIC_INLINE_BEGIN
-std::complex<T> CalcFourFast(const sps::element_t<T> &__restrict element,
+std::complex<T> CalcFourFast(const sps::element_rect_t<T> &__restrict element,
                              const sps::point_t<T> &__restrict projection,
                              const T &__restrict k,
                              const T* __restrict uvs,
@@ -139,7 +139,7 @@ std::complex<T> CalcFourFast(const sps::element_t<T> &__restrict element,
 
 template <class T>
 STATIC_INLINE_BEGIN
-std::complex<T> CalcHzFastSingle(const sps::element_t<T>& element,
+std::complex<T> CalcHzFastSingle(const sps::element_rect_t<T>& element,
                                  const sps::point_t<T>& projection,
                                  const T& k,
                                  const T* us,
@@ -261,7 +261,7 @@ inline CalcHzVecGL(const float& s,
 
 template <>
 std::complex<float>
-inline CalcHzAll(const sps::element_t<float>& element,
+inline CalcHzAll(const sps::element_rect_t<float>& element,
                  const sps::point_t<float>& projection, // Consider 4 points
                  const float& k,
                  const float* us,
@@ -407,7 +407,7 @@ inline CalcHzAll(const sps::element_t<float>& element,
 
 template <>
 std::complex<float>
-inline CalcHzFastSingle(const sps::element_t<float>& element,
+inline CalcHzFastSingle(const sps::element_rect_t<float>& element,
                         const sps::point_t<float>& projection,
                         const float& k,
                         const float* us,
@@ -424,7 +424,7 @@ inline CalcHzFastSingle(const sps::element_t<float>& element,
 
 template <>
 std::complex<double>
-inline CalcHzFastSingle(const sps::element_t<double>& element,
+inline CalcHzFastSingle(const sps::element_rect_t<double>& element,
                         const sps::point_t<double>& projection,
                         const double& k,
                         const double* us,
@@ -458,7 +458,7 @@ inline CalcHzVecGL(const double& s,
 
 template <>
 std::complex<double>
-inline CalcHzAll(const sps::element_t<double>& element,
+inline CalcHzAll(const sps::element_rect_t<double>& element,
                  const sps::point_t<double>& projection,
                  const double& k,
                  const double* us,

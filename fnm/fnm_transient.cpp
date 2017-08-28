@@ -19,8 +19,6 @@
 #include <fnm/fnm_data.hpp>
 #include <fnm/fnm.hpp>            // Aperture<T>::fs
 #include <fnm/fnm_common.hpp>
-#include <sofus/sofus_calc.hpp>   // CalcBoxTimes
-#include <sofus/rect_int_limits.hpp>
 
 #include <sps/debug.h>
 
@@ -58,7 +56,8 @@ namespace fnm {
     HanningWeightedPulse<T>::tbf5
   };
 
-  // TODO: Implement this
+#ifdef FNM_PULSED_WAVE
+  
   template <class T>
   T TransientSingleRect(const sysparm_t<T>* sysparm,
                         const ApertureData<T>* data,
@@ -612,24 +611,29 @@ namespace fnm {
 
     return 0;
   }
+#endif
 
+  template struct ToneBurst<float>;
 
+#ifdef FNM_PULSED_WAVE
   template float
   FNM_EXPORT CalcFdTransientRef(const fnm::sysparm_t<float>* sysparm,
                                 const ApertureData<float>* data,
                                 const float* pos, const size_t nPositions, const size_t nDim,
                                 float** odata, size_t* nSignals, size_t* nSamples);
-
-  template struct ToneBurst<float>;
-
+  
   template float TransientSingleRect(const sysparm_t<float>* sysparm,
                                      const ApertureData<float>* data,
                                      const float* pos, const size_t nPositions,
                                      float** odata, size_t* nSamples);
+#endif
+
+
 
 #if FNM_DOUBLE_SUPPORT
   template struct ToneBurst<double>;
 
+#ifdef FNM_PULSED_WAVE
   template double
   FNM_EXPORT CalcFdTransientRef(const fnm::sysparm_t<double>* sysparm,
                                 const ApertureData<double>* data,
@@ -640,7 +644,7 @@ namespace fnm {
                                       const ApertureData<double>* data,
                                       const double* pos, const size_t nPositions,
                                       double** odata, size_t* nSamples);
-
+#endif
 
 #endif
 }

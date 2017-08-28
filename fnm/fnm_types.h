@@ -28,6 +28,7 @@
 #pragma once
 
 #include <fnm/fnm_export.h>
+#include <fnm/config.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -60,13 +61,17 @@ struct FNM_EXPORT RwParamTypeNS {
     Elements           = 0x0D,
     SubElements        = 0x0E,
     Apodization        = 0x0F,
-    Fs                 = 0x10,
-    Normalize          = 0x11,
-    Excitation         = 0x12,
-    Impulse            = 0x13,
-    NDivW              = 0x14,
-    NDivH              = 0x15,
+    NDivW              = 0x10,
+    NDivH              = 0x11,
+#if FNM_PULSED_WAVE
+    Fs                 = 0x12,
+    Normalize          = 0x13,
+    Excitation         = 0x14,
+    Impulse            = 0x15,
     RwParamTypeCount   = 0x16,
+#else
+    RwParamTypeCount   = 0x12,
+#endif
   } _RwParamType_Value;
 };
 
@@ -79,6 +84,15 @@ struct FNM_EXPORT FNM_TypeNS {
     Struct         = 0x04,
     TypeValueCount = 0x05,
   } _Type_Value;
+};
+
+struct FNM_EXPORT FNM_ApodizationTypeNS {
+  enum ApodizationType_Value {
+    ApodizationTypeNonParametric = 0x00, ///< Specify element-wise apodization
+    ApodizationTypeRectangular   = 0x01, ///< Rectangular window using an f-number
+    ApodizationTypeHamming       = 0x02,
+    ApodizationTypeCount         = 0x03, ///< Unused
+  } _ApodizationType_Value;
 };
 
 #ifdef __cplusplus

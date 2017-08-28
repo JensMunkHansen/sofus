@@ -11,6 +11,9 @@
 
 #include <sps/cenv.h>
 
+#include <memory>
+#include <type_traits>
+
 /*
   TODO: Consider using sps::align<32> and/or renaming base_align16 to
   sps_base_align16 and move it to a C header
@@ -139,52 +142,52 @@ namespace sps {
       typedef T** pointer;
       typedef const T** const_pointer;
 
-      deleted_aligned_multi_array() : m_data(), m(0), n(0) {}
+      deleted_aligned_multi_array() : m_data(), m_m(0), m_n(0) {}
 
       deleted_aligned_multi_array(size_t m, size_t n) :
         m_data(new T*[m](),
                [](T** x) {
 # ifndef _DEBUG
-                 // TODO: Check using sps::msize(x[0])
-                 if (sps::msize(x) > sizeof(intptr_t))
+                 // TODO: Check using msize(x[0])
+                 if (msize(x) > sizeof(intptr_t))
                  {
                    _mm_free(&(x[0][0]));
                  }
 # else
-                 if (sps::msize(x) > 0)
+                 if (msize(x) > 0)
                  {
                    _mm_free(&(x[0][0]));
                  }
 # endif
-                 delete[] x;}), m(m), n(n) {
+                 delete[] x;}), m_m(m), m_n(n) {
         // Allocate
-        if (m*n > 0) {
+        if (m_m*m_n > 0) {
           // 32-byte aligned to allow 4-vectors of doubles
-          m_data.get()[0] = (T*) _mm_malloc(m*n*sizeof(T),32);
+          m_data.get()[0] = (T*) _mm_malloc(m_m*m_n*sizeof(T),32);
           
           // Row pointers. First pointer may screw up de-allocation.
-          for (size_t iRow = 1; iRow < m; iRow++) {
-            (m_data.get())[iRow] = &(m_data.get()[0][iRow*n]);
+          for (size_t iRow = 1; iRow < m_m; iRow++) {
+            (m_data.get())[iRow] = &(m_data.get()[0][iRow*m_n]);
           }
         }
       }
       
       deleted_aligned_multi_array(deleted_aligned_multi_array&& other) :
-        m_data(std::move(other.m_data)), m(other.m), n(other.n) {}
+        m_data(std::move(other.m_data)), m_m(other.m_m), m_n(other.m_n) {}
       
       // Dangerous
       deleted_aligned_multi_array& operator=( deleted_aligned_multi_array&& other ) 
       {
         if (this != &other) {
           m_data = std::move( other.m_data );
-          m    = other.m;
-          n    = other.n;
+          m_m    = other.m_m;
+          m_n    = other.m_n;
         }
         return *this;
       }
       
       T& operator()(size_t i, size_t j) {
-        return this->m_data.get()[0][i*n + j];
+        return this->m_data.get()[0][i*m_n + j];
       }
       
       T* operator[](size_t m) {
@@ -217,9 +220,12 @@ namespace sps {
 
       deleted_unique_array m_data;  ///<Data
     public:
-      size_t m; ///<Number of rows
-      size_t n; ///<Number of columns
+      size_t m_m; ///<Number of rows
+      size_t m_n; ///<Number of columns
     };
+
+    // Temporarily disable this
+#if 1
 
     // Work-around to partially specialize a function (multiple dimensions)
     template <class T, size_t I>
@@ -228,6 +234,7 @@ namespace sps {
     {
       return deleted_aligned_multi_array<T,2>(m,n);
     }
+#endif
   }
 }
 

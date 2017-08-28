@@ -27,7 +27,7 @@
 
 #pragma once
 
-#include <fnm_data.hpp>
+#include <fnm/fnm_data.hpp>
 #include <sps/stdlib.h>
 #include <sps/progress.hpp>
 #include <complex>
@@ -140,6 +140,7 @@ namespace fnm {
    * @param pos           Positions
    * @param nPositions    # of positions
    * @param odata         complex output
+   * @param pBar          progress bar
    * @return error code
    */
 #ifdef USE_PROGRESS_BAR
@@ -232,6 +233,7 @@ namespace fnm {
    * @param pos
    * @param nPositions
    * @param odata
+   * @param pbar
    *
    * @return
    */

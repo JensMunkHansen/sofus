@@ -37,6 +37,9 @@ namespace fnm {
     /// Speed of sound
     T c;
 
+    /// Sample frequency    
+    T fs;           
+
     /// Frequency dependent attenuation
     T att;
 
@@ -57,7 +60,13 @@ namespace fnm {
     /// Number of height abcissas
     size_t nDivH;
 
-    /// Width of Hanning pulse
+    /// Number of angular abcissas
+    size_t nDivA;
+    
+    /// Maximum number of angular sectors
+    size_t nMaxSectors;
+
+    /// Width of Hanning-weighted sinusoid pulse
     T w;
     ///@}
 
@@ -80,6 +89,8 @@ namespace fnm {
 
   typedef FNM_FocusingTypeNS::FocusingType_Value FocusingType;
 
+  typedef FNM_ApodizationTypeNS::ApodizationType_Value ApodizationType;
+  
   typedef RwParamTypeNS::RwParamType_Value RwParamType;
 
   typedef FNM_TypeNS::Type_Value ScalarType;

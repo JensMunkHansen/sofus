@@ -37,7 +37,7 @@
 
 template <>
 std::complex<float>
-inline CalcHzFast(const sps::element_t<float> &__restrict element,
+inline CalcHzFast(const sps::element_rect_t<float> &__restrict element,
                   const sps::point_t<float> &__restrict projection,
                   const float &__restrict k,
                   const float* __restrict us,
@@ -588,7 +588,7 @@ inline CalcFastFourAny2(const float& u,
 // TODO: Call CalcFastFourAny2 twice
 template <>
 std::complex<float>
-inline CalcFourFast(const sps::element_t<float> &__restrict element,
+inline CalcFourFast(const sps::element_rect_t<float> &__restrict element,
                     const sps::point_t<float> &__restrict projection,
                     const float &__restrict k,
                     const float* __restrict uvs,

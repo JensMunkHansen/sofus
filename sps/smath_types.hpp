@@ -63,21 +63,40 @@ namespace sps {
    */
 #ifdef _MSC_VER
   template <typename T>
-  struct SPS_EXPORT point_t : public std::aligned_array<T,4> {};
+  struct SPS_EXPORT point_t : public std::aligned_array<T,4>
 #else
+  // Must be 32-byte aligned for double.
   template <typename T>
-  // Must be 32-byte aligned for double. TODO: Make alignment depend on T
-#if 1 /* DOUBLE SUPPORT */
-struct __attribute__((aligned(4*sizeof(T)))) SPS_EXPORT point_t : public std::array<T,4> {
-#else
-struct __attribute__((aligned(16))) SPS_EXPORT point_t : public std::array<T,4> {
+struct __attribute__((aligned(4*sizeof(T)))) SPS_EXPORT point_t : public std::array<T,4>
 #endif
-    point_t()
   {
-    (*this)[0] = (*this)[1] = (*this)[2] = (*this)[3] = T(0.0);
-  }
+    static const point_t xaxis;
+    static const point_t yaxis;
+    static const point_t zaxis;
+    point_t() = default;
+    // Neede for initialization of constant vectors
+    point_t(const T& a, const T& b, const T&c)
+    {
+      (*this)[0] = a;
+      (*this)[1] = b;
+      (*this)[2] = c;
+    }
   };
-#endif
+
+  template <typename T>
+  const point_t<T> point_t<T>::xaxis = point_t<T>(T(1.0),T(0.0),T(0.0));
+
+  template <typename T>
+  const point_t<T> point_t<T>::yaxis = point_t<T>(T(0.0),T(1.0),T(0.0));
+
+  template <typename T>
+  const point_t<T> point_t<T>::zaxis = point_t<T>(T(0.0),T(0.0),T(1.0));
+
+  /*! \brief Vector aliased as point
+   *
+   */
+  template <typename T>
+  using vector_t = point_t<T>;
 
   /*! \brief Rectangle
    *
@@ -89,9 +108,8 @@ struct __attribute__((aligned(16))) SPS_EXPORT point_t : public std::array<T,4> 
   struct SPS_EXPORT rect_t : public std::aligned_array<point_t<T> ,4> {};
 #else
   template <typename T>
-  struct rect_t : public std::array<point_t<T> ,4> {};
+struct __attribute__((aligned(4*sizeof(T)))) SPS_EXPORT rect_t : public std::array<point_t<T> ,4> {};
 #endif
-
 
   /*! \brief Bounding box
    *
@@ -124,6 +142,13 @@ struct __attribute__((aligned(16))) SPS_EXPORT point_t : public std::array<T,4> 
     T dummy;
   };
 
+  template <typename T>
+  struct SPS_EXPORT circle_t : sps::aligned<4*sizeof(T)> {
+    sps::point_t<T> center; ///< Center position
+    sps::euler_t<T> euler;  ///< Euler angles
+    T radius;               ///< Radius
+  };
+
   /*! \brief Element representation
    *
    *  The element representation is used no matter if the
@@ -135,14 +160,14 @@ struct __attribute__((aligned(16))) SPS_EXPORT point_t : public std::array<T,4> 
 #if defined(_WIN32)
 # if 0 /* DOUBLE SUPPORT */
   template <typename T>
-  struct SPS_EXPORT element_t : sps::win32::base_align32
+  struct SPS_EXPORT element_rect_t : sps::win32::base_align32
 # else
   template <typename T>
-  struct SPS_EXPORT element_t : sps::win32::base_align16
+  struct SPS_EXPORT element_rect_t : sps::win32::base_align16
 # endif
 #else
   template <typename T>
-  struct SPS_EXPORT __attribute__((aligned(4*sizeof(T)))) element_t
+  struct SPS_EXPORT __attribute__((aligned(4*sizeof(T)))) element_rect_t
 #endif
   {
 
@@ -173,6 +198,26 @@ struct __attribute__((aligned(16))) SPS_EXPORT point_t : public std::array<T,4> 
 
     ///@}
   };
+
+  template <typename T>
+  struct SPS_EXPORT element_circular_t : sps::aligned<4*sizeof(T)> {
+    sps::circle_t<T> circle; // Circular element
+
+    /** @name Cached variables
+     *
+     */
+    ///@{
+
+    /// Normal vector
+    ALIGN16_BEGIN T normal[4] ALIGN16_END;
+    /// First basis vector
+    ALIGN16_BEGIN T uvector[4] ALIGN16_END;
+    /// Second basis vector
+    ALIGN16_BEGIN T vvector[4] ALIGN16_END;
+    ///@}
+  };
+
+
 #ifdef _MSC_VER
   template struct SPS_EXPORT bbox_t<float>;
   template struct SPS_EXPORT bbox_t<double>;

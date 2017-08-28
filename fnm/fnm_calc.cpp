@@ -137,7 +137,7 @@ namespace fnm {
     const size_t nSubElements = m_data->m_nsubelements;
 
     size_t _nElements, _nSubElements;
-    const sps::element_t<T>** elements = NULL;
+    const sps::element_rect_t<T>** elements = NULL;
     m_data->ElementsRefGet(&_nElements, &_nSubElements, elements);
 
     const T* apodizations = m_data->m_apodizations.get();
@@ -239,6 +239,7 @@ namespace fnm {
             // Any works for all nDivH, nDivW. Any2 works for nDivH/nDivW even
 
             // TODO: Make CalcFastFour call these two and use GLQuad2D
+            //       Make CalcCwFourRef match this
             result = CalcFastFourAny2<T>(projection[0],
                                          projection[1],
                                          element.hw,
@@ -588,7 +589,7 @@ namespace fnm {
 
     // const auto& elements = data.m_elements;
     size_t _nElements, _nSubElements;
-    const sps::element_t<T>** elements = NULL;
+    const sps::element_rect_t<T>** elements = NULL;
     data.ElementsRefGet(&_nElements, &_nSubElements, elements);
 
     for (size_t iPoint = 0 ; iPoint < nPositions ; iPoint++) {
@@ -607,7 +608,7 @@ namespace fnm {
 
           for (size_t jElement = 0 ; jElement < nSubElements ; jElement++) {
 
-            const sps::element_t<T>& element = elements[iElement][jElement];
+            const sps::element_rect_t<T>& element = elements[iElement][jElement];
 
             // Get basis vectors (can be stored)
             sps::point_t<T> hh_dir, hw_dir, normal;
@@ -676,6 +677,8 @@ namespace fnm {
   {
     SPS_UNREFERENCED_PARAMETER(pBar);
 
+    ProfilerStart();
+
     int retval = 0;
 
     const T lambda = sysparm->c / data->m_f0;
@@ -710,9 +713,9 @@ namespace fnm {
     threadarg.cpu_id      = 0;
 
 # ifdef _WIN32
-    retval                = (unsigned int)CalcCwThreaded((void*)&threadarg);
+    retval                = (unsigned int)CalcCwThreadFunc((void*)&threadarg);
 # else
-    void* thread_retval   = CalcCwThreaded((void*)&threadarg);
+    void* thread_retval   = CalcCwThreadFunc((void*)&threadarg);
     SPS_UNREFERENCED_PARAMETER(thread_retval);
 # endif
 #else
@@ -818,6 +821,8 @@ namespace fnm {
 
     delete progressQueue;
 
+    ProfilerStop();
+
     // Without message queues we destroy attributes
 #  if defined(HAVE_PTHREAD_H)
     CallErr(pthread_attr_destroy,(&attr));
@@ -854,7 +859,7 @@ namespace fnm {
     const size_t nSubElements = data->m_nsubelements;
 
     size_t _nElements, _nSubElements;
-    const sps::element_t<T>** elements = NULL;
+    const sps::element_rect_t<T>** elements = NULL;
     data->ElementsRefGet(&_nElements, &_nSubElements, elements);
 
     const T* apodizations = data->m_apodizations.get();
@@ -880,7 +885,7 @@ namespace fnm {
 
           for (size_t jElement = 0 ; jElement < data->m_nsubelements ; jElement++) {
 
-            const sps::element_t<T>& element = elements[iElement][jElement];
+            const sps::element_rect_t<T>& element = elements[iElement][jElement];
 
             // Get basis vectors (can be stored - are they initialized)
             sps::point_t<T> hh_dir = sps::point_t<T>();
@@ -1019,7 +1024,7 @@ namespace fnm {
     const size_t nSubElements = data->m_nsubelements;
 
     size_t _nElements, _nSubElements;
-    const sps::element_t<T>** elements = NULL;
+    const sps::element_rect_t<T>** elements = NULL;
     data->ElementsRefGet(&_nElements, &_nSubElements, elements);
 
     const T* apodizations = data->m_apodizations.get();
@@ -1052,7 +1057,7 @@ namespace fnm {
 
           for (size_t jElement = 0 ; jElement < data->m_nsubelements ; jElement++) {
 
-            const sps::element_t<T>& element = elements[iElement][jElement];
+            const sps::element_rect_t<T>& element = elements[iElement][jElement];
 
             // Get basis vectors (can be stored - are they initialized)
             sps::point_t<T> hh_dir = sps::point_t<T>();
@@ -1089,14 +1094,14 @@ namespace fnm {
               tmp = CALC_SELECT<T>(fabs(u),            fabs(u)+element.hw, s, z, k, uxs.get(),uweights.get(),nDivW);
               debug_print("int_u: %f %f\n",tmp.real(),tmp.imag());
               field1 += tmp;
-              tmp = CALC_SELECT<T>(fabs(u)-element.hw, fabs(u)           , s, z, k, uxs.get(),uweights.get(),nDivW);
+              tmp = CALC_SELECT<T>(fabs(u)-element.hw, fabs(u), s, z, k, uxs.get(),uweights.get(),nDivW);
               debug_print("int_u: %f %f\n",tmp.real(),tmp.imag());
               field1 += tmp;
               s = element.hh - fabs(v);
               tmp = CALC_SELECT<T>(fabs(u),            fabs(u)+element.hw, s, z, k, uxs.get(),uweights.get(),nDivW);
               debug_print("int_u: %f %f\n",tmp.real(),tmp.imag());
               field1 += tmp;
-              tmp = CALC_SELECT<T>(fabs(u)-element.hw, fabs(u)           , s, z, k, uxs.get(),uweights.get(),nDivW);
+              tmp = CALC_SELECT<T>(fabs(u)-element.hw, fabs(u), s, z, k, uxs.get(),uweights.get(),nDivW);
               debug_print("int_u: %f %f\n",tmp.real(),tmp.imag());
               field1 += tmp;
             } else {
@@ -1123,14 +1128,14 @@ namespace fnm {
             if (fabs(v) > element.hh) {
               debug_print("outside\n");
               // Outside
-              tmp = CALC_SELECT<T>(fabs(v)-element.hh, fabs(v)           , s, z, k, vxs.get(),vweights.get(),nDivH);
+              tmp = CALC_SELECT<T>(fabs(v)-element.hh, fabs(v), s, z, k, vxs.get(),vweights.get(),nDivH);
               field1 += tmp;
               debug_print("int_v: %f %f\n",tmp.real(),tmp.imag());
               tmp = CALC_SELECT<T>(fabs(v),            fabs(v)+element.hh, s, z, k, vxs.get(),vweights.get(),nDivH);
               field1 += tmp;
               debug_print("int_v: %f %f\n",tmp.real(),tmp.imag());
               s = element.hw - fabs(u);
-              tmp = CALC_SELECT<T>(fabs(v)-element.hh, fabs(v)           , s, z, k, vxs.get(),vweights.get(),nDivH);
+              tmp = CALC_SELECT<T>(fabs(v)-element.hh, fabs(v), s, z, k, vxs.get(),vweights.get(),nDivH);
               debug_print("int_v: %f %f\n",tmp.real(),tmp.imag());
               field1 += tmp;
               tmp = CALC_SELECT<T>(fabs(v),            fabs(v)+element.hh, s, z, k, vxs.get(),vweights.get(),nDivH);
@@ -1237,9 +1242,9 @@ namespace fnm {
     CalcWeightsAndAbcissae(sysparm, std::move(uxs), std::move(uweights),
                            std::move(vxs), std::move(vweights));
 
-    // sps::deleted_aligned_multi_array<sps::element_t<T>,2>& elements = data.m_elements;
+    // sps::deleted_aligned_multi_array<sps::element_rect_t<T>,2>& elements = data.m_elements;
     size_t _nElements, _nSubElements;
-    const sps::element_t<T>** elements = NULL;
+    const sps::element_rect_t<T>** elements = NULL;
     data.ElementsRefGet(&_nElements, &_nSubElements, elements);
 
     sps::point_t<T> projection;
@@ -1265,7 +1270,7 @@ namespace fnm {
 
           for (size_t jElement = 0 ; jElement < nSubElements ; jElement++) {
 
-            const sps::element_t<T>& element = elements[iElement][jElement];
+            const sps::element_rect_t<T>& element = elements[iElement][jElement];
 
             std::complex<T> result;
 
@@ -1333,7 +1338,7 @@ namespace fnm {
 
     //const auto& elements = data.m_elements;
     size_t _nElements, _nSubElements;
-    const sps::element_t<T>** elements = NULL;
+    const sps::element_rect_t<T>** elements = NULL;
     data.ElementsRefGet(&_nElements, &_nSubElements, elements);
 
     for (size_t iPoint = 0 ; iPoint < nPositions ; iPoint++) {
@@ -1352,7 +1357,7 @@ namespace fnm {
         // Average over sub-elements
         for (size_t jElement = 0 ; jElement < nSubElements ; jElement++) {
 
-          const sps::element_t<T>& element = elements[iElement][jElement];
+          const sps::element_rect_t<T>& element = elements[iElement][jElement];
 
           // Get basis vectors (can be stored)
           sps::point_t<T> hh_dir, hw_dir, normal;
@@ -1379,14 +1384,14 @@ namespace fnm {
             tmp = CalcSingle<T>(fabs(u),            fabs(u)+element.hw, s, z, k, uxs.get(),uweights.get(),nDivW);
             debug_print("int_u: %f %f\n",tmp.real(),tmp.imag());
             final += tmp;
-            tmp = CalcSingle<T>(fabs(u)-element.hw, fabs(u)           , s, z, k, uxs.get(),uweights.get(),nDivW);
+            tmp = CalcSingle<T>(fabs(u)-element.hw, fabs(u), s, z, k, uxs.get(),uweights.get(),nDivW);
             debug_print("int_u: %f %f\n",tmp.real(),tmp.imag());
             final += tmp;
             s = element.hh - fabs(v);
             tmp = CalcSingle<T>(fabs(u),            fabs(u)+element.hw, s, z, k, uxs.get(),uweights.get(),nDivW);
             debug_print("int_u: %f %f\n",tmp.real(),tmp.imag());
             final += tmp;
-            tmp = CalcSingle<T>(fabs(u)-element.hw, fabs(u)           , s, z, k, uxs.get(),uweights.get(),nDivW);
+            tmp = CalcSingle<T>(fabs(u)-element.hw, fabs(u), s, z, k, uxs.get(),uweights.get(),nDivW);
             debug_print("int_u: %f %f\n",tmp.real(),tmp.imag());
             final += tmp;
           } else {
@@ -1414,14 +1419,14 @@ namespace fnm {
           if (fabs(v) > element.hh) {
             debug_print("outside\n");
             // Outside
-            tmp = CalcSingle<T>(fabs(v)-element.hh, fabs(v)           , s, z, k, vxs.get(),vweights.get(),nDivH);
+            tmp = CalcSingle<T>(fabs(v)-element.hh, fabs(v), s, z, k, vxs.get(),vweights.get(),nDivH);
             final += tmp;
             debug_print("int_v: %f %f\n",tmp.real(),tmp.imag());
             tmp = CalcSingle<T>(fabs(v),            fabs(v)+element.hh, s, z, k, vxs.get(),vweights.get(),nDivH);
             final += tmp;
             debug_print("int_v: %f %f\n",tmp.real(),tmp.imag());
             s = element.hw - fabs(u);
-            tmp = CalcSingle<T>(fabs(v)-element.hh, fabs(v)           , s, z, k, vxs.get(),vweights.get(),nDivH);
+            tmp = CalcSingle<T>(fabs(v)-element.hh, fabs(v), s, z, k, vxs.get(),vweights.get(),nDivH);
             debug_print("int_v: %f %f\n",tmp.real(),tmp.imag());
             final += tmp;
             tmp = CalcSingle<T>(fabs(v),            fabs(v)+element.hh, s, z, k, vxs.get(),vweights.get(),nDivH);
@@ -1497,7 +1502,7 @@ namespace fnm {
                            std::move(vxs),std::move(vweights));
 
     size_t _nElements, _nSubElements;
-    const sps::element_t<T>** elements = NULL;
+    const sps::element_rect_t<T>** elements = NULL;
     data.ElementsRefGet(&_nElements, &_nSubElements, elements);
 
     sps::point_t<T> projection;
@@ -1527,7 +1532,7 @@ namespace fnm {
         // Average over sub-elements
         for (size_t jElement = 0 ; jElement < nSubElements ; jElement++) {
 
-          const sps::element_t<T>& element = elements[iElement][jElement];
+          const sps::element_rect_t<T>& element = elements[iElement][jElement];
 
           std::complex<T> result;
 

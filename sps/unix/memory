@@ -21,6 +21,8 @@
 // For multi_array
 #include <cstdarg>
 
+#include <type_traits>
+
 namespace sps {
   namespace nix {
     template<typename T>
@@ -65,7 +67,7 @@ namespace sps {
        * Default constructor
        * 
        */
-      deleted_aligned_multi_array() : m(0), n(0), data() {}
+      deleted_aligned_multi_array() : m_m(0), m_n(0), data() {}
 
       /** 
        * 
@@ -73,12 +75,12 @@ namespace sps {
        * @param m 
        * @param n 
        */
-      deleted_aligned_multi_array(size_t m, size_t n) : m(m), n(n) {
+      deleted_aligned_multi_array(size_t m, size_t n) : m_m(m), m_n(n) {
         if (m*n > 0) {
           data = deleted_unique_array(new T*[m](),
                                         [&](T** x) {
                                           // Not required, but would be cool to use initializer
-                                          if (sps::msize(x) > 0) {
+                                          if (msize(x) > 0) {
                                             _mm_free(&(x[0][0]));
                                           }
                                           delete[] x;});
@@ -104,7 +106,7 @@ namespace sps {
        * 
        * @param other 
        */
-      deleted_aligned_multi_array(deleted_aligned_multi_array&& other) : m(std::move(other.m)), n(std::move(other.n)), data(std::move(other.data)) { }
+      deleted_aligned_multi_array(deleted_aligned_multi_array&& other) : m_m(std::move(other.m_m)), m_n(std::move(other.m_n)), data(std::move(other.data)) { }
 
       /** 
        * Move assignment
@@ -117,8 +119,8 @@ namespace sps {
       {
         if (this != &other) {
           this->data = std::move( other.data );
-          this->m    = std::move( other.m );
-          this->n    = std::move( other.n );
+          this->m_m    = std::move( other.m_m );
+          this->m_n    = std::move( other.m_n );
         }
         return *this;
       }
@@ -132,29 +134,29 @@ namespace sps {
        * @return reference to element
        */
       T& operator()(size_t i, size_t j) {
-        return this->data.get()[0][i*n + j];
+        return this->data.get()[0][i*m_n + j];
       }
 
       /** 
        * Get row pointer
        * 
-       * @param m 
+       * @param row 
        * 
        * @return 
        */
-      T* operator[](size_t m) {
-        return &(data.get()[m][0]);
+      T* operator[](size_t row) {
+        return &(data.get()[row][0]);
       }
 
       /** 
        * Get const row pointer
        * 
-       * @param m 
+       * @param row
        * 
        * @return 
        */
-      const T* operator[](size_t m) const {
-        return data.get()[m];
+      const T* operator[](size_t row) const {
+        return data.get()[row];
       }
 
       /** 
@@ -199,11 +201,12 @@ namespace sps {
       deleted_aligned_multi_array& operator=( const deleted_aligned_multi_array& a ) = delete;
 
     public:
-      size_t m;                   ///<Number of rows
-      size_t n;                   ///<Number of columns
+      size_t m_m;                   ///<Number of rows
+      size_t m_n;                   ///<Number of columns
       deleted_unique_array data;  ///<Data
     };
-    
+
+#if 1
     // Work-around to partially specialize a function (multiple dimensions)
     template <class T, size_t I>
     inline typename std::enable_if<I==2, deleted_aligned_multi_array<T,2> >::type
@@ -211,6 +214,7 @@ namespace sps {
     {
       return deleted_aligned_multi_array<T,2>(m,n);
     }
+#endif
 
     // If we don't care about contiguous-ness, we can do the following (fix recursive type)
     template <class T, size_t d>
@@ -218,12 +222,13 @@ namespace sps {
     public:
       typedef std::unique_ptr<T[]> ManagedC;
       
+	  // Very bad, may cause infinite memory usage
       multi_array(...) {
         va_list ap;             /* varargs list traverser */
         size_t *d1;             /* dimension list */
         va_start(ap,d);
         d1 = (size_t *) malloc(d*sizeof(size_t));
-        size_t i, j;            /* loop counters */
+        size_t i;               /* loop counters */
         for(i=0; i<d; i++)
           d1[i] = va_arg(ap,size_t);
 

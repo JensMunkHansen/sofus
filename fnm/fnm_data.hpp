@@ -32,9 +32,9 @@
 
 #include <sps/cenv.h>
 #include <sps/memory>
-#include <sps/smath.hpp> // sps::point_t and sps::euler_t, now element_t
+#include <sps/smath.hpp> // sps::point_t and sps::euler_t, now element_rect_t
 
-#include <fnm/fnm_types.hpp> // FocusingType, element_t
+#include <fnm/fnm_types.hpp> // FocusingType, element_rect_t
 
 namespace fnm {
 
@@ -57,7 +57,7 @@ namespace fnm {
 #ifdef _MSC_VER
   public:
 #endif
-    typedef sps::deleted_aligned_multi_array<sps::element_t<T>, 2U> element_array;
+    typedef sps::deleted_aligned_multi_array<sps::element_rect_t<T>, 2U> element_array;
 
     /// Next unique identifier to use
     static size_t nextID;
@@ -107,6 +107,12 @@ namespace fnm {
     /// Focusing Type, Rayleigh or Pythagorean
     int m_focus_type;
 
+    /// Apodization Type, Parametric, Hamming or Gaussian
+    int m_apodization_type;
+
+    /// F-number
+    T m_fnumber;
+    
     //@{  Internal state variables
 
     /// Validity of focus, if equal m_focus_type, phases are valid
@@ -129,6 +135,11 @@ namespace fnm {
     void ElementsSet(element_array &&elements,
                      const size_t& nRows, const size_t& nCols) __restrict; /* pointer is unaliased */
 
+    int ApodizationSet(sps::deleted_aligned_array<T> &&apodization,
+                       const size_t nElements);
+
+    int ApodizationSet(const sps::point_t<T>& direction, const T& depth, const ApodizationType& type);
+    
     /**
      * Get reference to (sub)-elements
      *
@@ -138,7 +149,7 @@ namespace fnm {
      *
      * @return
      */
-    int ElementsRefGet(size_t* nElements, size_t* nSubElements, const sps::element_t<T>**& elements) const;
+    int ElementsRefGet(size_t* nElements, size_t* nSubElements, const sps::element_rect_t<T>**& elements) const;
 
     /**
      * Get reference to apodizations
