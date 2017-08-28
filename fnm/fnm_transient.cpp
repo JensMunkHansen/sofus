@@ -9,74 +9,20 @@
 
 namespace fnm {
 
-  const size_t nTerms = 6;
-
-  template<class T>
-  struct HanningWeightedPulse {
-    static T eval(T t, T W, T f0)
-    {
-      return (fabs(t/W - T(0.5)) < T(0.5)) ?
-             T(0.5)*(T(1.0) - cos(T(M_2PI)*t/W)) * sin(T(M_2PI)*f0*t) : T(0.0);
-    }
-
-    static T sbf0(T tau, T W, T f0)
-    {
-      SPS_UNREFERENCED_PARAMETER(W);
-      return cos(T(M_2PI)*f0*tau);
-    }
-    static T sbf1(T tau, T W, T f0)
-    {
-      SPS_UNREFERENCED_PARAMETER(W);
-      return sin(T(M_2PI)*f0*tau);
-    }
-    static T sbf2(T tau, T W, T f0)
-    {
-      return cos(T(M_2PI)*tau/W)*cos(T(M_2PI)*f0*tau);
-    }
-    static T sbf3(T tau, T W, T f0)
-    {
-      return cos(T(M_2PI)*tau/W)*sin(T(M_2PI)*f0*tau);
-    }
-    static T sbf4(T tau, T W, T f0)
-    {
-      return sin(T(M_2PI)*tau/W)*cos(T(M_2PI)*f0*tau);
-    }
-    static T sbf5(T tau, T W, T f0)
-    {
-      return sin(T(M_2PI)*tau/W)*sin(T(M_2PI)*f0*tau);
-    }
-    static T tbf0(T t, T W, T f0)
-    {
-      SPS_UNREFERENCED_PARAMETER(W);
-      return T(0.5)*sin(T(M_2PI)*f0*t);
-    }
-    static T tbf1(T t, T W, T f0)
-    {
-      SPS_UNREFERENCED_PARAMETER(W);
-      return -T(0.5)*cos(T(M_2PI)*f0*t);
-    }
-    static T tbf2(T t, T W, T f0)
-    {
-      return -T(0.5)*cos(T(M_2PI)*t/W)*sin(T(M_2PI)*f0*t);
-    }
-    static T tbf3(T t, T W, T f0)
-    {
-      return T(0.5)*cos(T(M_2PI)*t/W)*cos(T(M_2PI)*f0*t);
-    }
-    static T tbf4(T t, T W, T f0)
-    {
-      return -T(0.5)*sin(T(M_2PI)*t/W)*sin(T(M_2PI)*f0*t);
-    }
-    static T tbf5(T t, T W, T f0)
-    {
-      return T(0.5)*sin(T(M_2PI)*t/W)*cos(T(M_2PI)*f0*t);
-    }
-    static T(*const SpatialBasisFunction[nTerms])(T,T,T);
-    static T(*const TemporalBasisFunction[nTerms])(T,T,T);
+  template <class T>
+  T (*const ToneBurst<T>::SpatialBasisFunction[ToneBurst<T>::nTerms])(T,T,T) = {
+    ToneBurst<T>::sbf0,
+    ToneBurst<T>::sbf1,
   };
 
   template <class T>
-  T (*const HanningWeightedPulse<T>::SpatialBasisFunction[nTerms])(T,T,T) = {
+  T (*const ToneBurst<T>::TemporalBasisFunction[ToneBurst<T>::nTerms])(T,T,T) = {
+    ToneBurst<T>::tbf0,
+    ToneBurst<T>::tbf1,
+  };
+
+  template <class T>
+  T (*const HanningWeightedPulse<T>::SpatialBasisFunction[HanningWeightedPulse<T>::nTerms])(T,T,T) = {
     HanningWeightedPulse<T>::sbf0,
     HanningWeightedPulse<T>::sbf1,
     HanningWeightedPulse<T>::sbf2,
@@ -86,7 +32,7 @@ namespace fnm {
   };
 
   template <class T>
-  T (*const HanningWeightedPulse<T>::TemporalBasisFunction[nTerms])(T,T,T) = {
+  T (*const HanningWeightedPulse<T>::TemporalBasisFunction[HanningWeightedPulse<T>::nTerms])(T,T,T) = {
     HanningWeightedPulse<T>::tbf0,
     HanningWeightedPulse<T>::tbf1,
     HanningWeightedPulse<T>::tbf2,
@@ -95,27 +41,167 @@ namespace fnm {
     HanningWeightedPulse<T>::tbf5
   };
 
+  // TODO: Implement this
+  template <class T>
+  T TransientSingleRect(const sysparm_t<T>* sysparm,
+                        const ApertureData<T>* data,
+                        const T* pos, const size_t nPositions,
+                        T** odata, size_t* nSamples)
+  {
+    // Reset output
+    *odata = nullptr;
+    *nSamples = 0;
+
+    const T c  = sysparm->c;
+    const T fs = sysparm->fs;
+    const T W  = sysparm->w;
+
+    const T f0 = data->m_f0;
+
+    const T invfs = T(1.0) / fs;
+
+    //const T eps = std::numeric_limits<T>::epsilon();
+
+    sps::bbox_t<T> box;
+    data->ExtentGet(box);
+
+    debug_print("nPositions: %zu\n",nPositions);
+
+    size_t nElements,nSubElements;
+
+    const T* delays;
+    const T* apodizations;
+    const sps::element_rect_t<T>** elementsArray = nullptr;
+
+    data->ApodizationsRefGet(&nElements, apodizations);
+    data->DelaysRefGet(&nElements, delays);
+    data->ElementsRefGet(&nElements, &nSubElements, elementsArray);
+
+    SPS_UNREFERENCED_PARAMETERS(apodizations, delays);
+
+    // TODO: Support more than one element with zero delay
+    const sps::element_rect_t<T>& element = elementsArray[0][0];
+
+    // Simple box surrounding the scatters
+    sps::bbox_t<T> scatter_box = sps::bbox_t<T>();
+    sps::compute_bounding_box3(pos, nPositions, &scatter_box);
+
+    // Box surrounding single element
+    sps::bbox_t<T> element_box = sps::bbox_t<T>();
+    data->ElementExtentGet(0, element_box);
+
+    T distNear;
+    T distFar;
+
+    // Uses the 8 corner points
+    sps::dists_most_distant_and_closest(scatter_box,
+                                        element_box,
+                                        &distNear,
+                                        &distFar);
+
+    T tStart = (distNear / c);
+    T tEnd   = (distFar / c) + W;
+
+    T fSampleSignalStart = fs * tStart;
+
+    int iSampleSignalStart = (int) floor(fSampleSignalStart);
+
+    // Allocate output
+    int _nSamples = (int) ceil(T(2.0) + fs*(tEnd - tStart));
+
+    *odata = (T*) malloc(nPositions*_nSamples*sizeof(T));
+    memset(*odata, 0, nPositions*_nSamples*sizeof(T));
+    *nSamples = _nSamples;
+
+    sofus::sysparm_t<T> timeDomainParm;
+    timeDomainParm.fs = sysparm->fs;
+    timeDomainParm.c  = sysparm->c;
+
+    auto uweights = sps::deleted_aligned_array<T>();
+    auto vweights = sps::deleted_aligned_array<T>();
+    auto uxs      = sps::deleted_aligned_array<T>();
+    auto vxs      = sps::deleted_aligned_array<T>();
+
+    CalcWeightsAndAbcissae(sysparm, std::move(uxs), std::move(uweights),
+                           std::move(vxs),std::move(vweights));
+
+    GLQuad2D<T> uv;
+    uv.u.xs     = uxs.get();
+    uv.u.ws     = uweights.get();
+    uv.u.nx     = sysparm->nDivW;
+    uv.v.xs     = vxs.get();
+    uv.v.ws     = vweights.get();
+    uv.v.nx     = sysparm->nDivH;
+
+    for (size_t iPosition = 0 ; iPosition < nPositions ; iPosition++) {
+      sofus::proj_limit_dist_t<T> pld;
+
+      sps::point_t<T> point;
+      point[0] = pos[iPosition * 3];
+      point[1] = pos[iPosition * 3 + 1];
+      point[2] = pos[iPosition * 3 + 2];
+
+      T delay = T(0.0);
+      sofus::calcProjectionAndLimits(timeDomainParm, elementsArray[0][0],
+                                     point, delay,
+                                     &pld);
+
+      T z = pld.dist2plane;
+
+      int iSampleStart = (int)pld.fSampleStart + 1; // First non-zero value
+
+      int iSampleStop  = (int) (pld.fSampleStop + W*fs) + 1; // Ends with a non-zero value
+
+      T t1;
+
+      // Todo add delay (or subtract t_offset)
+      t1 = z / c; // = tau_2
+
+      // Solve integral using Gauss-Legendre
+      T spatial = FourDirect(element, pld, &uv);
+
+      // Missing factor (rho_0 c a)/pi
+      for (int iSample = iSampleStart ; iSample < iSampleStop ; iSample++) {
+
+        int iSampleSignal = iSample - iSampleSignalStart;
+        T t = invfs * iSample;
+
+        T direct = - ToneBurst<T>::eval(t-t1, W, f0) * spatial; // -v(t-tau_2)
+
+        //TODO: Compute edge terms
+
+        // update output
+        T value = direct;
+        (*odata)[iSampleSignal + iPosition*_nSamples] = value;
+      }
+    }
+
+    return T(0.0);
+  }
+
   template <class T>
   T FourEdge(const sysparm_t<T>* sysparm,
-             const sps::element_t<T>& element,
+             const sps::element_rect_t<T>& element,
              const sofus::proj_limit_dist_t<T>& limit,
              const T& tau,
              const GLQuad2D<T>* uv);
 
   template <class T>
-  T FourDirect(const sps::element_t<T>& element,
+  T FourDirect(const sps::element_rect_t<T>& element,
                const sofus::proj_limit_dist_t<T>& limit,
                const GLQuad2D<T>* uv)
   {
 
     T result = T(0.0);
 
+    // Integration limits
     T uLow  = fabs(limit.u) - element.hw;
     T uHigh = fabs(limit.u) + element.hw;
 
     T vLow  = fabs(limit.v) - element.hh;
     T vHigh = fabs(limit.v) + element.hh;
 
+    // Adjacent edges
     T v[2];
     v[0] = element.hh - fabs(limit.v); // -vLow
     v[1] = element.hh + fabs(limit.v); //  vHigh
@@ -167,7 +253,7 @@ namespace fnm {
 
   template <class T>
   void DirectWave(const sysparm_t<T>* sysparm,
-                  const sps::element_t<T>& element,
+                  const sps::element_rect_t<T>& element,
                   const sofus::proj_limit_dist_t<T>& limit,
                   const T f0,
                   const T delay,
@@ -176,7 +262,7 @@ namespace fnm {
                   sps::msignal1D<T>* output)
   {
     SPS_UNREFERENCED_PARAMETER(delay);
-    const T fs    = Aperture<T>::fs;
+    const T fs    = sysparm->fs;
     const T c     = sysparm->c;
     const T W     = sysparm->w;
     const T _invfs = T(1.0) / fs;
@@ -255,7 +341,7 @@ namespace fnm {
 
   template <class T>
   void EdgeWaves(const sysparm_t<T>* sysparm,
-                 const sps::element_t<T>& element,
+                 const sps::element_rect_t<T>& element,
                  const sofus::proj_limit_dist_t<T>& limit,
                  const T f0,
                  const T delay,
@@ -306,7 +392,7 @@ namespace fnm {
 
   template <class T>
   T FourEdge(const sysparm_t<T>* sysparm,
-             const sps::element_t<T>& element,
+             const sps::element_rect_t<T>& element,
              const sofus::proj_limit_dist_t<T>& limit,
              const T& tau,
              const GLQuad2D<T>* uv)
@@ -338,12 +424,12 @@ namespace fnm {
   {
     SPS_UNREFERENCED_PARAMETERS(nDim);
     const T eps    = std::numeric_limits<T>::epsilon();
-    const T fs     = Aperture<T>::fs;
+    const T fs = sysparm->fs;
     const T _invfs = T(1.0) / fs;
     SPS_UNREFERENCED_PARAMETER(_invfs);
 
     sofus::sysparm_t<T> timeDomainParm;
-    timeDomainParm.fs = Aperture<T>::fs;
+    timeDomainParm.fs = sysparm->fs;
     timeDomainParm.c  = sysparm->c;
 
     // Pulse is 10 samples long
@@ -360,7 +446,7 @@ namespace fnm {
 
     const T* delays;
     const T* apodizations;
-    const sps::element_t<T>** elementsArray = nullptr;
+    const sps::element_rect_t<T>** elementsArray = nullptr;
 
     data->ApodizationsRefGet(&nElements, apodizations);
     data->DelaysRefGet(&nElements, delays);
@@ -445,7 +531,7 @@ namespace fnm {
         SPS_UNREFERENCED_PARAMETERS(apodization, delay);
         if (fabs(apodization) > eps) {
           for (size_t iSubElement = 0 ; iSubElement < nSubElements ; iSubElement++) {
-            const sps::element_t<T>& element = elementsArray[iElement][iSubElement];
+            const sps::element_rect_t<T>& element = elementsArray[iElement][iSubElement];
             const sofus::proj_limit_dist_t<T>& limit = plds[iElement][iSubElement];
             SPS_UNREFERENCED_PARAMETERS(element,limit);
 
@@ -511,14 +597,33 @@ namespace fnm {
   }
 
 
-  template float FNM_EXPORT CalcFdTransientRef(const fnm::sysparm_t<float>* sysparm,
-      const ApertureData<float>* data,
-      const float* pos, const size_t nPositions, const size_t nDim,
-      float** odata, size_t* nSignals, size_t* nSamples);
+  template float
+  FNM_EXPORT CalcFdTransientRef(const fnm::sysparm_t<float>* sysparm,
+                                const ApertureData<float>* data,
+                                const float* pos, const size_t nPositions, const size_t nDim,
+                                float** odata, size_t* nSignals, size_t* nSamples);
+
+  template struct ToneBurst<float>;
+
+  template float TransientSingleRect(const sysparm_t<float>* sysparm,
+                                     const ApertureData<float>* data,
+                                     const float* pos, const size_t nPositions,
+                                     float** odata, size_t* nSamples);
+
 #if FNM_DOUBLE_SUPPORT
-  template double FNM_EXPORT CalcFdTransientRef(const fnm::sysparm_t<double>* sysparm,
-      const ApertureData<double>* data,
-      const double* pos, const size_t nPositions, const size_t nDim,
-      double** odata, size_t* nSignals, size_t* nSamples);
+  template struct ToneBurst<double>;
+
+  template double
+  FNM_EXPORT CalcFdTransientRef(const fnm::sysparm_t<double>* sysparm,
+                                const ApertureData<double>* data,
+                                const double* pos, const size_t nPositions, const size_t nDim,
+                                double** odata, size_t* nSignals, size_t* nSamples);
+
+  template double TransientSingleRect(const sysparm_t<double>* sysparm,
+                                      const ApertureData<double>* data,
+                                      const double* pos, const size_t nPositions,
+                                      double** odata, size_t* nSamples);
+
+
 #endif
 }
