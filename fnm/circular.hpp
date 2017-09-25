@@ -56,6 +56,9 @@ namespace fnm {
      */
     const size_t& NMaxDivAGet() const;
 
+    const T& DensityGet() const;
+    void DensitySet(const T& rho);
+
     void RadiusSet(const T& radius);
     const T& RadiusGet() const;
 
@@ -85,6 +88,10 @@ namespace fnm {
     void FsSet(const T& fs);
 
     const T& FsGet() const;
+
+    void CSet(const T& fs);
+
+    const T& CGet() const;
 
     /**
      * Get width of pulse [s]
@@ -133,6 +140,25 @@ namespace fnm {
     int CalcCwFieldRef(const T* pos, const size_t nPositions, const size_t nDim,
                        std::complex<T>** odata, size_t* nOutPositions);
 
+    /**
+     * Compute transient field at the specified positions. The pulse is a simple
+     * tone-burst specified by setting the length w and center frequency f0.
+     *
+     * auto a = CircularAperture<float>(radius);
+     * a.F0Set(1e6);
+     * a.WSet(nCycles / 1e6)
+     *
+     * a.CalcTransientFieldRef(pPositions, nPositions, 3, ppOutData, pNSignals, pNSamples)
+     *
+     * @param pos
+     * @param nPositions
+     * @param nDim
+     * @param odata
+     * @param nSignals
+     * @param nSamples
+     *
+     * @return
+     */
     T CalcTransientFieldRef(const T* pos, const size_t nPositions, const size_t nDim,
                             T** odata, size_t* nSignals, size_t* nSamples);
 

@@ -15,11 +15,12 @@
 #include <fnm/fnm_types.h>
 
 #include <sps/cenv.h>
-#include <sps/memory>
 
 #if FNM_PULSED_WAVE
 # include <sofus/sofus_types.hpp>
 #endif
+
+#include <cstddef>
 
 namespace fnm {
 
@@ -37,8 +38,8 @@ namespace fnm {
     /// Speed of sound
     T c;
 
-    /// Sample frequency    
-    T fs;           
+    /// Sample frequency
+    T fs;
 
     /// Frequency dependent attenuation
     T att;
@@ -49,6 +50,8 @@ namespace fnm {
     /// Use attenuation
     bool use_att;
 
+    /// Density [kg/m3]
+    T rho;
     /** @name Frequency domain parameters
      *
      */
@@ -62,7 +65,7 @@ namespace fnm {
 
     /// Number of angular abcissas
     size_t nDivA;
-    
+
     /// Maximum number of angular sectors
     size_t nMaxSectors;
 
@@ -90,7 +93,7 @@ namespace fnm {
   typedef FNM_FocusingTypeNS::FocusingType_Value FocusingType;
 
   typedef FNM_ApodizationTypeNS::ApodizationType_Value ApodizationType;
-  
+
   typedef RwParamTypeNS::RwParamType_Value RwParamType;
 
   typedef FNM_TypeNS::Type_Value ScalarType;

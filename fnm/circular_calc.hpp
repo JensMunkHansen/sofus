@@ -34,12 +34,27 @@
 #include <fnm/circular.hpp>
 
 namespace fnm {
-  template <class T>
+#if 0
+  template <class T, template <typename> class A>
   T CalcCircularTransientFieldRef(const fnm::sysparm_t<T>* sysparm,
                                   const fnm::CircularApertureData<T>& data,
                                   const T* pos, const size_t nPositions,
                                   T** odata, size_t* nSamples);
-  template <class T>
+#endif
+
+  /**
+   * Transient field computed. The result is in units of [Pa]. The tone burst used is +/- 1.0 V.
+   *
+   * @param sysparm
+   * @param data
+   * @param pos
+   * @param nPositions
+   * @param odata
+   * @param nSamples
+   *
+   * @return
+   */
+  template <class T, template <typename> class A>
   T CalcCircularTransientFieldRefZeroDelay(const fnm::sysparm_t<T>* sysparm,
       const fnm::CircularApertureData<T>& data,
       const T* pos, const size_t nPositions,

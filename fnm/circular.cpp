@@ -20,6 +20,7 @@
 #include <fnm/circular_calc.hpp>
 #include <fnm/fnm_transient.hpp>
 #include <fnm/fnm.hpp>
+#include <fnm/fnm_basis.hpp>
 
 #include <sps/memory>
 #include <sps/algorithm>
@@ -70,6 +71,30 @@ namespace fnm {
   void CircularAperture<T>::FsSet(const T& fs)
   {
     m_sysparm->fs = fs;
+  }
+
+  template <class T>
+  const T& CircularAperture<T>::CGet() const
+  {
+    return m_sysparm->c;
+  }
+
+  template <class T>
+  void CircularAperture<T>::CSet(const T& c)
+  {
+    m_sysparm->c = c;
+  }
+
+  template <class T>
+  const T& CircularAperture<T>::DensityGet() const
+  {
+    return m_sysparm->rho;
+  }
+
+  template <class T>
+  void CircularAperture<T>::DensitySet(const T& rho)
+  {
+    m_sysparm->rho = rho;
   }
 
   template <class T>
@@ -174,18 +199,19 @@ namespace fnm {
   T CircularAperture<T>::CalcTransientFieldRef(const T* pos, const size_t nPositions, const size_t nDim,
       T** odata, size_t* nSignals, size_t* nSamples)
   {
-    int retval = 0;
+    T retval = T(0.0);
     assert(nDim == 3);
 
     if (nDim != 3) {
       *odata = NULL;
       *nSignals = 0;
       *nSamples = 0;
-      retval = -1;
+      retval = T(-1.0);
       return retval;
     }
 
-    T tStart = CalcCircularTransientFieldRefZeroDelay(this->m_sysparm, *this->m_data,
+    // TODO: Call HanningWeightedPulse is excitation
+    T tStart = CalcCircularTransientFieldRefZeroDelay<T, ToneBurst>(this->m_sysparm, *this->m_data,
                pos, nPositions,
                odata, nSamples);
     *nSignals = nPositions;
@@ -206,7 +232,7 @@ namespace fnm {
       return retval;
     }
 
-    retval = CalcCircularCwFieldRef(this->m_sysparm, *this->m_data, pos, nPositions, odata);
+    retval = CalcCircularCwFieldRef<T>(this->m_sysparm, *this->m_data, pos, nPositions, odata);
     if (retval == 0) {
       *nOutPositions = nPositions;
     } else {

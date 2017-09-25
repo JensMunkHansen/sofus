@@ -108,6 +108,7 @@ set(fnm_HEADERS
   fnm_calc.hpp
   fnm_data.hpp
   fnm_arrays.hpp
+  fnm_basis.hpp
   circular_data.hpp
   circular_calc.hpp
   circular.hpp
@@ -124,6 +125,7 @@ set(fnm_SOURCES
   ../sps/progress.cpp
   fnm_types.cpp
   fnm_data.cpp
+  fnm_basis.cpp
   fnm_calc.cpp
   fnm.cpp
   fnm_arrays.cpp

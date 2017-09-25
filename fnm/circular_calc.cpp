@@ -17,8 +17,7 @@
 
 #include <fnm/circular_data.hpp>
 #include <fnm/circular_calc.hpp>
-
-#include <fnm/fnm_transient.hpp>
+#include <fnm/fnm_basis.hpp> // Basis functions
 
 #include <gl/gl.hpp>
 
@@ -55,7 +54,7 @@ namespace fnm {
     }
   }
 
-  template <class T>
+  template <class T, template <typename> class A>
   T CalcCircularTransientFieldRefZeroDelay(const fnm::sysparm_t<T>* sysparm,
       const fnm::CircularApertureData<T>& data,
       const T* pos, const size_t nPositions,
@@ -118,14 +117,18 @@ namespace fnm {
     sps::deleted_aligned_array<T> aweights;
     sps::deleted_aligned_array<T> axs;
 
-    CalcOneDimensionalWeightsAndAbcissae(nMaxAbcissa,
-                                         s1, s2,
-                                         std::move(axs), std::move(aweights));
+    CalcOneDimensionalWeightsAndAbcissae(nMaxAbcissa, s1, s2, std::move(axs), std::move(aweights));
 
     T fSampleStart, fSampleStop;
+
+    const T rho = T(1000.0); // [kg/m3]
+
+    T scale = rho * c * a / T(M_PI);
+
+    // If we multiply with an additional T(M_PI_2) then it matches the results produced using SOFUS
+    scale *= T(M_PI_2);
+
     for (size_t iPosition = 0; iPosition < nPositions; iPosition++) {
-
-
       sps::point_t<T> point;
       point[0] = pos[iPosition * 3];
       point[1] = pos[iPosition * 3 + 1];
@@ -169,9 +172,10 @@ namespace fnm {
       t3 = sqrt(z2 + SQUARE((r+a))) / c;
 
       // Two terms for tone burst
-      T E[2];
-      E[0] = T(0.0);
-      E[1] = T(0.0);
+      T E[A<T>::nTerms];
+      for (size_t iTerm = 0 ; iTerm < A<T>::nTerms ; iTerm++) {
+        E[iTerm] = T(0.0);
+      }
 
       T psi_1 = T(0.0), psi_2=T(0.0);
 
@@ -181,14 +185,15 @@ namespace fnm {
 
       size_t i_1 = 0, i_2 = 0;
 
-      // TODO: Scale by rho_0 * c * a / pi
+      // Unit is Pa
+
       for (int iSample = iSampleStart ; iSample < iSampleStop ; iSample++) {
 
         bedge = true;
         int iSampleSignal = iSample - iSampleSignalStart;
         T t = invfs * iSample;
 
-        T direct = - ToneBurst<T>::eval(t-t1, W, f0) * spatial; // -v(t-tau_2)
+        T direct = - A<T>::Evaluate(t-t1, W, f0) * spatial; // -v(t-tau_2)
 
         if (t < t2 + W) {
           psi_1 = T(0.0);
@@ -230,8 +235,9 @@ namespace fnm {
             T factor = (r*cos(psi) - a) / sqarg;
 
             T tau = sqrt(std::max<T>(z2 + sqarg,T(0.0))) / c; // tau_1
-            for (size_t iTerm = 0 ; iTerm < 2 ; iTerm++) {
-              E[iTerm] -= (weight * factor * ToneBurst<T>::SpatialBasisFunction[iTerm](tau,W,f0));
+
+            for (size_t iTerm = 0 ; iTerm < A<T>::nTerms ; iTerm++) {
+              E[iTerm] -= (weight * factor * A<T>::SpatialBasisFunction[iTerm](tau,W,f0));
             }
           }
           // Add new psi
@@ -247,17 +253,18 @@ namespace fnm {
             T factor = (r*cos(psi) - a) / sqarg;
 
             T tau = sqrt( std::max<T>(z2+sqarg, T(0.0))) / c; // tau_1
-            for (size_t iTerm = 0 ; iTerm < 2 ; iTerm++) {
-              E[iTerm] += (weight * factor * ToneBurst<T>::SpatialBasisFunction[iTerm](tau,W,f0));
+
+            for (size_t iTerm = 0 ; iTerm < A<T>::nTerms ; iTerm++) {
+              E[iTerm] += (weight * factor * A<T>::SpatialBasisFunction[iTerm](tau,W,f0));
             }
           }
 
-          for (size_t iTerm = 0 ; iTerm < 2 ; iTerm++) {
-            edge += E[iTerm] * ToneBurst<T>::TemporalBasisFunction[iTerm](t,W,f0);
+          for (size_t iTerm = 0 ; iTerm < A<T>::nTerms ; iTerm++) {
+            edge += E[iTerm] * A<T>::TemporalBasisFunction[iTerm](t,W,f0);
           }
         }
 #else
-        // Works but slower than reusing terms
+        // Works but is slower than reusing terms
         T edge = T(0.0);
         E[0] = T(0.0);
         E[1] = T(0.0);
@@ -274,241 +281,16 @@ namespace fnm {
             T factor = (r*cos(psi) - a) / sqarg;
 
             T tau = sqrt( std::max<T>(z2+sqarg, T(0.0))) / c; // tau_1
-            for (size_t iTerm = 0 ; iTerm < 2 ; iTerm++) {
-              E[iTerm] += (weight * factor * ToneBurst<T>::SpatialBasisFunction[iTerm](tau,W,f0));
+            for (size_t iTerm = 0 ; iTerm < A<T>::nTerms ; iTerm++) {
+              E[iTerm] += (weight * factor * A<T>::SpatialBasisFunction[iTerm](tau,W,f0));
             }
           }
-          for (size_t iTerm = 0 ; iTerm < 2 ; iTerm++) {
-            edge += E[iTerm] * ToneBurst<T>::TemporalBasisFunction[iTerm](t,W,f0);
+          for (size_t iTerm = 0 ; iTerm < A<T>::nTerms ; iTerm++) {
+            edge += E[iTerm] * A<T>::TemporalBasisFunction[iTerm](t,W,f0);
           }
         }
 #endif
-        T value = (direct + edge);
-        (*odata)[iSampleSignal + iPosition*_nSamples] = value;
-      }
-    }
-
-    return 0;
-  }
-
-  template <class T>
-  T CalcCircularTransientFieldRef(const fnm::sysparm_t<T>* sysparm,
-                                  const fnm::CircularApertureData<T>& data,
-                                  const T* pos, const size_t nPositions,
-                                  T** odata, size_t* nSamples)
-  {
-    // Reset output
-    *odata = nullptr;
-    *nSamples = 0;
-
-    const T c  = sysparm->c;
-    const T fs = sysparm->fs;
-    const T W  = sysparm->w;
-
-    const T f0 = data.m_f0;
-
-    const T invfs = T(1.0) / fs;
-
-    const T eps = std::numeric_limits<T>::epsilon();
-
-
-    const sps::element_circular_t<T>& element = data.m_element;
-
-    // Simple box surrounding the scatters
-    sps::bbox_t<T> scatter_box = sps::bbox_t<T>();
-    sps::compute_bounding_box3(pos, nPositions, &scatter_box);
-
-    // Box surrounding circular aperture
-    sps::bbox_t<T> circle_box = sps::bbox_t<T>();
-    sps::compute_bounding_box_circle<T>(element.circle, &circle_box);
-
-    T distNear;
-    T distFar;
-    debug_print("scatter_box: %1.4f %1.4f %1.4f %1.4f %1.4f %1.4f\n", scatter_box.min[0], scatter_box.min[1], scatter_box.min[2],
-                scatter_box.max[0], scatter_box.max[1], scatter_box.max[2]);
-    debug_print("circle_box: %1.4f %1.4f %1.4f %1.4f %1.4f %1.4f\n", circle_box.min[0], circle_box.min[1], circle_box.min[2],
-                circle_box.max[0], circle_box.max[1], circle_box.max[2]);
-    dists_most_distant_and_closest(scatter_box, circle_box, &distNear, &distFar);
-
-    // Not really needed
-    T minDelay = data.m_delay;
-    T maxDelay = data.m_delay;
-
-    T tStart = (distNear / c) + minDelay;
-    T tEnd   = (distFar / c) + maxDelay + W;
-
-    T fSampleSignalStart = fs * tStart;
-
-    int iSampleSignalStart = (int) floor(fSampleSignalStart);
-
-    // Allocate output
-    int _nSamples = (int) ceil(T(2.0) + fs*(tEnd - tStart));
-
-    // TODO: Check if this can be allocated
-    *odata = (T*) malloc(nPositions*_nSamples*sizeof(T));
-
-    memset(*odata, 0, nPositions*_nSamples*sizeof(T));
-    *nSamples = _nSamples;
-
-    const T a = element.circle.radius;
-    const T a2 = SQUARE(a);
-
-    const T s1 = 0;
-    const T s2 = T(M_PI);
-    const size_t nMaxAbcissa = sysparm->nDivA;
-
-    sps::deleted_aligned_array<T> aweights;
-    sps::deleted_aligned_array<T> axs;
-
-    CalcOneDimensionalWeightsAndAbcissae(nMaxAbcissa,
-                                         s1, s2,
-                                         std::move(axs), std::move(aweights));
-
-    T fSampleStart, fSampleStop;
-    for (size_t iPosition = 0; iPosition < nPositions; iPosition++) {
-
-
-      sps::point_t<T> point;
-      point[0] = pos[iPosition * 3];
-      point[1] = pos[iPosition * 3 + 1];
-      point[2] = pos[iPosition * 3 + 2];
-
-      T r, z;
-      sps::dist_point_to_circle_local(point, element.circle, &r, &z, &distNear, &distFar);
-
-      T z2 = SQUARE(z);
-      T r2 = SQUARE(r);
-
-      T raz2 = r2 + a2 + z2;
-
-      fSampleStart = fs * (distNear / c);
-      fSampleStop  = fs * (distFar / c);
-
-      int iSampleStart = (int)fSampleStart + 1; // First non-zero value
-
-      int iSampleStop  = (int) (fSampleStop + W*fs) + 1; // Ends with a non-zero value
-
-      // Missing factor (rho_0 c a)/pi
-
-      // Solve integral using Gauss-Legendre
-      T spatial = T(0.0);
-      for (size_t ia = 0 ; ia < nMaxAbcissa ; ia++) {
-
-        // Can be done once and for all
-        T psi = axs[ia];
-        T weight = aweights[ia];
-
-        T sqarg = r2 + a2 - T(2.0)*a*r*cos(psi);
-
-        T factor = (r*cos(psi) - a) / sqarg;
-        spatial += weight*factor;
-      }
-
-      T t1, t2, t3;
-
-      // Todo add delay (or subtract t_offset)
-      t1 = z / c; // = tau_2
-      t2 = sqrt(z2 + SQUARE((r-a))) / c; //
-      t3 = sqrt(z2 + SQUARE((r+a))) / c;
-
-      // Two terms for tone burst
-      T E[2];
-      E[0] = T(0.0);
-      E[1] = T(0.0);
-
-      T psi_1 = T(0.0), psi_2=T(0.0);
-
-      T psi, weight;
-
-      bool bedge = true;
-
-      size_t i_1 = 0, i_2 = 0;
-
-      // TODO: Adjust iSampleStart: t -> t - t_offset
-
-      // TODO: Scale by rho_0 * c * a / pi
-      for (int iSample = iSampleStart ; iSample < iSampleStop ; iSample++) {
-
-        bedge = true;
-        int iSampleSignal = iSample - iSampleSignalStart;
-        T t = invfs * iSample;
-
-        // TODO: Subtract offset = iSampleSignalStart - delay
-        //       t = invfs*iSample - (iSampleSignalStart - delay)
-        //       t -> t + delay
-        T direct = - ToneBurst<T>::eval(t-t1, W, f0) * spatial; // -v(t-tau_2)
-
-        if (t < t2 + W) {
-          psi_1 = T(0.0);
-        } else if (t < t3 + W) {
-          // t must be less than t3+W
-          T arg = (raz2 - SQUARE(c)*SQUARE(t-W)) / (T(2.0)*a*std::max<T>(r,eps));
-          arg = std::clamp<T>(arg,T(-1.0),T(1.0));
-          psi_1 = acos(arg);
-        } else {
-          // Should not happen (do we need direct term??)
-          psi_1 = T(0.0);
-          bedge = false;
-        }
-
-        if ( (t >= t3) && (t < (t3+W))) { // and by construction less than t3+W (TODO: Extend range)
-          psi_2 = T(M_PI);
-        } else if ( (t > t2)) {
-          T arg = (raz2 - SQUARE(c*t)) / (T(2.0)*a*std::max<T>(r,eps));
-          arg = std::clamp<T>(arg,T(-1.0),T(1.0));
-          psi_2 = acos(arg);
-        } else {
-          // Should not happen
-          psi_2 = T(0.0);
-          bedge = false;
-        }
-
-        // Fast version reusing partial sums
-
-        T edge = T(0.0);
-        if (bedge) {
-          // Remove any psi
-          for (size_t ia = i_1 ; (ia < i_2 && ia < nMaxAbcissa) ; ia++) {
-            psi = axs[ia];
-            if (psi > psi_1) {
-              break;
-            }
-            i_1 = ia + 1;
-
-            weight = aweights[ia];
-
-            T sqarg = r2+a2-2*a*r*cos(psi);
-            T factor = (r*cos(psi) - a) / sqarg;
-
-            T tau = sqrt(std::max<T>(z2 + sqarg,T(0.0))) / c; // tau_1
-            for (size_t iTerm = 0 ; iTerm < 2 ; iTerm++) {
-              E[iTerm] -= (weight * factor * ToneBurst<T>::SpatialBasisFunction[iTerm](tau,W,f0));
-            }
-          }
-          // Add new psi
-          for (size_t ia = i_2 ; ia < nMaxAbcissa ; ia++) {
-            psi = axs[ia];
-            if (psi > psi_2) {
-              break;
-            }
-            i_2 = ia + 1;
-            weight = aweights[ia];
-
-            T sqarg = r2+a2-T(2.0)*a*r*cos(psi);
-            T factor = (r*cos(psi) - a) / sqarg;
-
-            T tau = sqrt( std::max<T>(z2+sqarg, T(0.0))) / c; // tau_1
-            for (size_t iTerm = 0 ; iTerm < 2 ; iTerm++) {
-              E[iTerm] += (weight * factor * ToneBurst<T>::SpatialBasisFunction[iTerm](tau,W,f0));
-            }
-          }
-
-          for (size_t iTerm = 0 ; iTerm < 2 ; iTerm++) {
-            edge += E[iTerm] * ToneBurst<T>::TemporalBasisFunction[iTerm](t,W,f0);
-          }
-        }
-
-        T value = (direct + edge);
+        T value = scale * (direct + edge);
         (*odata)[iSampleSignal + iPosition*_nSamples] = value;
       }
     }
@@ -648,12 +430,12 @@ namespace fnm {
                                       const float* pos, const size_t nPositions,
                                       std::complex<float>** odata);
 
-  template float CalcCircularTransientFieldRef(const sysparm_t<float>* sysparm,
+  template float CalcCircularTransientFieldRefZeroDelay<float, ToneBurst>(const sysparm_t<float>* sysparm,
       const CircularApertureData<float>& data,
       const float* pos, const size_t nPositions,
       float** odata, size_t* nSamples);
 
-  template float CalcCircularTransientFieldRefZeroDelay(const sysparm_t<float>* sysparm,
+  template float CalcCircularTransientFieldRefZeroDelay<float, HanningWeightedPulse>(const sysparm_t<float>* sysparm,
       const CircularApertureData<float>& data,
       const float* pos, const size_t nPositions,
       float** odata, size_t* nSamples);
@@ -664,12 +446,12 @@ namespace fnm {
                                       const double* pos, const size_t nPositions,
                                       std::complex<double>** odata);
 
-  template double CalcCircularTransientFieldRef(const sysparm_t<double>* sysparm,
+  template double CalcCircularTransientFieldRefZeroDelay<double, ToneBurst>(const sysparm_t<double>* sysparm,
       const CircularApertureData<double>& data,
       const double* pos, const size_t nPositions,
       double** odata, size_t* nSamples);
 
-  template double CalcCircularTransientFieldRefZeroDelay(const sysparm_t<double>* sysparm,
+  template double CalcCircularTransientFieldRefZeroDelay<double, HanningWeightedPulse>(const sysparm_t<double>* sysparm,
       const CircularApertureData<double>& data,
       const double* pos, const size_t nPositions,
       double** odata, size_t* nSamples);
