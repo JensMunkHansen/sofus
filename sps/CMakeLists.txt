@@ -208,7 +208,20 @@ if (SPS_Signals)
   find_package(SWIG REQUIRED)
   include(${SWIG_USE_FILE})
 
-  find_package(PythonLibs REQUIRED)
+  if (ENABLE_PYTHON3)
+    set(Python_ADDITIONAL_VERSIONS 3.5)
+    find_package(PythonInterp 3 REQUIRED)
+    find_package(PythonLibs)
+  else()
+    set(Python_ADDITIONAL_VERSIONS 2.7)
+    # HACK
+    if (WIN32)
+      find_package(PythonInterp 2.7 REQUIRED)
+    else()
+      find_package(PythonInterp 2.7 EXACT REQUIRED)
+    endif()
+    find_package(PythonLibs 2.7 REQUIRED)
+  endif()
 
   include_directories(${PYTHON_INCLUDE_PATH})
 
