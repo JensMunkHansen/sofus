@@ -39,6 +39,8 @@ from dicts import dotdict
 import swig_fnm as fnm
 from fnm_arrays import (linear_array, linear_array3, convex_array, convex_array3)
 
+cmap = plt.get_cmap('jet')
+
 multithreaded = True
 
 _emitterCache = weakref.WeakKeyDictionary()
@@ -300,7 +302,7 @@ class ComputeField(QRunnable):
     indices = [i for i, x in enumerate([nx,ny,nz]) if x == 1]
     
     if nDim == 2:
-      self.data.ax.imshow(logp,extent=[vs.min(),vs.max(), us.min(), us.max()],aspect='auto')
+      self.data.ax.imshow(logp,cmap=cmap,extent=[vs.min(),vs.max(), us.min(), us.max()],aspect='auto')
       if iSingleton[0] == 1:
         self.data.ax.set_xlabel('Depth [m]')
         self.data.ax.set_ylabel('Width [m]')
@@ -354,7 +356,11 @@ class Main(QMainWindow, ui):
     # QVXYModelMapper can map columns or rows to an xy-model
     
     super(Main, self).__init__()
+
+    dpiX = self.logicalDpiX()
+
     self.setupUi(self)
+    
     self.action_Exit.triggered.connect(self.close)
 
     self.modelShape = TransducerShapeModel(["Linear",
@@ -436,12 +442,13 @@ class Main(QMainWindow, ui):
     #self.propModel = PropagatorModel(["Sphere"], self)
     #self.cboxPropagator.setModel(self.propModel)
     
-    self.sboxOrder.setValue(2)
+    self.sboxOrder.setValue(40)
     self.sboxOrder.setMinimum(2)
     self.sboxOrder.setMaximum(500)
 
     self.cboxDomain.setCurrentIndex(0)
     self.cboxDomain.currentIndexChanged[QString].connect(self.on_cbox_domain_changed)
+    self.cboxDomain.setDisabled(True)
     self.leSampleFrq.setDisabled(True)
     self.leExcitationCycles.setDisabled(True)
 

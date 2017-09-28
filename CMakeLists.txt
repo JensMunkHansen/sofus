@@ -46,6 +46,8 @@ option (BUILD_FNM_TEST "Build tests" OFF)
 
 option(USE_MQUEUE "Use message queues" OFF)
 
+option (ENABLE_PYTHON3 "Python 3" OFF)
+
 option(BUILD_DOCUMENTATION
     "Create and install the HTML based API documentation (requires Doxygen)" ${DOXYGEN_FOUND})
 
