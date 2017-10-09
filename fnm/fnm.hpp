@@ -773,9 +773,15 @@ namespace fnm {
      */
     void FocusUpdateRef();
 
-#ifdef FNM_PULSED_WAVE
     /**
-     * Experimental attempt for hanning-weighted pulsed wave
+     * Compute transient for first element.
+     *
+     * Mask bits: 0x01: Direct,
+     *            0x02: Edge (q0->q3)
+     *            0x04: Edge (q0->q1)
+     *            0x08: Edge (q1->q2)
+     *            0x10: Edge (q2->q3)
+     *            0x1F: All contributions (default)
      *
      * @param pos
      * @param nPositions
@@ -783,15 +789,12 @@ namespace fnm {
      * @param odata
      * @param nSignals
      * @param nSamples
+     * @param mask
      *
      * @return
      */
-    T CalcFdTransientRef(const T* pos, const size_t nPositions, const size_t nDim,
-                         T** odata, size_t* nSignals, size_t* nSamples);
-
     T CalcTransientSingleElementNoDelay(const T* pos, const size_t nPositions, const size_t nDim,
-                                        T** odata, size_t* nSignals, size_t* nSamples);
-#endif
+                                        T** odata, size_t* nSignals, size_t* nSamples, int mask = 0x1F);
 
     /** @name FNM Calculation functions
      *

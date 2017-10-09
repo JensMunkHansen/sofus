@@ -1,0 +1,89 @@
+#pragma once
+
+#include <sps/cenv.h>
+
+#include <cmath>
+#include <type_traits>   // std::enable_if
+#include <limits>        // std::numeric_limits
+
+/*
+template <typename T> int sgn(T val) {
+    return (T(0) < val) - (val < T(0));
+}
+
+template <typename T> inline constexpr
+int signum(T x, std::false_type is_signed) {
+    return T(0) < x;
+}
+
+template <typename T> inline constexpr
+int signum(T x, std::true_type is_signed) {
+    return (T(0) < x) - (x < T(0));
+}
+
+template <typename T> inline constexpr
+int signum(T x) {
+    return signum(x, std::is_signed<T>());
+}
+
+*/
+
+#ifdef CXX11
+template<class T>
+typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type
+almost_equal(T x, T y, int ulp)
+{
+  // the machine epsilon has to be scaled to the magnitude of the values used
+  // and multiplied by the desired precision in ULPs (units in the last place)
+  return std::abs(x-y) < std::numeric_limits<T>::epsilon() * std::abs(x+y) * ulp
+         // unless the result is subnormal
+         || std::abs(x-y) < std::numeric_limits<T>::min();
+}
+#endif
+
+/** @name Templated trigonometric functions. A way to enforce precission
+ *
+ */
+///@{
+namespace sps {
+  template <typename T>
+  inline T sin(T v) { return sin(v); }
+
+  template <typename T>
+  inline T cos(T v) { return cos(v); }
+
+  template <typename T>
+  inline T tan(T v) { return tan(v); }
+  
+  template <typename T>
+  inline T asin(T v) { return asin(v); }
+
+  template <typename T>
+  inline T acos(T v) { return acos(v); }
+  
+  template <>
+  inline float sin<float>(float v) { return sinf(v); }
+
+  template <>
+  inline float cos<float>(float v) { return cosf(v); }
+
+  template <>
+  inline float asin<float>(float v) { return asinf(v); }
+
+  template <>
+  inline float acos<float>(float v) { return acosf(v); }
+
+  template <>
+  inline float tan<float>(float v) { return tanf(v); }
+  
+}
+///@}
+
+
+/* Local variables: */
+/* mode: c++ */
+/* indent-tab-mode: nil */
+/* tab-width: 2 */
+/* c-basic-offset: 2 */
+/* indent-tabs-mode: nil */
+/* End: */

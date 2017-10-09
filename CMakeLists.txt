@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(Fnm C CXX)
+project(Fnm CXX)
 
 # Add path for custom modules
 set(CMAKE_MODULE_PATH
@@ -98,9 +98,7 @@ add_subdirectory(gl)
 
 add_subdirectory(fnm)
 
-if (FNM_PULSED_WAVE)
-  add_subdirectory(sofus)
-endif()
+add_subdirectory(sofus)
 
 add_subdirectory(python)
 

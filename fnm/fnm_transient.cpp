@@ -15,6 +15,8 @@
  *  along with SOFUS.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// TODO: Make this work for non-sampled delays, Evaluate()
+
 #include <fnm/fnm_transient.hpp>
 #include <fnm/fnm_data.hpp>
 #include <fnm/fnm_common.hpp>
@@ -22,11 +24,7 @@
 
 #include <sps/debug.h>
 
-#ifdef FNM_PULSED_WAVE
-# include <sofus/rect_int_limits.hpp> // calcProjectionAndLimits
-# include <sofus/sofus_calc.hpp>
-# include <sps/signals.hpp>
-#endif
+#include <sofus/rect_int_limits.hpp> // calcProjectionAndLimits
 
 #include <sps/algorithm>
 
@@ -34,34 +32,35 @@
 
 namespace fnm {
 
-#ifdef FNM_PULSED_WAVE
-
   template <class T>
-  T FourDirect(const sps::element_rect_t<T>& element,
-               const sofus::proj_limit_dist_t<T>& limit,
+  T FourDirect(const sps::element_rect_t<T>* element,
+               const sofus::proj_limit_dist_t<T>* limit,
                const GLQuad2D<T>* uv)
   {
+    const T eps = std::numeric_limits<T>::epsilon();
 
     T result = T(0.0);
 
     // Integration limits
-    T uLow  = fabs(limit.u) - element.hw;
-    T uHigh = fabs(limit.u) + element.hw;
+    T uLow  = fabs(limit->u) - element->hw;
+    T uHigh = fabs(limit->u) + element->hw;
 
-    T vLow  = fabs(limit.v) - element.hh;
-    T vHigh = fabs(limit.v) + element.hh;
+    T vLow  = fabs(limit->v) - element->hh;
+    T vHigh = fabs(limit->v) + element->hh;
 
-    // Adjacent edges
+    // Adjacent
     T v[2];
-    v[0] = element.hh - fabs(limit.v);
-    v[1] = element.hh + fabs(limit.v);
+    v[0] = element->hh - fabs(limit->v);
+    v[1] = element->hh + fabs(limit->v);
 
     T u[2];
-    u[0] = element.hw - fabs(limit.u);
-    u[1] = element.hw + fabs(limit.u);
+    u[0] = element->hw - fabs(limit->u);
+    u[1] = element->hw + fabs(limit->u);
+
+    T sp;
 
     // Offset of abcissa
-    T sp = T(0.5) * (uHigh + uLow);
+    sp = T(0.5) * (uHigh + uLow);
 
     T l2[2];
     l2[0] = SQUARE(v[0]);
@@ -72,10 +71,9 @@ namespace fnm {
 
     for (size_t iU = 0 ; iU < uv->u.nx ; iU++) {
       T s2 = SQUARE(uv->u.xs[iU] + sp);
-      sInt[0] += uv->u.ws[iU] * (T(1.0) / (l2[0]+s2));
-      sInt[1] += uv->u.ws[iU] * (T(1.0) / (l2[1]+s2));
+      sInt[0] += uv->u.ws[iU] * (T(1.0) / std::max<T>(s2+l2[0],eps));
+      sInt[1] += uv->u.ws[iU] * (T(1.0) / std::max<T>(s2+l2[1],eps));
     }
-
     result += sInt[0]*v[0];
     result += sInt[1]*v[1];
 
@@ -87,101 +85,112 @@ namespace fnm {
 
     memset(sInt,0,2*sizeof(T));
 
+    // Without this, 0x01 is not confined to inside the element
     for (size_t iV = 0 ; iV < uv->v.nx ; iV++) {
       T s2 = SQUARE(uv->v.xs[iV] + sp);
-      sInt[0] += uv->v.ws[iV] * (T(1.0) / (l2[0]+s2));
-      sInt[1] += uv->v.ws[iV] * (T(1.0) / (l2[1]+s2));
+      sInt[0] += uv->v.ws[iV] * (T(1.0) / std::max<T>(s2+l2[0],eps));
+      sInt[1] += uv->v.ws[iV] * (T(1.0) / std::max<T>(s2+l2[1],eps));
     }
-
     result += sInt[0]*u[0];
     result += sInt[1]*u[1];
 
     return result;
   }
 
-  template <class T>
-  void DirectWaveSingle(const sps::element_rect_t<T>& element,
-                        const sysparm_t<T>* sysparm,
+  template <class T,  template <typename> class A>
+  void DirectWaveSingle(const sysparm_t<T>* sysparm,
+                        const sps::element_rect_t<T>* element,
+                        const T& scale,
                         const T& f0,
-                        sofus::proj_limit_dist_t<T>& pld,
-                        GLQuad2D<T>& uv,
-                        T fSampleSignalStart,
+                        const sofus::proj_limit_dist_t<T>* pld,
+                        const GLQuad2D<T>* uv,
+                        const T delay,
+                        const int iSampleSignalStart,
+                        const size_t nSamples,
                         T* odata)
   {
-
     const T W = sysparm->w;
     const T c = sysparm->c;
     const T fs = sysparm->fs;
 
     const T invfs = T(1.0) / fs;
 
-    const T scale = sysparm->rho * c / T(M_2PI);
+    const T factor = - scale * sysparm->rho * c / T(M_2PI);
 
-    int iSampleSignalStart = (int) floor(fSampleSignalStart);
+    SPS_UNREFERENCED_PARAMETER(nSamples);
 
-    T z = pld.dist2plane;
-
-    int iSampleStart = (int)pld.fSampleStart + 1; // First non-zero value
-
-    int iSampleStop  = (int) (pld.fSampleStop + W*fs) + 1; // Ends with a non-zero value
+    T z = pld->dist2plane;
 
     T t1;
 
     t1 = z / c; // tau_2
 
-    T spatial = FourDirect(element, pld, &uv);
+    int iSampleStart = (int) (pld->fSampleStart + delay*fs) + 1; // First non-zero value
+    int iSampleStop  = (int) (pld->fSampleStop + delay*fs + W*fs) + 1; // Ends with a non-zero value
 
+    T spatial = FourDirect(element, pld, uv);
+
+    assert(iSampleStart > (iSampleSignalStart - 1) && "Access before start");
+    assert((iSampleStop - 1 - iSampleSignalStart) < (int)nSamples && "Access after stop");
+
+    // Vectorize four sample at a time + (nSamples % 4)
     for (int iSample = iSampleStart ; iSample < iSampleStop ; iSample++) {
 
       int iSampleSignal = iSample - iSampleSignalStart;
-      T t = invfs * iSample;
+      T t = invfs * iSample - delay; // TEST: If we remove this, it gets crazy
 
-      T direct = - ToneBurst<T>::Evaluate(t-t1, W, f0) * spatial;
+      // TODO: Make this work with non-sampled delays
+      T direct = - A<T>::Evaluate(t-t1, W, f0) * spatial;
 
       T value = direct;
-
-      // This is the signal for a single position
-      odata[iSampleSignal] = scale * value;
+      // HERE SEGV
+      odata[iSampleSignal] += factor * value;
     }
   }
 
   template <typename T, template <typename> class A>
   void UpdateSIR(const sysparm_t<T>* sysparm,
                  const T f0,
-                 const T sigma, const T sweight,
+                 const T ssigma, const T sweight,
                  const T adjacent, const T z2,
                  A<T>* pulse)
   {
     const T eps = std::numeric_limits<T>::epsilon();
-    T denom = std::max<T>((SQUARE(adjacent) + SQUARE(sigma)), eps);
-    T tau = sqrt(std::max<T>(z2 + denom, T(0.0))) / sysparm->c;
+
+    // Uses scaled weight and sigma
+    T denom = std::max<T>(eps, SQUARE(adjacent) + SQUARE(ssigma));
+    T tau = sqrt(std::max<T>(T(0.0),z2 + denom)) / sysparm->c;
     T scale = sweight / denom;
 
     pulse->UpdateSpatial(scale, tau, sysparm->w, f0);
   }
 
+  // TODO: Vectorize - compute 4 edges at a time
+
   // Safe implementation using two integration ranges for each edge
   template <typename T, template <typename> class A>
   void EdgeResponse(const sysparm_t<T>* sysparm,
-                    const sps::element_rect_t<T>& element,
+                    const sps::element_rect_t<T>* element,
+                    const T& scale,
                     const size_t iEdge,
-                    const sofus::proj_limit_dist_t<T>& pld,
-                    const T* ls,
-                    const T* lw,
+                    const sofus::proj_limit_dist_t<T>* pld,
+                    const GLQuad1D<T>* pGL,
                     const T& f0,
-                    const T& fSampleSignalStart,
+                    const T& delay,
+                    const int& iSampleSignalStart,
+                    const size_t& nSamples,
                     T* odata)
   {
+    //    const T eps = std::numeric_limits<T>::epsilon();
+
     const T fs = sysparm->fs;
     const T invfs = T(1.0) / fs;
     const T W = sysparm->w;
     const T c = sysparm->c;
 
-    const T scale = sysparm->rho * c / T(M_2PI);
+    const T factor = - scale * sysparm->rho * c / T(M_2PI);
 
-    const int iSampleSignalStart = (int) floor(fSampleSignalStart);
-
-    const T z2 = SQUARE(pld.dist2plane);
+    const T z2 = SQUARE(pld->dist2plane);
 
     T hl = T(0.0); // Half long
     T pl = T(0.0); // Point long
@@ -199,25 +208,43 @@ namespace fnm {
     case 0:
       iVertices[0] = 0;
       iVertices[1] = 3;
-      hl = element.hh; // Half the integration range
-      hs = element.hw;
-      pl = pld.v;
-      ps = pld.u;
-      nl = sysparm->nDivH;
-      if (ps > T(0.0)) {
-        adjacent = hs - fabs(ps);
-      } else {
-        adjacent = hs + fabs(ps);
-      }
       break;
     case 1:
       iVertices[0] = 0;
       iVertices[1] = 1;
-      hl = element.hw;
-      hs = element.hh;
-      pl = pld.u;
-      ps = pld.v;
+      break;
+    case 2:
+      iVertices[0] = 1;
+      iVertices[1] = 2;
+      break;
+    case 3:
+      iVertices[0] = 3;
+      iVertices[1] = 2;
+      break;
+    };
+
+    switch (iEdge) {
+    case 1:
+    case 3:
+      hl = element->hw;
+      hs = element->hh;
+      pl = pld->u;
+      ps = pld->v;
+      nl = sysparm->nDivH;
+      break;
+    case 0:
+    case 2:
+      hl = element->hh;
+      hs = element->hw;
+      pl = pld->v;
+      ps = pld->u;
       nl = sysparm->nDivW;
+      break;
+    };
+
+    switch (iEdge) {
+    case 0:
+    case 1:
       if (ps > T(0.0)) {
         adjacent = hs - fabs(ps);
       } else {
@@ -225,27 +252,7 @@ namespace fnm {
       }
       break;
     case 2:
-      iVertices[0] = 1;
-      iVertices[1] = 2;
-      hl = element.hh;
-      hs = element.hw;
-      pl = pld.v;
-      ps = pld.u;
-      nl = sysparm->nDivH;
-      if (ps < T(0.0)) {
-        adjacent = hs - fabs(ps);
-      } else {
-        adjacent = hs + fabs(ps);
-      }
-      break;
     case 3:
-      iVertices[0] = 3;
-      iVertices[1] = 2;
-      hl = element.hw; // Integration along this
-      hs = element.hh;
-      pl = pld.u;
-      ps = pld.v; // This is zero
-      nl = sysparm->nDivW;
       if (ps < T(0.0)) {
         adjacent = hs - fabs(ps);
       } else {
@@ -254,8 +261,8 @@ namespace fnm {
       break;
     };
 
-    T t1 = pld.vdists[iVertices[0]] / c;
-    T t2 = pld.vdists[iVertices[1]] / c;
+    T t1 = pld->vdists[iVertices[0]] / c;
+    T t2 = pld->vdists[iVertices[1]] / c;
 
     T t12min, t12max;
 
@@ -264,17 +271,17 @@ namespace fnm {
       Upper = 1,
     };
 
-    // Limits
+    // Limits - used for disabling upper or lower
     int iSigmaMin[2];
     int iSigmaMax[2];
 
+    // Nothing is disabled for now
     iSigmaMin[Lower] = 0;
     iSigmaMax[Lower] = (int)nl;
-
     iSigmaMin[Upper] = 0;
     iSigmaMax[Upper] = (int)nl;
 
-    // Variable
+    // Dynamic limits
     int iSigmaLow[2];
     int iSigmaUp[2];
 
@@ -283,34 +290,38 @@ namespace fnm {
     memset(iSigmaUp, 0, 2*sizeof(int));
 
     if (fabs(pl) < hl) {
-      t12min = sqrt(z2 + SQUARE(adjacent)) / c;
+      t12min = sqrt(std::max<T>(T(0.0), z2 + SQUARE(adjacent))) / c;
 
-      auto end = ls + nl;
+      auto end = pGL->xs + nl;
 
       // Greater or equal (We should end here, verify)
-      auto it = std::find_if(ls, end,[&](T a)->bool {return !(pl > a);});
+      auto it = std::find_if(pGL->xs, end,[&](T a)->bool {return !(pl > a);});
 
       if (it != end) {
-        int iProj = (int) std::distance(ls, it);
-
+        int iProj = (int) std::distance(pGL->xs, it);
         iSigmaLow[Lower] = iProj;
         iSigmaUp[Lower]  = iProj;
         iSigmaLow[Upper] = iProj;
         iSigmaUp[Upper]  = iProj;
-
       } else {
-        iSigmaMax[Lower] = (int)nl;
-        iSigmaMin[Lower] = (int)nl;
+        iSigmaLow[Lower] = (int)nl;
+        iSigmaUp[Lower] = (int)nl;
+        // Upper integral is disabled usig iSigmaMax
+        iSigmaLow[Upper] = (int)nl;
+        iSigmaUp[Upper]  = (int)nl;
       }
     } else {
-
       t12min = std::min<T>(t1,t2);
       if (pl > hl) {
         iSigmaLow[Lower] = (int)nl;
         iSigmaUp[Lower]  = (int)nl;
+        // Upper integral is disabled
+        iSigmaMax[Upper] = 0;
       } else {
         iSigmaLow[Upper] = 0;
         iSigmaUp[Upper]  = 0;
+        // Lower integral is disabled
+        iSigmaMin[Lower] = (int) nl;
       }
     }
 
@@ -319,8 +330,8 @@ namespace fnm {
     T fSampleStart = fs * t12min;
     T fSampleStop = fs * t12max;
 
-    int iSampleStart = (int)fSampleStart + 1;
-    int iSampleStop  = (int) (fSampleStop + W*fs) + 1;
+    int iSampleStart = (int)(fSampleStart + delay*fs) + 1;
+    int iSampleStop  = (int) (fSampleStop + delay*fs + W*fs) + 1;
 
     // Lower values for ranges: [-hl ; pl] and [pl, hl]
     T fSigmaMin[2];
@@ -334,20 +345,33 @@ namespace fnm {
 
     A<T> ImpulseResponse = A<T>();
 
-#if SPS_DEBUG
+#if SPS_DEBUG && 0
     typedef std::vector<std::pair<int,int> > limitVector;
     limitVector upperLimits = limitVector();
     limitVector lowerLimits = limitVector();
 #endif
+
+#ifdef SPS_DEBUG
+    if (iSampleStart < iSampleSignalStart) {
+      debug_print("\033[31;1mSamples too early: u: %f, v: %f\033[0m\n", pld->u, pld->v);
+    }
+    if (iSampleStop >= int(nSamples + iSampleSignalStart)) {
+      debug_print("\033[31;1mSamples too late: u: %f, v: %f\033[0m\n", pld->u, pld->v);
+    }
+#endif
+
+    assert(iSampleStart > (iSampleSignalStart - 1) && "Access before start");
+    assert((iSampleStop - 1 - iSampleSignalStart) < (int)nSamples && "Access after stop");
+
     for (int iSample = iSampleStart ; iSample < iSampleStop ; iSample++) {
 
       int iSampleSignal = iSample - iSampleSignalStart;
-      T t = invfs * iSample;
+      T t = invfs * iSample - delay;
 
-      // TODO TODO TODO: Fix for pl != 0.0, e.g iEdge = 1 or iEdge = 3 in example
-
-      // Compute two sigma segments
-      deltaSigma = sqrt(std::max<T>(T(0.0), SQUARE(c*t) - z2 - SQUARE(adjacent)));
+      // Compute two sigma segments (asymmetry could be if we start to early)
+      T sqrtArg = SQUARE(c*t) - z2 - SQUARE(adjacent);
+      sqrtArg = std::max<T>(T(0.0), sqrtArg);
+      deltaSigma = sqrt(sqrtArg);
 
       // Lower sigma range
       fSigmaMax[Lower] = std::clamp(pl, -hl, hl);
@@ -363,48 +387,49 @@ namespace fnm {
         fSigmaMin[Upper] = std::clamp(pl + deltaSigma, -hl, hl);
         fSigmaMax[Lower] = std::clamp(pl - deltaSigma, -hl, hl);
       }
-
       // Remove sigma from upper sigmas
-      for (int iSigma = iSigmaLow[Upper] ; iSigma < iSigmaMax[Upper] ; iSigma++) {
-        sigma = ls[iSigma];
+      for (int iSigma = iSigmaLow[Upper] ; (iSigma < iSigmaMax[Upper] && iSigma < iSigmaUp[Upper] ) ; iSigma++) {
+        sigma = pGL->xs[iSigma];
         if (sigma > fSigmaMin[Upper]) {
           break;
         }
         iSigmaLow[Upper] = iSigma + 1;
-        UpdateSIR(sysparm, f0, pl - sigma, -lw[iSigma], adjacent, z2, &ImpulseResponse);
+        UpdateSIR<T,A>(sysparm, f0, pl - sigma, -pGL->ws[iSigma], adjacent, z2, &ImpulseResponse);
       }
 
       // Add sigma to upper sigmas
       for (int iSigma = iSigmaUp[Upper] ; iSigma < iSigmaMax[Upper] ; iSigma++) {
-        sigma = ls[iSigma];
+        sigma = pGL->xs[iSigma];
         if (sigma > fSigmaMax[Upper]) {
           break;
         }
         iSigmaUp[Upper] = iSigma + 1;
-        UpdateSIR(sysparm, f0, pl - sigma, lw[iSigma], adjacent, z2, &ImpulseResponse);
+        UpdateSIR<T,A>(sysparm, f0, pl - sigma, pGL->ws[iSigma], adjacent, z2, &ImpulseResponse);
       }
 
-      // Remove sigma from lower sigmas (TEST: constraint after &&
-      for (int iSigma = iSigmaUp[Lower] ; iSigma > iSigmaMin[Lower] ; iSigma--) {
-        sigma = ls[iSigma-1];
+      // Remove sigma from lower sigmas
+      for (int iSigma = iSigmaUp[Lower] ; (iSigma > iSigmaMin[Lower] && iSigma > iSigmaLow[Lower]) ; iSigma--) {
+        assert(iSigma > 0 && "Lower sigma out of bounds");
+        sigma = pGL->xs[iSigma-1];
         if (sigma < fSigmaMax[Lower]) {
           break;
         }
         iSigmaUp[Lower] = iSigma - 1;
-        UpdateSIR(sysparm, f0, pl - sigma, -lw[iSigma-1], adjacent, z2, &ImpulseResponse);
+        UpdateSIR<T,A>(sysparm, f0, pl - sigma, -pGL->ws[iSigma-1], adjacent, z2, &ImpulseResponse);
       }
 
-      // Add sigma to lower sigmas (TEST: Adding && constraint)
-      for (int iSigma = iSigmaLow[Lower] ; iSigma > iSigmaMin[Lower] ; iSigma--) {
-        sigma = ls[iSigma-1];
-        if (sigma < fSigmaMin[Lower]) {
+      for (int iSigma = iSigmaLow[Lower] ; (iSigma > iSigmaMin[Lower]) ; iSigma--) {
+
+        assert(iSigma > 0 && "Lower sigma out of bounds");
+        sigma = pGL->xs[iSigma-1];
+        if ((sigma < fSigmaMin[Lower])) {
           break;
         }
         iSigmaLow[Lower] = iSigma - 1;
-        UpdateSIR(sysparm, f0, pl - sigma, lw[iSigma-1], adjacent, z2, &ImpulseResponse);
+        UpdateSIR<T,A>(sysparm, f0, pl - sigma, pGL->ws[iSigma-1], adjacent, z2, &ImpulseResponse);
       }
 
-#if SPS_DEBUG
+#if SPS_DEBUG && 0
       upperLimits.push_back(std::make_pair(iSigmaLow[Upper], iSigmaUp[Upper]));
       lowerLimits.push_back(std::make_pair(iSigmaLow[Lower], iSigmaUp[Lower]));
 #endif
@@ -415,12 +440,16 @@ namespace fnm {
       debug_print("fSigmaMin[Upper]: %1.5f, fSigmaMax[Upper]: %1.5f\n", fSigmaMin[Upper], fSigmaMax[Upper]);
 #endif
 
+      // TODO: Make this work for non-sampled delays
       T edge = ImpulseResponse.EvaluateTSD(t,W,f0);
+
+      assert(iSampleSignal < (int)nSamples);
+
       // update output
-      odata[iSampleSignal] += scale * adjacent * edge;
+      odata[iSampleSignal] += factor * adjacent * edge;
     }
 
-#if SPS_DEBUG
+#if SPS_DEBUG && 0
     std::cout << "[";
     for (auto &elem : lowerLimits) {
       std::cout << elem.second - elem.first << " ";
@@ -457,10 +486,10 @@ namespace fnm {
 
     debug_print("nPositions: %zu\n",nPositions);
 
-    size_t nElements,nSubElements;
+    size_t nElements = 0, nSubElements = 0;
 
-    const T* delays;
-    const T* apodizations;
+    const T* delays = nullptr;
+    const T* apodizations = nullptr;
     const sps::element_rect_t<T>** elementsArray = nullptr;
 
     data->ApodizationsRefGet(&nElements, apodizations);
@@ -473,31 +502,38 @@ namespace fnm {
     sps::bbox_t<T> scatter_box = sps::bbox_t<T>();
     sps::compute_bounding_box3(pos, nPositions, &scatter_box);
 
-    auto uweights = sps::deleted_aligned_array<T>();
-    auto vweights = sps::deleted_aligned_array<T>();
-    auto uxs      = sps::deleted_aligned_array<T>();
-    auto vxs      = sps::deleted_aligned_array<T>();
+    auto uws = sps::deleted_aligned_array<T>();
+    auto vws = sps::deleted_aligned_array<T>();
+    auto uxs = sps::deleted_aligned_array<T>();
+    auto vxs = sps::deleted_aligned_array<T>();
 
     const size_t iElement = 0;
     const size_t jElement = 0;
     const sps::element_rect_t<T>& element = elementsArray[iElement][jElement];
-    const T delay = delays[iElement];
-    SPS_UNREFERENCED_PARAMETER(delay);
-
 
     /********************************************
      * Compute abcissas and weights             *
      ********************************************/
-    CalcWeightsAndAbcissaeScaled(sysparm, element, std::move(uxs), std::move(uweights),
-                                 std::move(vxs),std::move(vweights));
+    CalcWeightsAndAbcissaeScaled(sysparm, element, std::move(uxs), std::move(uws),
+                                 std::move(vxs),std::move(vws));
 
     GLQuad2D<T> uv;
     uv.u.xs     = uxs.get();
-    uv.u.ws     = uweights.get();
+    uv.u.ws     = uws.get();
     uv.u.nx     = sysparm->nDivW;
     uv.v.xs     = vxs.get();
-    uv.v.ws     = vweights.get();
+    uv.v.ws     = vws.get();
     uv.v.nx     = sysparm->nDivH;
+
+    GLQuad1D<T> u;
+    u.xs = uxs.get();
+    u.ws = uws.get();
+    u.nx = sysparm->nDivW;
+
+    GLQuad1D<T> v;
+    v.xs = vxs.get();
+    v.ws = vws.get();
+    v.nx = sysparm->nDivH;
 
     sps::bbox_t<T> element_box = sps::bbox_t<T>();
     data->ElementExtentGet(iElement, element_box);
@@ -513,6 +549,8 @@ namespace fnm {
 
     T fSampleSignalStart = fs * tStart;
 
+    int iSampleSignalStart = (int) floor(fSampleSignalStart);
+
     // Allocate output
     int _nSamples = (int) ceil(T(2.0) + fs*(tEnd - tStart));
 
@@ -524,6 +562,8 @@ namespace fnm {
     sofus::sysparm_t<T> timeDomainParm;
     timeDomainParm.fs = sysparm->fs;
     timeDomainParm.c  = sysparm->c;
+
+    const T scale = T(1.0);
 
     for (size_t iPosition = 0 ; iPosition < nPositions ; iPosition++) {
 
@@ -540,87 +580,155 @@ namespace fnm {
                                      &pld);
 
       if (mask & 0x01) {
-        DirectWaveSingle(element, sysparm, f0,
-                         pld, // projection
-                         uv,  // abcissas
-                         fSampleSignalStart,
-                         &((*odata)[iPosition*_nSamples]));
+        DirectWaveSingle<T,A>(sysparm,
+                              &element, scale,
+                              f0,
+                              &pld,
+                              &uv,
+                              delay,
+                              iSampleSignalStart,
+                              _nSamples,
+                              &((*odata)[iPosition*_nSamples]));
       }
 
       if (mask & 0x02) {
-        EdgeResponse<T, A>(sysparm, element,
-                           0, pld,
-                           vxs.get(), vweights.get(),
+        EdgeResponse<T, A>(sysparm, &element, scale,
+                           0, &pld,
+                           &v,
                            f0,
-                           fSampleSignalStart,
+                           delay,
+                           iSampleSignalStart,
+                           _nSamples,
                            &((*odata)[iPosition*_nSamples]));
       }
       if (mask & 0x04) {
-        EdgeResponse<T, A>(sysparm, element,
-                           1, pld,
-                           uxs.get(), uweights.get(),
+        EdgeResponse<T, A>(sysparm, &element, scale,
+                           1, &pld,
+                           &u,
                            f0,
-                           fSampleSignalStart,
+                           delay,
+                           iSampleSignalStart,
+                           _nSamples,
                            &((*odata)[iPosition*_nSamples]));
       }
       if (mask & 0x08) {
-        EdgeResponse<T, A>(sysparm, element,
-                           2, pld,
-                           vxs.get(), vweights.get(),
+        EdgeResponse<T, A>(sysparm, &element, scale,
+                           2, &pld,
+                           &v,
                            f0,
-                           fSampleSignalStart,
+                           delay,
+                           iSampleSignalStart,
+                           _nSamples,
                            &((*odata)[iPosition*_nSamples]));
       }
       if (mask & 0x10) {
-        EdgeResponse<T, A>(sysparm, element,
-                           3, pld,
-                           uxs.get(), uweights.get(),
+        EdgeResponse<T, A>(sysparm, &element, scale,
+                           3, &pld,
+                           &u,
                            f0,
-                           fSampleSignalStart,
+                           delay,
+                           iSampleSignalStart,
+                           _nSamples,
                            &((*odata)[iPosition*_nSamples]));
       }
     }
     return T(0.0);
   }
 
-#endif
+  template void
+  EdgeResponse<float, ToneBurst>(const sysparm_t<float>* sysparm,
+                                 const sps::element_rect_t<float>* element,
+                                 const float& scale,
+                                 const size_t iEdge,
+                                 const sofus::proj_limit_dist_t<float>* pld,
+                                 const GLQuad1D<float>* pGL,
+                                 const float& f0,
+                                 const float& delay,
+                                 const int& iSampleSignalStart,
+                                 const size_t& nSamples,
+                                 float* odata);
 
-#ifdef FNM_PULSED_WAVE
-
-  template void EdgeResponse<float, ToneBurst>(const sysparm_t<float>* sysparm,
-      const sps::element_rect_t<float>& element,
+  template void
+  EdgeResponse<float, HanningWeightedPulse>(const sysparm_t<float>* sysparm,
+      const sps::element_rect_t<float>* element,
+      const float& scale,
       const size_t iEdge,
-      const sofus::proj_limit_dist_t<float>& pld,
-      const float* ls,
-      const float* lw,
+      const sofus::proj_limit_dist_t<float>* pld,
+      const GLQuad1D<float>* pGL,
       const float& f0,
-      const float& fSampleSignalStart,
+      const float& delay,
+      const int& iSampleSignalStart,
+      const size_t& nSamples,
       float* odata);
 
-  template float TransientSingleRect<float, ToneBurst>(const sysparm_t<float>* sysparm,
+  template void
+  DirectWaveSingle<float, ToneBurst>(const sysparm_t<float>* sysparm,
+                                     const sps::element_rect_t<float>* element,
+                                     const float& scale,
+                                     const float& f0,
+                                     const sofus::proj_limit_dist_t<float>* pld,
+                                     const GLQuad2D<float>* uv,
+                                     const float delay,
+                                     const int iSampleSignalStart,
+                                     const size_t nSamples,
+                                     float* odata);
+
+  template void
+  DirectWaveSingle<float, HanningWeightedPulse>(const sysparm_t<float>* sysparm,
+      const sps::element_rect_t<float>* element,
+      const float& scale,
+      const float& f0,
+      const sofus::proj_limit_dist_t<float>* pld,
+      const GLQuad2D<float>* uv,
+      const float delay,
+      const int iSampleSignalStart,
+      const size_t nSamples,
+      float* odata);
+
+  template float
+  TransientSingleRect<float, ToneBurst>(const sysparm_t<float>* sysparm,
+                                        const ApertureData<float>* data,
+                                        const float* pos, const size_t nPositions,
+                                        float** odata, size_t* nSamples, int mask);
+
+  template float
+  TransientSingleRect<float, HanningWeightedPulse>(const sysparm_t<float>* sysparm,
       const ApertureData<float>* data,
       const float* pos, const size_t nPositions,
       float** odata, size_t* nSamples, int mask);
 
-
 #if FNM_DOUBLE_SUPPORT
 
-  template double TransientSingleRect<double, ToneBurst>(const sysparm_t<double>* sysparm,
-      const ApertureData<double>* data,
-      const double* pos, const size_t nPositions,
-      double** odata, size_t* nSamples, int mask);
+  template void
+  DirectWaveSingle(const sysparm_t<double>* sysparm,
+                   const sps::element_rect_t<double>* element,
+                   const double& scale,
+                   const double& f0,
+                   const sofus::proj_limit_dist_t<double>* pld,
+                   const GLQuad2D<double>* uv,
+                   const double delay,
+                   const int iSampleSignalStart,
+                   const size_t nSamples,
+                   double* odata);
 
-  template void EdgeResponse<double, ToneBurst>(const sysparm_t<double>* sysparm,
-      const sps::element_rect_t<double>& element,
-      const size_t iEdge,
-      const sofus::proj_limit_dist_t<double>& pld,
-      const double* ls,
-      const double* lw,
-      const double& f0,
-      const double& fSampleSignalStart,
-      double* odata);
+  template void
+  EdgeResponse<double, ToneBurst>(const sysparm_t<double>* sysparm,
+                                  const sps::element_rect_t<double>* element,
+                                  const double& scale,
+                                  const size_t iEdge,
+                                  const sofus::proj_limit_dist_t<double>* pld,
+                                  const GLQuad1D<double>* pGL,
+                                  const double& f0,
+                                  const double& delay,
+                                  const int& iSampleSignalStart,
+                                  const size_t& nSamples,
+                                  double* odata);
 
+  template double
+  TransientSingleRect<double, ToneBurst>(const sysparm_t<double>* sysparm,
+                                         const ApertureData<double>* data,
+                                         const double* pos, const size_t nPositions,
+                                         double** odata, size_t* nSamples, int mask);
 #endif
 
-#endif
 }

@@ -1,0 +1,29 @@
+/**
+* @file   <sofus/config.h>
+* @author Jens Munk Hansen <jens.munk.hansen@gmail.com>
+* @date   Tue Apr 29 19:46:27 2014
+*
+* @brief  Auto-generated configuration file
+*
+*
+*/
+#pragma once
+
+#define SOFUS_MAJOR_VERSION (@SOFUS_MAJOR_VERSION@)
+#define SOFUS_MINOR_VERSION (@SOFUS_MINOR_VERSION@)
+#define SOFUS_PATCH_VERSION (@SOFUS_PATCH_VERSION@)
+#define SOFUS_VERSION_STRING "@SOFUS_VERSION@"
+
+#ifdef _WIN32
+# define HAVE_ROUND @HAVE_ROUND@
+#endif
+
+#define USE_PROJECTIONS @USE_PROJECTIONS@
+
+// Tell me
+#cmakedefine HAVE_PTHREAD_H   @HAVE_PTHREAD_H@
+#cmakedefine HAVE_SIGNAL_H    @HAVE_SIGNAL_H@
+#cmakedefine HAVE_IMMINTRIN_H @HAVE_IMMINTRIN_H@
+
+#cmakedefine HAVE_THREAD      @HAVE_THREAD@
+

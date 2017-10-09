@@ -21,6 +21,7 @@
  *  along with SOFUS.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <fnm/config.h>
 #include <fnm/fnm_basis.hpp>
 
 namespace fnm {
@@ -53,9 +54,9 @@ namespace fnm {
       this->m_fTerms[iTerm] += factor * Identity<T>::SpatialBasisFunction[iTerm](tau, W, f0);
     }
   }
-
+  /*
   template <class T>
-  inline T Identity<T>::EvaluateTSD(T t, T W, T f0)
+  inline T Identity<T>::EvaluateTSD(T t, T W, T f0) const
   {
     T result = T(0.0);
     for (size_t iTerm = 0 ; iTerm < Identity<T>::nTerms ; iTerm++) {
@@ -63,6 +64,7 @@ namespace fnm {
     }
     return result;
   }
+  */
 
   template <class T>
   T (*const ToneBurst<T>::SpatialBasisFunction[ToneBurst<T>::nTerms])(T,T,T) = {
@@ -95,9 +97,9 @@ namespace fnm {
       this->m_fTerms[iTerm] += factor * ToneBurst<T>::SpatialBasisFunction[iTerm](tau, W, f0);
     }
   }
-
+  /*
   template <class T>
-  inline T ToneBurst<T>::EvaluateTSD(T t, T W, T f0)
+  inline T ToneBurst<T>::EvaluateTSD(T t, T W, T f0) const
   {
     T result = T(0.0);
     for (size_t iTerm = 0 ; iTerm < ToneBurst<T>::nTerms ; iTerm++) {
@@ -105,6 +107,7 @@ namespace fnm {
     }
     return result;
   }
+  */
 
   template <class T>
   T (*const HanningWeightedPulse<T>::SpatialBasisFunction[HanningWeightedPulse<T>::nTerms])(T,T,T) = {
@@ -145,9 +148,9 @@ namespace fnm {
       this->m_fTerms[iTerm] += factor * HanningWeightedPulse<T>::SpatialBasisFunction[iTerm](tau, W, f0);
     }
   }
-
+  /*
   template <class T>
-  inline T HanningWeightedPulse<T>::EvaluateTSD(T t, T W, T f0)
+  T HanningWeightedPulse<T>::EvaluateTSD(T t, T W, T f0) const
   {
     T result = T(0.0);
     for (size_t iTerm = 0 ; iTerm < HanningWeightedPulse<T>::nTerms ; iTerm++) {
@@ -155,6 +158,7 @@ namespace fnm {
     }
     return result;
   }
+  */
 
 #ifdef FNM_DOUBLE_SUPPORT
   template class Identity<double>;

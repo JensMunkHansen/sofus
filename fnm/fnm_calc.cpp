@@ -71,38 +71,6 @@ namespace fnm {
     int cpu_id;
   };
 
-  template <class T>
-  void CalcWeightsAndAbcissae(const sysparm_t<T>* sysparm,
-                              sps::deleted_aligned_array<T> &&uxs,
-                              sps::deleted_aligned_array<T> &&uweights,
-                              sps::deleted_aligned_array<T> &&vxs,
-                              sps::deleted_aligned_array<T> &&vweights)
-  {
-
-    size_t nDivW = sysparm->nDivW;
-    size_t nDivH = sysparm->nDivH;
-
-    uxs      = sps::deleted_aligned_array_create<T>(nDivW);
-    uweights = sps::deleted_aligned_array_create<T>(nDivW);
-    vxs      = sps::deleted_aligned_array_create<T>(nDivH);
-    vweights = sps::deleted_aligned_array_create<T>(nDivH);
-
-    // Common weights and abcissa
-    for (size_t i = 0 ; i < nDivW ; i++) {
-      gl::GLNode qp = gl::GL(nDivW,i);
-      // Conversion from double to T
-      uxs[i]        = T(qp.value);
-      uweights[i]   = T(qp.weight);
-    }
-
-    for (size_t i = 0 ; i < nDivH ; i++) {
-      gl::GLNode qp = gl::GL(nDivH, i);
-      // Conversion from double to T
-      vxs[i]      = T(qp.value);
-      vweights[i] = T(qp.weight);
-    }
-  }
-
 #if defined(HAVE_PTHREAD_H)
   template <class T>
   void* CalcCwThreadFunc(void* ptarg)

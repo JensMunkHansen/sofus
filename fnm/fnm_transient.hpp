@@ -28,6 +28,9 @@
 
 #include <fnm/fnm_types.hpp>
 #include <sps/math.h>
+#include <sps/smath_types.hpp>
+
+#include <sofus/sofus_types.hpp>
 
 namespace fnm {
 #ifdef _MSC_VER
@@ -40,19 +43,82 @@ namespace fnm {
 }
 
 namespace fnm {
-#ifdef FNM_PULSED_WAVE
   template <class T, template <typename> class A>
   T TransientSingleRect(const sysparm_t<T>* sysparm,
                         const ApertureData<T>* data,
                         const T* pos, const size_t nPositions,
                         T** odata, size_t* nSamples, int mask = 0x1F);
 
+  /**
+   * Note: Uses scaled Gauss-Legendre weights and abcissae
+   *
+   * @param element
+   * @param limit   Projection and limits for sphere intersecting element
+   * @param uv      Gauss-Legendre weights and abcissae scaled by hw (for u) and hh (for v)
+   *
+   * @return
+   */
   template <class T>
-  T CalcFdTransientRef(const sysparm_t<T>* sysparm,
-                       const ApertureData<T>* data,
-                       const T* pos, const size_t nPositions, const size_t nDim,
-                       T** odata, size_t* nSignals, size_t* nSamples);
-#endif
+  T FourDirect(const sps::element_rect_t<T>* element,
+               const sofus::proj_limit_dist_t<T>* limit,
+               const GLQuad2D<T>* uv);
+
+  /**
+   * Compute direct response for rectangle
+   *
+   * @param sysparm
+   * @param element
+   * @param scale
+   * @param f0
+   * @param pld
+   * @param uv
+   * @param delay
+   * @param iSampleSignalStart
+   * @param nSamples
+   * @param odata
+   */
+  template <class T, template <typename> class A>
+  void DirectWaveSingle(const sysparm_t<T>* sysparm,
+                        const sps::element_rect_t<T>* element,
+                        const T& scale,
+                        const T& f0,
+                        const sofus::proj_limit_dist_t<T>* pld,
+                        const GLQuad2D<T>* uv,
+                        const T delay,
+                        const int iSampleSignalStart,
+                        const size_t nSamples,
+                        T* odata);
+
+  /**
+   * Compute edge response for rectangle
+   *
+   * Note: Uses scaled Gauss-Legendre weights and abcissae
+   *
+   * @param sysparm
+   * @param element
+   * @param scale
+   * @param iEdge
+   * @param pld
+   * @param pGL
+   * @param f0
+   * @param delay
+   * @param iSampleSignalStart
+   * @param nSamples
+   * @param odata
+   */
+  template <typename T, template <typename> class A>
+  void EdgeResponse(const sysparm_t<T>* sysparm,
+                    const sps::element_rect_t<T>* element,
+                    const T& scale,
+                    const size_t iEdge,
+                    const sofus::proj_limit_dist_t<T>* pld,
+                    const GLQuad1D<T>* pGL,
+                    const T& f0,
+                    const T& delay,
+                    const int& iSampleSignalStart,
+                    const size_t& nSamples,
+                    T* odata);
+
 }
 
 /* Local variables: */

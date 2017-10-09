@@ -36,7 +36,8 @@
 
 #include <fnm/fnm_common.hpp>     // fnm::CalcWeightsAndAbcissae
 #include <fnm/fnm_calc.hpp>       // fnm::Calc routines
-#include <fnm/fnm_transient.hpp>  // fnm::CalcFd routines
+#include <fnm/fnm_basis.hpp>
+#include <fnm/fnm_transient.hpp>
 #include <fnm/fnm_arrays.hpp>     // fnm::FocusedLinearArray, fnm::FocusedConvexArray
 
 #if FNM_PULSED_WAVE
@@ -2183,20 +2184,9 @@ SubToElementsError:
     return tStart;
   }
 
-#if FNM_PULSED_WAVE
-
   template <class T>
   T Aperture<T>::CalcTransientSingleElementNoDelay(const T* pos, const size_t nPositions, const size_t nDim,
-      T** odata, size_t* nSignals, size_t* nSamples)
-  {
-    T tstart = fnm::TransientSingleRect<T>(this->m_sysparm, this->m_data, pos, nPositions, odata, nSamples);
-    *nSignals = nPositions;
-    return tstart;
-  }
-
-  template <class T>
-  T Aperture<T>::CalcFdTransientRef(const T* pos, const size_t nPositions, const size_t nDim,
-                                    T** odata, size_t* nSignals, size_t* nSamples)
+      T** odata, size_t* nSignals, size_t* nSamples, int mask)
   {
     assert(nDim == 3);
     if (nDim != 3) {
@@ -2205,24 +2195,10 @@ SubToElementsError:
       *nSamples = 0;
       return T(0.0);
     }
-
-    if (m_data->m_focus_type == FocusingType::Rayleigh) {
-      fprintf(stderr, "Rayleigh focusing type is not supported for pulsed wave calculations\n");
-      fprintf(stderr, "Focusing type is reset to Pythagorean\n");
-      m_data->m_focus_type = FocusingType::Pythagorean;
-    }
-    this->FocusUpdate();
-
-    T tStart = fnm::CalcFdTransientRef(m_sysparm,
-                                       m_data,
-                                       pos, nPositions, nDim,
-                                       odata, nSignals, nSamples);
-
-    return tStart;
-
+    T tstart = fnm::TransientSingleRect<T, ToneBurst>(this->m_sysparm, this->m_data, pos, nPositions, odata, nSamples, mask);
+    *nSignals = nPositions;
+    return tstart;
   }
-#endif
-
 
   // Optimal sampling for integral (reduced integration path)
   template <class T>

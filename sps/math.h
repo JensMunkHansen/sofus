@@ -98,14 +98,16 @@ template<typename T> T next_power_two(T value)
   return value+1;
 }
 
-template <> int
-next_power_two(int value)
+template <>
+inline
+int next_power_two<int>(int value)
 {
   return 1 << ((sizeof(int) * CHAR_BIT) - __builtin_clz(value-1));
 }
 
-template <> long int
-next_power_two(long int value)
+template <>
+inline
+long int next_power_two(long int value)
 {
   return 1 << ((sizeof(int) * CHAR_BIT) - __builtin_clzl(value-1));
 }

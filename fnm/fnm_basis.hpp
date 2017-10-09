@@ -24,8 +24,11 @@
 
 #include <sps/cenv.h>
 #include <sps/math.h>
+#include <sps/cmath>
 #include <cstddef>
 #include <algorithm> // for std::fill
+
+// TODO: Vectorize all basis functions and evaluate
 
 namespace fnm {
   /*! \brief ToneBurst
@@ -40,24 +43,25 @@ namespace fnm {
     static const size_t nTerms = 2;
 
     STATIC_INLINE_BEGIN T Evaluate(T t, T W, T f0) STATIC_INLINE_END {
-      return (fabs(t / W - T(0.5)) < T(0.5)) ? sin(T(M_2PI)*f0*t) : T(0.0);
+      return (fabs(t / W - T(0.5)) < T(0.5)) ? sps::sin<T>(T(M_2PI)*f0*t) : T(0.0);
     }
     STATIC_INLINE_BEGIN T sbf0(T tau, T W, T f0) STATIC_INLINE_END {
       SPS_UNREFERENCED_PARAMETER(W);
-      return cos(T(M_2PI)*f0*tau);
+      return sps::cos<T>(T(M_2PI)*f0*tau);
     }
     STATIC_INLINE_BEGIN T sbf1(T tau, T W, T f0) STATIC_INLINE_END {
       SPS_UNREFERENCED_PARAMETER(W);
-      return sin(T(M_2PI)*f0*tau);
+      return sps::sin<T>(T(M_2PI)*f0*tau);
     }
     STATIC_INLINE_BEGIN T tbf0(T t, T W, T f0) STATIC_INLINE_END {
       SPS_UNREFERENCED_PARAMETER(W);
-      return sin(T(M_2PI)*f0*t);
+      return sps::sin<T>(T(M_2PI)*f0*t);
     }
     STATIC_INLINE_BEGIN T tbf1(T t, T W, T f0) STATIC_INLINE_END {
       SPS_UNREFERENCED_PARAMETER(W);
-      return -cos(T(M_2PI)*f0*t);
+      return -sps::cos<T>(T(M_2PI)*f0*t);
     }
+
     static T(*const SpatialBasisFunction[nTerms])(T, T, T);
     static T(*const TemporalBasisFunction[nTerms])(T, T, T);
 
@@ -70,9 +74,17 @@ namespace fnm {
 
     inline void ResetSpatial();
 
+    // TODO: Check if it is faster to use a static function add argument T (coeff*)[nTerms]
     inline void UpdateSpatial(T factor, T tau, T W, T f0);
 
-    inline T EvaluateTSD(T t, T W, T f0);
+    inline T EvaluateTSD(T t, T W, T f0) const
+    {
+      T result = T(0.0);
+      for (size_t iTerm = 0 ; iTerm < ToneBurst<T>::nTerms ; iTerm++) {
+        result += this->m_fTerms[iTerm] * ToneBurst<T>::TemporalBasisFunction[iTerm](t,W,f0);
+      }
+      return result;
+    }
     ///@}
 
   private:
@@ -110,7 +122,14 @@ namespace fnm {
 
     inline void UpdateSpatial(T factor, T tau, T W, T f0);
 
-    inline T EvaluateTSD(T t, T W, T f0);
+    inline T EvaluateTSD(T t, T W, T f0) const
+    {
+      T result = T(0.0);
+      for (size_t iTerm = 0 ; iTerm < Identity<T>::nTerms ; iTerm++) {
+        result += this->m_fTerms[iTerm] * Identity<T>::TemporalBasisFunction[iTerm](t,W,f0);
+      }
+      return result;
+    }
     ///@}
   private:
     T m_fTerms[nTerms];
@@ -132,48 +151,48 @@ namespace fnm {
 
     STATIC_INLINE_BEGIN T Evaluate(T t, T W, T f0) STATIC_INLINE_END {
       return (fabs(t / W - T(0.5)) < T(0.5)) ?
-      T(0.5)*(T(1.0) - cos(T(M_2PI)*t / W)) * sin(T(M_2PI)*f0*t) : T(0.0);
+      T(0.5)*(T(1.0) - sps::cos<T>(T(M_2PI)*t / W)) * sps::sin<T>(T(M_2PI)*f0*t) : T(0.0);
     }
 
     STATIC_INLINE_BEGIN T sbf0(T tau, T W, T f0) STATIC_INLINE_END {
       SPS_UNREFERENCED_PARAMETER(W);
-      return cos(T(M_2PI)*f0*tau);
+      return sps::cos<T>(T(M_2PI)*f0*tau);
     }
     STATIC_INLINE_BEGIN T sbf1(T tau, T W, T f0) STATIC_INLINE_END {
       SPS_UNREFERENCED_PARAMETER(W);
-      return sin(T(M_2PI)*f0*tau);
+      return sps::sin<T>(T(M_2PI)*f0*tau);
     }
     STATIC_INLINE_BEGIN T sbf2(T tau, T W, T f0) STATIC_INLINE_END {
-      return cos(T(M_2PI)*tau / W)*cos(T(M_2PI)*f0*tau);
+      return sps::cos<T>(T(M_2PI)*tau / W)*sps::cos<T>(T(M_2PI)*f0*tau);
     }
     STATIC_INLINE_BEGIN T sbf3(T tau, T W, T f0) STATIC_INLINE_END {
-      return cos(T(M_2PI)*tau / W)*sin(T(M_2PI)*f0*tau);
+      return sps::cos<T>(T(M_2PI)*tau / W)*sps::sin<T>(T(M_2PI)*f0*tau);
     }
     STATIC_INLINE_BEGIN T sbf4(T tau, T W, T f0) STATIC_INLINE_END {
-      return sin(T(M_2PI)*tau / W)*cos(T(M_2PI)*f0*tau);
+      return sps::sin<T>(T(M_2PI)*tau / W)*sps::cos<T>(T(M_2PI)*f0*tau);
     }
     STATIC_INLINE_BEGIN T sbf5(T tau, T W, T f0) STATIC_INLINE_END {
-      return sin(T(M_2PI)*tau / W)*sin(T(M_2PI)*f0*tau);
+      return sps::sin<T>(T(M_2PI)*tau / W)*sps::sin<T>(T(M_2PI)*f0*tau);
     }
     STATIC_INLINE_BEGIN T tbf0(T t, T W, T f0) STATIC_INLINE_END {
       SPS_UNREFERENCED_PARAMETER(W);
-      return T(0.5)*sin(T(M_2PI)*f0*t);
+      return T(0.5)*sps::sin<T>(T(M_2PI)*f0*t);
     }
     STATIC_INLINE_BEGIN T tbf1(T t, T W, T f0) STATIC_INLINE_END {
       SPS_UNREFERENCED_PARAMETER(W);
-      return -T(0.5)*cos(T(M_2PI)*f0*t);
+      return -T(0.5)*sps::cos<T>(T(M_2PI)*f0*t);
     }
     STATIC_INLINE_BEGIN T tbf2(T t, T W, T f0) STATIC_INLINE_END {
-      return -T(0.5)*cos(T(M_2PI)*t / W)*sin(T(M_2PI)*f0*t);
+      return -T(0.5)*sps::cos<T>(T(M_2PI)*t / W)*sps::sin<T>(T(M_2PI)*f0*t);
     }
     STATIC_INLINE_BEGIN T tbf3(T t, T W, T f0) STATIC_INLINE_END {
-      return T(0.5)*cos(T(M_2PI)*t / W)*cos(T(M_2PI)*f0*t);
+      return T(0.5)*sps::cos<T>(T(M_2PI)*t / W)*sps::cos<T>(T(M_2PI)*f0*t);
     }
     STATIC_INLINE_BEGIN T tbf4(T t, T W, T f0) STATIC_INLINE_END {
-      return -T(0.5)*sin(T(M_2PI)*t / W)*sin(T(M_2PI)*f0*t);
+      return -T(0.5)*sps::sin<T>(T(M_2PI)*t / W)*sps::sin<T>(T(M_2PI)*f0*t);
     }
     STATIC_INLINE_BEGIN T tbf5(T t, T W, T f0) STATIC_INLINE_END {
-      return T(0.5)*sin(T(M_2PI)*t / W)*cos(T(M_2PI)*f0*t);
+      return T(0.5)*sps::sin<T>(T(M_2PI)*t / W)*sps::cos<T>(T(M_2PI)*f0*t);
     }
     static T(*const SpatialBasisFunction[nTerms])(T, T, T);
     static T(*const TemporalBasisFunction[nTerms])(T, T, T);
@@ -189,7 +208,14 @@ namespace fnm {
 
     inline void UpdateSpatial(T factor, T tau, T W, T f0);
 
-    inline T EvaluateTSD(T t, T W, T f0);
+    inline T EvaluateTSD(T t, T W, T f0) const
+    {
+      T result = T(0.0);
+      for (size_t iTerm = 0 ; iTerm < HanningWeightedPulse<T>::nTerms ; iTerm++) {
+        result += this->m_fTerms[iTerm] * HanningWeightedPulse<T>::TemporalBasisFunction[iTerm](t,W,f0);
+      }
+      return result;
+    }
     ///@}
   private:
     T m_fTerms[nTerms];

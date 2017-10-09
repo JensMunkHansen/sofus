@@ -109,6 +109,7 @@ set(fnm_HEADERS
   fnm_data.hpp
   fnm_arrays.hpp
   fnm_basis.hpp
+  fnm_common.hpp
   circular_data.hpp
   circular_calc.hpp
   circular.hpp
@@ -129,6 +130,7 @@ set(fnm_SOURCES
   fnm_calc.cpp
   fnm.cpp
   fnm_arrays.cpp
+  fnm_common.cpp
   if_fnm.cpp
   circular.cpp
   circular_data.cpp
