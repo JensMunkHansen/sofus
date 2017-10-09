@@ -197,7 +197,7 @@ namespace fnm {
 #endif
 
             // TODO: Use CalcHzFast for comparison with reference
-#if 1
+#if 0
             // This is worse not reducing the number of integrals
             result = CalcHzFast<T>(element, projection, k,
                                    uxs, uweights, nDivW,
