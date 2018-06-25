@@ -92,7 +92,8 @@
    singletons to the proving interface. See <sps/globals.hpp> for
    details.
  */
-template <typename T, template <typename> class V> V<T>* sps::globalstruct<T, V >::pVar = NULL;
+template <typename T,template <typename> class V>
+std::atomic<V<T>*> sps::globalstruct<T,V >::pVar{nullptr};
 
 // Question: Can we partially specialize this using sysparm_t
 

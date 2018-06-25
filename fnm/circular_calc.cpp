@@ -199,7 +199,7 @@ namespace fnm {
           psi_1 = T(0.0);
         } else if (t < t3 + W) {
           T arg = (raz2 - SQUARE(c)*SQUARE(t-W)) / (T(2.0)*a*std::max<T>(r,eps));
-          arg = std::clamp<T>(arg,T(-1.0),T(1.0));
+          arg = sps::clamp<T>(arg,T(-1.0),T(1.0));
           psi_1 = acos(arg);
         } else {
           psi_1 = T(0.0);
@@ -210,7 +210,7 @@ namespace fnm {
           psi_2 = T(M_PI);
         } else if ( (t > t2)) {
           T arg = (raz2 - SQUARE(c*t)) / (T(2.0)*a*std::max<T>(r,eps));
-          arg = std::clamp<T>(arg,T(-1.0),T(1.0));
+          arg = sps::clamp<T>(arg,T(-1.0),T(1.0));
           psi_2 = acos(arg);
         } else {
           psi_2 = T(0.0);
@@ -371,7 +371,7 @@ namespace fnm {
       sps::point_t<T> r2p = point - element.circle.center;
 
       sps::point_t<T> normal = sps::point_t<T>();
-      sps::basis_vectors<T, sps::EulerIntrinsicYXY>(normal, element.circle.euler, 2);
+      sps::basis_vectors<T, sps::EulerIntrinsicYXY>(&normal, element.circle.euler, 2);
 
       T z = dot(normal,r2p);
       T z2 = SQUARE(z);

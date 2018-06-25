@@ -276,7 +276,7 @@ namespace fnm {
 
           sps::point_t<T> center1;
           // Rotate about origin
-          sps::basis_rotate<T, sps::EulerIntrinsicYXY>(center,euler,center1);
+          sps::basis_rotate<T, sps::EulerIntrinsicYXY>(center,euler,&center1);
           center1[2] = center1[2] - azR;
 
           elements[iAz][iEl].hh     = hh;

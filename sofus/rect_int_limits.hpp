@@ -763,9 +763,9 @@ namespace sofus {
     sps::point_t<T> r2p = point - element.center;
 
     sps::point_t<T> hh_dir, hw_dir, normal;
-    sps::basis_vectors<T, sps::EulerIntrinsicYXY>(hw_dir, element.euler, 0);
-    sps::basis_vectors<T, sps::EulerIntrinsicYXY>(hh_dir, element.euler, 1);
-    sps::basis_vectors<T, sps::EulerIntrinsicYXY>(normal, element.euler, 2);
+    sps::basis_vectors<T, sps::EulerIntrinsicYXY>(&hw_dir, element.euler, 0);
+    sps::basis_vectors<T, sps::EulerIntrinsicYXY>(&hh_dir, element.euler, 1);
+    sps::basis_vectors<T, sps::EulerIntrinsicYXY>(&normal, element.euler, 2);
 
     // Distance to plane
     *dist2plane = fabs(dot(normal,r2p));

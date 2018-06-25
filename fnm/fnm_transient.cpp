@@ -374,18 +374,18 @@ namespace fnm {
       deltaSigma = sqrt(sqrtArg);
 
       // Lower sigma range
-      fSigmaMax[Lower] = std::clamp(pl, -hl, hl);
-      fSigmaMin[Lower] = std::clamp(pl - deltaSigma, -hl, hl);
+      fSigmaMax[Lower] = sps::clamp(pl, -hl, hl);
+      fSigmaMin[Lower] = sps::clamp(pl - deltaSigma, -hl, hl);
 
       // Upper sigma range
-      fSigmaMax[Upper] = std::clamp(pl + deltaSigma, -hl, hl);
-      fSigmaMin[Upper] = std::clamp(pl, -hl, hl);
+      fSigmaMax[Upper] = sps::clamp(pl + deltaSigma, -hl, hl);
+      fSigmaMin[Upper] = sps::clamp(pl, -hl, hl);
 
       if ((t > t12min + W) && (t < t12max + W)) {
         // Shorten ranges
         deltaSigma = sqrt(std::max<T>(T(0.0), SQUARE(c*(t-W)) - z2 - SQUARE(adjacent)));
-        fSigmaMin[Upper] = std::clamp(pl + deltaSigma, -hl, hl);
-        fSigmaMax[Lower] = std::clamp(pl - deltaSigma, -hl, hl);
+        fSigmaMin[Upper] = sps::clamp(pl + deltaSigma, -hl, hl);
+        fSigmaMax[Lower] = sps::clamp(pl - deltaSigma, -hl, hl);
       }
       // Remove sigma from upper sigmas
       for (int iSigma = iSigmaLow[Upper] ; (iSigma < iSigmaMax[Upper] && iSigma < iSigmaUp[Upper] ) ; iSigma++) {

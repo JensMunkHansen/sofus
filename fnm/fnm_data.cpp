@@ -198,8 +198,8 @@ namespace fnm {
       for(size_t jElement = 0 ; jElement < m_nsubelements ; jElement++) {
         const sps::element_rect_t<T>& element = elements[iElement][jElement];
 
-        sps::basis_vectors<T, sps::EulerIntrinsicYXY>(w_dir,element.euler,0);
-        sps::basis_vectors<T, sps::EulerIntrinsicYXY>(h_dir,element.euler,1);
+        sps::basis_vectors<T, sps::EulerIntrinsicYXY>(&w_dir,element.euler,0);
+        sps::basis_vectors<T, sps::EulerIntrinsicYXY>(&h_dir,element.euler,1);
 
         for(size_t i_xyz=0 ; i_xyz < 3 ; i_xyz++) {
 

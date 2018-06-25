@@ -22,11 +22,8 @@
 #include <fnm/fnm.hpp>
 #include <fnm/fnm_basis.hpp>
 
-#include <sps/memory>
-#include <sps/algorithm>
 #include <sps/smath.hpp>
-#include <sps/signals.hpp>
-#include <sps/debug.h>
+#include <sps/msignals.hpp>
 
 #include <gl/gl.hpp>
 

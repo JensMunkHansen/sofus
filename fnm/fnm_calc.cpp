@@ -581,9 +581,9 @@ namespace fnm {
             // Get basis vectors (can be stored)
             sps::point_t<T> hh_dir, hw_dir, normal;
 
-            sps::basis_vectors<T, sps::EulerIntrinsicYXY>(hw_dir, element.euler, 0);
-            sps::basis_vectors<T, sps::EulerIntrinsicYXY>(hh_dir, element.euler, 1);
-            sps::basis_vectors<T, sps::EulerIntrinsicYXY>(normal, element.euler, 2);
+            sps::basis_vectors<T, sps::EulerIntrinsicYXY>(&hw_dir, element.euler, 0);
+            sps::basis_vectors<T, sps::EulerIntrinsicYXY>(&hh_dir, element.euler, 1);
+            sps::basis_vectors<T, sps::EulerIntrinsicYXY>(&normal, element.euler, 2);
 
             sps::point_t<T> r2p = point - element.center;
 
@@ -860,9 +860,9 @@ namespace fnm {
             sps::point_t<T> hw_dir = sps::point_t<T>();
             sps::point_t<T> normal = sps::point_t<T>();
 
-            sps::basis_vectors<T, sps::EulerIntrinsicYXY>(hw_dir, element.euler, 0);
-            sps::basis_vectors<T, sps::EulerIntrinsicYXY>(hh_dir, element.euler, 1);
-            sps::basis_vectors<T, sps::EulerIntrinsicYXY>(normal, element.euler, 2);
+            sps::basis_vectors<T, sps::EulerIntrinsicYXY>(&hw_dir, element.euler, 0);
+            sps::basis_vectors<T, sps::EulerIntrinsicYXY>(&hh_dir, element.euler, 1);
+            sps::basis_vectors<T, sps::EulerIntrinsicYXY>(&normal, element.euler, 2);
 
             debug_print("hw_dir: %f %f %f\n", hw_dir[0], hw_dir[1], hw_dir[2]);
             debug_print("hh_dir: %f %f %f\n", hh_dir[0], hh_dir[1], hh_dir[2]);
@@ -1032,9 +1032,9 @@ namespace fnm {
             sps::point_t<T> hw_dir = sps::point_t<T>();
             sps::point_t<T> normal = sps::point_t<T>();
 
-            sps::basis_vectors<T, sps::EulerIntrinsicYXY>(hw_dir, element.euler, 0);
-            sps::basis_vectors<T, sps::EulerIntrinsicYXY>(hh_dir, element.euler, 1);
-            sps::basis_vectors<T, sps::EulerIntrinsicYXY>(normal, element.euler, 2);
+            sps::basis_vectors<T, sps::EulerIntrinsicYXY>(&hw_dir, element.euler, 0);
+            sps::basis_vectors<T, sps::EulerIntrinsicYXY>(&hh_dir, element.euler, 1);
+            sps::basis_vectors<T, sps::EulerIntrinsicYXY>(&normal, element.euler, 2);
 
             debug_print("hw_dir: %f %f %f\n", hw_dir[0], hw_dir[1], hw_dir[2]);
             debug_print("hh_dir: %f %f %f\n", hh_dir[0], hh_dir[1], hh_dir[2]);
@@ -1330,9 +1330,9 @@ namespace fnm {
           // Get basis vectors (can be stored)
           sps::point_t<T> hh_dir, hw_dir, normal;
 
-          sps::basis_vectors<T, sps::EulerIntrinsicYXY>(hw_dir, element.euler, 0);
-          sps::basis_vectors<T, sps::EulerIntrinsicYXY>(hh_dir, element.euler, 1);
-          sps::basis_vectors<T, sps::EulerIntrinsicYXY>(normal, element.euler, 2);
+          sps::basis_vectors<T, sps::EulerIntrinsicYXY>(&hw_dir, element.euler, 0);
+          sps::basis_vectors<T, sps::EulerIntrinsicYXY>(&hh_dir, element.euler, 1);
+          sps::basis_vectors<T, sps::EulerIntrinsicYXY>(&normal, element.euler, 2);
 
           sps::point_t<T> r2p = point - element.center;
 
