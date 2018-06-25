@@ -1,21 +1,39 @@
+/**
+ * @file   if_fnm.h
+ * @author Jens Munk Hansen <jens.munk.hansen@gmail.com>
+ * @date   Fri Sep  8 21:14:16 2017
+ *
+ * @brief  External C interface for creation of apertures and computation
+ *         of continous-wave fields.
+ *
+ */
+
 #ifndef __IF_FNM_H
 #define __IF_FNM_H
 
 #include <fnm/config.h>
 #include <fnm/fnm_export.h>
-#include <fnm/fnm_types.h>
+
 #include <stddef.h>
-
-// TODO: Issue that complex.h includes sps/memory rather than memory!!!
 #include <complex.h>
+#include <stdarg.h>
 
-#define FNM_EXTERNAL_API FNM_EXPORT
+#ifndef SPS_FCOMPLEX
+# ifdef __GNUC__
+#  define SPS_FCOMPLEX float _Complex
+# elif defined(_MSC_VER)
+#  define SPS_FCOMPLEX _Fcomplex
+# endif
+#endif
+
+#ifndef FNM_EXTERNAL_API
+# define FNM_EXTERNAL_API FNM_EXPORT
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// Enough to write aperture instead of struct aperture
 typedef struct Aperture Aperture;
 
 /**
@@ -27,7 +45,7 @@ typedef struct Aperture Aperture;
 FNM_EXTERNAL_API int ApertureCreate(Aperture** obj);
 
 /**
- *
+ * Create Linear Array. @see fnm::FocusedLinearArray
  *
  * @param obj
  * @param nElements
@@ -68,6 +86,10 @@ FNM_EXTERNAL_API int ApertureDestroy(Aperture* obj);
  */
 FNM_EXTERNAL_API int ApertureRwFloatParamSet(Aperture* obj, int fsel, const float* f, size_t nDim, ...);
 
+
+// FNM_EXTERNAL_API int ApertureRwFloatParamSet1D(Aperture* obj, int fsel, const float* f, size_t nData);
+
+
 /**
  * ApertureRwFloatParamGet
  *
@@ -83,28 +105,110 @@ FNM_EXTERNAL_API int ApertureRwFloatParamSet(Aperture* obj, int fsel, const floa
 FNM_EXTERNAL_API int ApertureRwFloatParamGet(Aperture* obj, int fsel, float** f, size_t nDim, ...);
 #endif
 
+
+FNM_EXTERNAL_API int FreeCArray(void* pData);
+
+/**
+ * ApertureNDivWSet
+ *
+ * See @ref fnm::Aperture<T>::ApertureNDivWSet
+ *
+ * @param obj
+ * @param nDiv
+ *
+ * @return
+ */
 FNM_EXTERNAL_API int ApertureNDivWSet(Aperture* obj, size_t nDiv);
 
+/**
+ * ApertureNDivWSet
+ *
+ * See @ref fnm::Aperture<T>::ApertureNDivWSet
+ *
+ * @param obj
+ *
+ * @return
+ */
+FNM_EXTERNAL_API size_t ApertureNDivWGet(Aperture* obj);
+
+/**
+ *
+ *
+ * @param obj
+ * @param nDiv
+ *
+ * @return
+ */
 FNM_EXTERNAL_API int ApertureNDivHSet(Aperture* obj, size_t nDiv);
 
-FNM_EXTERNAL_API int ApertureNThreadsSet(Aperture* obj, size_t nthreads);
+/**
+ *
+ *
+ * @param obj
+ *
+ * @return
+ */
+FNM_EXTERNAL_API size_t ApertureNDivHGet(Aperture* obj);
 
+/**
+ *
+ *
+ * @param obj
+ *
+ * @return
+ */
+FNM_EXTERNAL_API size_t ApertureNThreadsGet(Aperture* obj);
+
+/**
+ *
+ *
+ * @param[in] obj
+ * @param[in] nThreads
+ *
+ * @return
+ */
+FNM_EXTERNAL_API int ApertureNThreadsSet(Aperture* obj, size_t nThreads);
+
+/**
+ *
+ *
+ * @param obj
+ * @param ftype
+ *
+ * @return
+ */
 FNM_EXTERNAL_API int ApertureFocusingTypeSet(Aperture* obj, int ftype);
 
-#ifdef _MSC_VER
+/**
+ *
+ *
+ * @param obj
+ * @param pos
+ * @param nPositions
+ * @param nDim
+ * @param odata
+ * @param nOutPositions
+ *
+ * @return
+ */
 FNM_EXTERNAL_API int ApertureCalcCwFieldRef(Aperture* obj, float* pos, size_t nPositions, size_t nDim,
-																						_Fcomplex** odata, size_t* nOutPositions);
+    SPS_FCOMPLEX** odata, size_t* nOutPositions);
 
+/**
+ *
+ *
+ * @param obj
+ * @param pos
+ * @param nPositions
+ * @param nDim
+ * @param odata
+ * @param nOutPositions
+ *
+ * @return
+ */
 FNM_EXTERNAL_API int ApertureCalcCwFieldFast(Aperture* obj, float* pos, size_t nPositions, size_t nDim,
-																						 _Fcomplex** odata, size_t* nOutPositions);
-#else
-FNM_EXTERNAL_API int ApertureCalcCwFieldRef(Aperture* obj, float* pos, size_t nPositions, size_t nDim,
-																						float _Complex** odata, size_t* nOutPositions);
+    SPS_FCOMPLEX** odata, size_t* nOutPositions);
 
-FNM_EXTERNAL_API int ApertureCalcCwFieldFast(Aperture* obj, float* pos, size_t nPositions, size_t nDim,
-																						 float _Complex** odata, size_t* nOutPositions);
-#endif
-	
 #ifdef __cplusplus
 }
 #endif
