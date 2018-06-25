@@ -4,7 +4,7 @@ pushd %~dp0
 
 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
 
-set BuildGui=1
+set BuildGui=0
 if "%~1"=="NOGUI" goto :NoGUI
 set BuildGui=0
 :NoGUI
