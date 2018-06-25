@@ -170,8 +170,8 @@ BOOL APIENTRY DllMain(HANDLE hModule,
 }
 #endif
 
-char PerformanceInfo[32] = "\n";
-double g_tStart = 0.0;
+FNM_EXPORT char PerformanceInfo[32] = "\n";
+FNM_EXPORT double g_tStart = 0.0;
 
 void ProfilerStart()
 {

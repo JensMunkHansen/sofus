@@ -80,8 +80,8 @@ namespace sofus {
 }
 #endif
 
-extern char PerformanceInfo[32];
-extern double g_tStart;
+FNM_EXPORT extern char PerformanceInfo[32];
+FNM_EXPORT extern double g_tStart;
 /*!
  * @addtogroup fnm
  * @{
