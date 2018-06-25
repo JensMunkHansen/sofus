@@ -177,6 +177,8 @@ else()
   endif()
 endif()
 
+target_link_libraries(fnm sofus)
+
 generate_export_header(fnm)# DEFINE_NO_DEPRECATED)
 
 set_target_properties(fnm PROPERTIES
@@ -221,7 +223,7 @@ if (BUILD_SWIG_INTERFACE)
   include_directories(${PYTHON_INCLUDE_PATH})
   include_directories(${CMAKE_CURRENT_SOURCE_DIR})
   include_directories(${CMAKE_CURRENT_BINARY_DIR}) # config.h
-  
+
   if (BUILD_DOCUMENTATION)
     set(DOXYSWIG_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/documentation.i")
     

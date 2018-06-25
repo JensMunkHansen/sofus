@@ -42,8 +42,8 @@
 
 #if FNM_PULSED_WAVE
 # include <sofus/sofus_types.hpp>
-# include <sofus/sofus_calc.hpp>
-# include <sofus/sofus_pulses.hpp>
+//# include <sofus/sofus_calc.hpp>
+//# include <sofus/sofus_pulses.hpp>
 #endif
 
 #include <sps/memory>          // sps::deleted_aligned_array_create

@@ -14,9 +14,20 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY
 
 set(sofus_HEADERS
   rect_int_limits.hpp
+  sofus_version.hpp
   )
 
 set(sofus_SOURCES
+  sofus_version.cpp
   )
 
+add_library(sofus ${LIB_TYPE} ${sofus_SOURCES} ${sofus_HEADERS} config.h.in)
 
+generate_export_header(sofus)
+
+install(TARGETS sofus
+  EXPORT SofusTargets
+  RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
+  ARCHIVE DESTINATION "${INSTALL_LIB_DIR}" COMPONENT lib
+  LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT shlib
+  PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}/fnm" COMPONENT dev)

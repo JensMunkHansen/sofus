@@ -114,10 +114,8 @@ endif()
 export(TARGETS fnm gl sps
   FILE "${PROJECT_BINARY_DIR}/FnmTargets.cmake")
 
-if (FNM_PULSED_WAVE)
-  export(TARGETS sofus
+export(TARGETS sofus
     FILE "${PROJECT_BINARY_DIR}/FnmTargets.cmake")
-endif()
 
 # Export the package for use from the build-tree
 export(PACKAGE Fnm)
