@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(Fnm CXX)
+project(Fnm C CXX)
 
 # Add path for custom modules
 set(CMAKE_MODULE_PATH
