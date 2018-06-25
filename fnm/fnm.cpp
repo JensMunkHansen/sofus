@@ -120,7 +120,7 @@ void SofusInit ()
   printf ("\nInitializing SOFUS\n\n");
 #if defined(__GNUC__) && !defined(__CYGWIN__)
 #  if !defined(NDEBUG)
-  sps::STrace::Instance().enable();
+  sps::STrace::Instance().Enable();
 #  endif
 #endif
 }
