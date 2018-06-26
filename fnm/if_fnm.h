@@ -19,11 +19,7 @@
 #include <stdarg.h>
 
 #ifndef SPS_FCOMPLEX
-# ifdef __GNUC__
-#  define SPS_FCOMPLEX float _Complex
-# elif defined(_MSC_VER)
-#  define SPS_FCOMPLEX _Fcomplex
-# endif
+# include <sps/cenv.h>
 #endif
 
 #ifndef FNM_EXTERNAL_API
