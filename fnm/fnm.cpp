@@ -2545,7 +2545,7 @@ SubToElementsError:
 
   template class Aperture<float>;
 
-#ifdef FNM_CLOSURE_FUNCTIONS
+#if defined(FNM_CLOSURE_FUNCTIONS) && defined(__GNUG__)
   static_assert(RwParamType::RwParamTypeCount == sizeof(FunctionSelectTable<float>::Info) / sizeof(FunctionInfo<float>),
                 "Update table FunctionSelectTable, when adding new parameters in fnm_types.h");
 #endif
