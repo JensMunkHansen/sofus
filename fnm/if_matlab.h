@@ -18,6 +18,12 @@
 #elif defined(_MSC_VER)
 # define FNM_EXTERNAL_API __declspec(dllexport)
 #endif
+# ifndef SPS_FCOMPLEX
+#  ifdef __GNUC__
+#   define SPS_FCOMPLEX float _Complex
+#  elif defined(_MSC_VER)
+#   define SPS_FCOMPLEX float  // Windows does not handle C99 complex numbers
+#  endif
+# endif
 # include <fnm/if_fnm.h>
-
 #endif
