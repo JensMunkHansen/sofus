@@ -75,6 +75,12 @@ include_directories(
   "${PROJECT_BINARY_DIR}"   # to find fnm/config.h
   )
 
+if (BUILD_SHARED_LIBS)
+  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+  endif()
+endif()
+
 if (BUILD_DOCUMENTATION)
   add_doxygen_target(doc)
 endif()
