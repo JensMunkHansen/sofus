@@ -14,7 +14,7 @@ while (iDir > 0):
     iDir = iDir - 1;
 
 matches = []
-    
+
 # TODO: Python 3.0 use '**/fnm/Release', recursive=True):
 for i in range(3):
   if os.name == 'nt':
@@ -23,7 +23,7 @@ for i in range(3):
     paths = [i*'*/' + 'fnm']
   paths.append(i*'*/' + 'python')
   for path in paths:
-    entries = glob.glob(path) 
+    entries = glob.glob(path)
     if len(entries) > 0:
       path = os.path.join(os.getcwd(),entries[0])
       matches.append(path)
@@ -35,9 +35,8 @@ for path in paths:
   if len(entries) > 0:
     path = os.path.join(os.getcwd(),entries[0])
     matches.append(path)
-      
+
 for path in matches:
   sys.path.append( path )
 
 os.chdir(cwd)
-  

@@ -12,11 +12,21 @@ a  = 2
 %}
 fnmroot = [pwd filesep '..'];
 % Build directory
-builddir = [fnmroot filesep 'release'];
+if isunix
+  builddir = [fnmroot filesep 'release'];
+else
+  builddir = [fnmroot filesep 'build' filesep 'fnm'];
+end
+
 
 % Shared object name and header
-if isunix; libname = 'libfnm.so'; else; libname = 'fnm.dll'; end;
-libnamefull = [builddir filesep 'fnm' filesep libname];
+if isunix
+  libname = 'libfnm.so';
+  libnamefull = [builddir filesep 'fnm' filesep libname];
+else
+  libname = 'fnm.dll';
+  libnamefull = [builddir filesep 'Release' filesep libname];
+end
 libheader   = [fnmroot filesep 'fnm' filesep 'if_matlab.h'];
 
 % Load library using alias fnm
@@ -75,7 +85,12 @@ pos = [xs(:), zeros(nPos,1), zs(:)];
 pos = single(pos');
 
 nOut = uint64(0);
+
+% pdataOut = libpointer('singlePtr', single(zeros(2,42500)));
+% Linux okay to simply to
 pdataOut = libpointer;
+
+%pdataOut = numerictype;
 pnOut = libpointer('uint64Ptr', nOut);
 
 
@@ -94,7 +109,8 @@ calllib('fnm', 'ApertureCalcCwFieldFast', pAperture, pos, uint64(nPos), uint64(n
 toc
 
 % Specify pointer type and dimension for output - two samples per complex
-setdatatype(pdataOut,'singlePtr', 2, pnOut.Value);
+%setdatatype(pdataOut,'singlePtr', 2, pnOut.Value);
+reshape(pdataOut, 2, pnOut.Value);
 
 % Convert and reshape
 c = pdataOut.Value;
