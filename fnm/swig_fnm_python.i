@@ -1,5 +1,6 @@
 %insert("python") %{
 from mpl_toolkits.mplot3d import art3d
+from sys import version_info
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import itertools
@@ -194,11 +195,17 @@ if _newclass:
   extent     = property(ExtentGet)
   area       = property(AreaGet)
       
-# Merge the two method dictionaries, and get the keys
-__swig_dir__ = dict(__swig_getmethods__.items() + __swig_setmethods__.items()).keys()
-# Implement __dir__() to return it plus all of the other members
+  # Merge the two method dictionaries, and get the keys
+  if version_info >= (3, 3, 0):
+    __swig_dir__ = list({**__swig_getmethods__, **__swig_setmethods__}.keys())
+  else:
+    __swig_dir__ = dict(__swig_getmethods__.items() + __swig_setmethods__.items()).keys()
+#Implement __dir__() to return it plus all of the other members
 def __dir__(self):
-  return self.__dict__.keys() + ApertureFloat.__swig_dir__
+  if version_info >= (3, 3, 0):
+    return ApertureFloat.__swig_dir__
+  else:
+    return self.__dict__.keys() + ApertureFloat.__swig_dir__
 
 if 'FNM_CLOSURE_FUNCTIONS' in globals():
   # An error was introduced in SWIG 3.0.10

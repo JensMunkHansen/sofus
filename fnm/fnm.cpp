@@ -1652,6 +1652,8 @@ SubToElementsError:
 #endif
   };
 
+#ifdef FNM_CLOSURE_FUNCTIONS
+
   // TODO: This could be templated over U = T, bool, int, size_t
   template <class T>
   int Aperture<T>::RwFloatParamGet(int fsel, T** oMultiData, size_t nDim, ...)
@@ -1822,7 +1824,7 @@ SubToElementsError:
 
     return retval;
   }
-
+#endif
   template <class T>
   void Aperture<T>::RwBooleanParamSet0D(int fsel, const bool& value)
   {
