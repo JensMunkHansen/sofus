@@ -200,6 +200,7 @@ if _newclass:
   # __swig_dir__ = list({**__swig_getmethods__, **__swig_setmethods__}.keys())            # Works in 3.5+ (syntax error in 2.7)
   __swig_dir__ = __swig_getmethods__.copy()
   __swig_dir__.update(__swig_setmethods__)
+  __swig_dir__ = list(__swig_dir__.keys())
 
 #Implement __dir__() to return it plus all of the other members
 def __dir__(self):
