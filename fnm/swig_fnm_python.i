@@ -196,10 +196,11 @@ if _newclass:
   area       = property(AreaGet)
       
   # Merge the two method dictionaries, and get the keys
-  if version_info >= (3, 3, 0):
-    __swig_dir__ = list({**__swig_getmethods__, **__swig_setmethods__}.keys())
-  else:
-    __swig_dir__ = dict(__swig_getmethods__.items() + __swig_setmethods__.items()).keys()
+  # __swig_dir__ = dict(__swig_getmethods__.items() + __swig_setmethods__.items()).keys() # Works in 2.7
+  # __swig_dir__ = list({**__swig_getmethods__, **__swig_setmethods__}.keys())            # Works in 3.5+ (syntax error in 2.7)
+  __swig_dir__ = __swig_getmethods__.copy()
+  __swig_dir__.update(__swig_setmethods__)
+
 #Implement __dir__() to return it plus all of the other members
 def __dir__(self):
   if version_info >= (3, 3, 0):
