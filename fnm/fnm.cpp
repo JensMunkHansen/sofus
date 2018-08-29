@@ -1274,7 +1274,7 @@ SubToElementsError:
                                 size_t* nParams) const
   {
     size_t nSubElements = 0;
-    int err = this->MultiElementsGet(1, out, nElements, &nSubElements, nParams);
+    int err = this->MultiElementsGet(0, out, nElements, &nSubElements, nParams);
     SPS_UNREFERENCED_PARAMETERS(err);
   }
 
