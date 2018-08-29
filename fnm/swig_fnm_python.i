@@ -207,7 +207,7 @@ def __dir__(self):
   if version_info >= (3, 3, 0):
     return ApertureFloat.__swig_dir__
   else:
-    return self.__dict__.keys() + ApertureFloat.__swig_dir__
+    return self.__dict__.keys() + ApertureFloat.__swig_dir__ + ApertureFloat.__dict__.keys()
 
 if 'FNM_CLOSURE_FUNCTIONS' in globals():
   # An error was introduced in SWIG 3.0.10
