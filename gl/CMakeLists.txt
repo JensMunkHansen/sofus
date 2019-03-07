@@ -1,10 +1,20 @@
 include(GenerateExportHeader)
 
+option (BUILD_GL_TEST "Build tests" OFF)
+
+option (GL_SHARED_LIBS "Build Shared Libraries" OFF)
+set(GL_LIB_TYPE STATIC)
+if (GL_SHARED_LIBS)
+  set(GL_LIB_TYPE SHARED)
+endif()
+
 if (BUILD_TEST)
   find_package( GoogleTest REQUIRED )
 endif()
+
 find_package( Threads REQUIRED )
 find_package( Mathematica )
+
 include_directories(${GTEST_INCLUDE_DIRS})
 
 set(_BUILD_LUT OFF)
@@ -22,11 +32,16 @@ set(_BESSELJ_1_SQUARED_LUT_TABLE_SIZE 21 CACHE STRING "Square of BesselJ(1,Besse
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
 
 set(gl_HEADERS
-  "${CMAKE_CURRENT_BINARY_DIR}/gl_export.h"
-  "${CMAKE_CURRENT_BINARY_DIR}/config.h"
   gl_lut.hpp
   bessel_lut.hpp
 )
+
+set(gl_PUBLIC_HEADERS
+  "${CMAKE_CURRENT_BINARY_DIR}/gl_export.h"
+  "${CMAKE_CURRENT_BINARY_DIR}/config.h"
+  gl.hpp
+  )
+
 set(gl_SOURCES
   gl.cpp
 )
@@ -52,16 +67,23 @@ else()
   set(gl_SOURCES "${gl_SOURCES}" "${CMAKE_CURRENT_SOURCE_DIR}/bessel_lut.cpp")
 endif()
 
-add_library(gl ${LIB_TYPE} ${gl_SOURCES} ${gl_HEADERS})
+add_library(gl ${GL_LIB_TYPE} ${gl_SOURCES} ${gl_HEADERS} ${gl_PUBLIC_HEADERS})
 
 generate_export_header(gl)# DEFINE_NO_DEPRECATED)
 
-if (BUILD_TEST)
+set_target_properties(gl PROPERTIES
+  PUBLIC_HEADER "${gl_PUBLIC_HEADERS};${CMAKE_CURRENT_BINARY_DIR}/config.h;${CMAKE_CURRENT_BINARY_DIR}/gl_export.h")
+
+if (BUILD_DOCUMENTATION)
+#  add_doxygen_target(doc_gl)
+endif()
+
+if (BUILD_GL_TEST)
   add_executable(gl_test gl_test.cpp)
 
   # Targets are defined in GoogleTest.cmake
   target_link_libraries(gl_test ${GTEST_LIBRARIES})
-  
+
   target_link_libraries(gl_test gl)
 
   # Link to threading library

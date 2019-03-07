@@ -5,36 +5,29 @@
 %
 % Copyright 2018, Jens Munk Hansen
 
-a  = 2
-
 %{
 //! [LinearArrayMatlab example] 
 %}
 fnmroot = [pwd filesep '..'];
 % Build directory
-if isunix
-  builddir = [fnmroot filesep 'release'];
-else
-  builddir = [fnmroot filesep 'build' filesep 'fnm'];
-end
-
+builddir = [fnmroot filesep 'release'];
 
 % Shared object name and header
-if isunix
-  libname = 'libfnm.so';
-  libnamefull = [builddir filesep 'fnm' filesep libname];
-else
-  libname = 'fnm.dll';
-  libnamefull = [builddir filesep 'Release' filesep libname];
-end
+if isunix; libname = 'libfnm.so'; else; libname = 'fnm.dll'; end;
+libnamefull = [builddir filesep 'fnm' filesep libname];
 libheader   = [fnmroot filesep 'fnm' filesep 'if_matlab.h'];
 
-% Load library using alias fnm
+% Load library using alias fnm - only one extra header is allowed
 [notfound, warnings] = loadlibrary(libnamefull, libheader,...
+                                   'addheader', 'fnm_types.h',...
                                    'addheader', 'if_fnm.h',...
                                    'alias', 'fnm',...
                                    'includepath', builddir,...
-                                   'includepath', fnmroot);
+                                   'includepath', fnmroot,...
+                                   'mfilename', 'fnmM');
+
+[methodinfo, structs, enuminfo, ThunkLibName] = fnmM;
+
 c  = single(1500);
 f0 = single(1.0e6);
 
@@ -43,12 +36,12 @@ kerf      = 5.0e-4;
 width     = 3e-3;
 height    = 50e-3;
 
-nDiv = 4;
+nDiv = 20;
 
 nx = 170;
 nz = 250;
 
-d = (width + kerf)*nx;
+d = (width + kerf) * nElements;
 dx = (1.5 * d) / nx;
 dz = (2.0 * d) / nz;
 
@@ -85,12 +78,7 @@ pos = [xs(:), zeros(nPos,1), zs(:)];
 pos = single(pos');
 
 nOut = uint64(0);
-
-% pdataOut = libpointer('singlePtr', single(zeros(2,42500)));
-% Linux okay to simply to
 pdataOut = libpointer;
-
-%pdataOut = numerictype;
 pnOut = libpointer('uint64Ptr', nOut);
 
 
@@ -109,8 +97,7 @@ calllib('fnm', 'ApertureCalcCwFieldFast', pAperture, pos, uint64(nPos), uint64(n
 toc
 
 % Specify pointer type and dimension for output - two samples per complex
-%setdatatype(pdataOut,'singlePtr', 2, pnOut.Value);
-reshape(pdataOut, 2, pnOut.Value);
+setdatatype(pdataOut,'singlePtr', 2, pnOut.Value);
 
 % Convert and reshape
 c = pdataOut.Value;

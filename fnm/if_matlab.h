@@ -15,15 +15,18 @@
 # define FNM_STATIC_DEFINE
 #ifdef __GNUC__
 # define FNM_EXTERNAL_API
+# define FNM_EXPORT
 #elif defined(_MSC_VER)
 # define FNM_EXTERNAL_API __declspec(dllexport)
+# define FNM_EXPORT __declspec(dllexport)
 #endif
-# ifndef SPS_FCOMPLEX
-#  ifdef __GNUC__
-#   define SPS_FCOMPLEX float _Complex
-#  elif defined(_MSC_VER)
-#   define SPS_FCOMPLEX float  // Windows does not handle C99 complex numbers
-#  endif
-# endif
+
+enum MyMatlabEnum {
+  First = 0,
+  Last = 1
+};
+
+# include <fnm/fnm_types.h>
 # include <fnm/if_fnm.h>
+
 #endif

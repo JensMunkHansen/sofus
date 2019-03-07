@@ -1274,7 +1274,7 @@ SubToElementsError:
                                 size_t* nParams) const
   {
     size_t nSubElements = 0;
-    int err = this->MultiElementsGet(1, out, nElements, &nSubElements, nParams);
+    int err = this->MultiElementsGet(0, out, nElements, &nSubElements, nParams);
     SPS_UNREFERENCED_PARAMETERS(err);
   }
 
@@ -1652,6 +1652,8 @@ SubToElementsError:
 #endif
   };
 
+#ifdef FNM_CLOSURE_FUNCTIONS
+
   // TODO: This could be templated over U = T, bool, int, size_t
   template <class T>
   int Aperture<T>::RwFloatParamGet(int fsel, T** oMultiData, size_t nDim, ...)
@@ -1822,7 +1824,7 @@ SubToElementsError:
 
     return retval;
   }
-
+#endif
   template <class T>
   void Aperture<T>::RwBooleanParamSet0D(int fsel, const bool& value)
   {
