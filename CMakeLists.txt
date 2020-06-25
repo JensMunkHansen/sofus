@@ -19,7 +19,7 @@ set(CMAKE_MODULE_PATH
 # Prefix used for dependencies
 set(CMAKE_PREFIX_PATH "${CMAKE_CURRENT_BINARY_DIR}/deps-prefix" CACHE STRING "Prefix path for dependencies")
 
-find_package(Doxygen)
+find_package(Doxygen 1.8.13)
 
 include(SetInstallDir)
 include(DoxygenTarget)
@@ -55,7 +55,7 @@ option (BUILD_FNM_TEST "Build tests" OFF)
 
 option(USE_MQUEUE "Use message queues" OFF)
 
-option (ENABLE_PYTHON3 "Python 3" OFF)
+option (ENABLE_PYTHON3 "Python 3" ON)
 
 option(BUILD_DOCUMENTATION
     "Create and install the HTML based API documentation (requires Doxygen)" ${DOXYGEN_FOUND})

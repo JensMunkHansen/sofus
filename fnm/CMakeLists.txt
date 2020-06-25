@@ -254,6 +254,9 @@ if (BUILD_SWIG_INTERFACE)
   
   set_source_files_properties(swig_fnm.i PROPERTIES OBJECT_DEPENDS "${DOXYSWIG_OUTPUT}")
 
+  execute_process(COMMAND swig -python -c++ -external-runtime ${CMAKE_CURRENT_BINARY_DIR}/swig_runtime.h
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
   if (BUILD_SWIG_DOCUMENTATION AND NOT WIN32)
     set_property(SOURCE swig_fnm.i PROPERTY SWIG_FLAGS "-DSWIG_INCLUDE_DOCUMENTATION")
   endif()
@@ -261,9 +264,9 @@ if (BUILD_SWIG_INTERFACE)
 
   if(${CMAKE_VERSION} VERSION_LESS "3.8.0")
     # TODO: Consider using swig_deps_actual here (without .i files)
-    swig_add_module(swig_fnm python swig_fnm.i ${swig_fnm_HEADERS})# ${swig_deps_actual})
+    swig_add_module(swig_fnm python swig_fnm.i ${swig_fnm_HEADERS} ${swig_deps_actual})
   else()
-    swig_add_library(swig_fnm LANGUAGE python SOURCES swig_fnm.i ${swig_fnm_HEADERS})#
+    swig_add_library(swig_fnm LANGUAGE python SOURCES swig_fnm.i ${swig_fnm_HEADERS} ${swig_deps_actual})
   endif()
 
   # Removes generated file
