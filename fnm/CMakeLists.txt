@@ -283,7 +283,7 @@ if (BUILD_SWIG_INTERFACE)
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/swig.stamp
     )
   # Depedency
-  add_dependencies(_swig_fnm swigtrick)
+  add_dependencies(_swig_fnm swig_fnm_doxy)
 
   if (MSVC)
     # Potential uninitialized variable in SWIG_AsVal_
