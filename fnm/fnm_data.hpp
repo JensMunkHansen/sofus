@@ -38,8 +38,10 @@
 #include <fnm/fnm_alias.hpp>
 
 #ifdef FNM_PULSED_WAVE
+# include <sofus/sofus_types.hpp>
 # include <sofus/sofus_focus_line.hpp>
 # include <vector>
+# include <sofus/sofus_pulses.hpp>
 #endif
 
 namespace fnm {
@@ -54,7 +56,10 @@ namespace fnm {
 template <class T>
 class ApertureData : public sps::aligned<4*sizeof(T)> {
  public:
-  typedef sps::deleted_aligned_multi_array<sps::element_rect_t<T>, 2U> element_array;
+  typedef sps::unique_aligned_multi_array<sps::element_rect_t<T>, 2U> element_array;
+
+  template <typename U>
+  using unique_aligned_array = sps::unique_aligned_array<U>;
 
   /// Next unique identifier to use
   static size_t nextID;
@@ -68,23 +73,25 @@ class ApertureData : public sps::aligned<4*sizeof(T)> {
   /// Number of positions, equals number of elements
   size_t m_npos;
 
-  /// Elements
+  /// Elements (nElements x nSubElements)
   element_array m_elements;
 
-  /// Positions
-  sps::deleted_aligned_array<sps::point_t<T> > m_pos;
+  /// Focus positions
+  unique_aligned_array<sps::point_t<T> > m_pos;
 
-  /// Apodization values
-  sps::deleted_aligned_array<T> m_apodizations;
+  /// Apodization values (sensitivity)
+  unique_aligned_array<T> m_sensitivities;
 
   /// Phases, range is (-pi;pi]
-  sps::deleted_aligned_array<T> m_phases;
+  unique_aligned_array<T> m_phases;
 
   /// Delays
-  sps::deleted_aligned_array<T> m_delays;
+  unique_aligned_array<T> m_delays;
 
-  /// Center frequency
+  /// Center frequency (nominal frequency)
   T m_f0;
+
+  //@{  Focus variables
 
   /// Focus point
   sps::point_t<T> m_focus;
@@ -104,13 +111,15 @@ class ApertureData : public sps::aligned<4*sizeof(T)> {
   /// F-number
   T m_fnumber;
 
+  //@}
+
   //@{  Internal state variables
 
   /// Rectangles
-  sps::deleted_aligned_array<sps::rect_t<T> > m_rectangles;
+  unique_aligned_array<sps::rect_t<T> > m_rectangles;
 
   /// Boxes encapsulating sub-elements for each element
-  sps::deleted_aligned_array<sps::bbox_t<T> > m_boxes;
+  unique_aligned_array<sps::bbox_t<T> > m_boxes;
 
   /// Maximum half width or height (used for far field memory allocation)
   T m_h_xyz[3];
@@ -122,6 +131,10 @@ class ApertureData : public sps::aligned<4*sizeof(T)> {
   size_t m_id;
 
   //@}
+
+#ifdef FNM_PULSED_WAVE
+  sofus::AperturePulses<T>* m_pulses;
+#endif
 
 #ifdef FNM_CLOSURE_FUNCTIONS
   //@{  Closure captured variables
@@ -143,9 +156,12 @@ class ApertureData : public sps::aligned<4*sizeof(T)> {
    * @param nCols
    */
   void ElementsSet(element_array &&elements,
-                   const size_t& nRows, const size_t& nCols); ///* pointer is unaliased - clang not happy with adding __restrict */
+                   const size_t& nRows, const size_t& nCols);
 
-  int ApodizationSet(sps::deleted_aligned_array<T> &&apodization,
+  int Rotate(const sps::point_t<T>& reference,
+             const sps::euler_t<T>& euler);
+
+  int ApodizationSet(sps::unique_aligned_array<T> &&apodization,
                      const size_t nElements);
 
   int ApodizationSet(const sps::point_t<T>& direction, const T& depth, const ApodizationType& type);
@@ -188,14 +204,14 @@ class ApertureData : public sps::aligned<4*sizeof(T)> {
    * @param iElement
    * @param bbox Bounding box enclosing sub-elements for the i'th element
    */
-  void ElementExtentGet(const size_t iElement, sps::bbox_t<T>& bbox) const;
+  void ElementExtentGet(const size_t iElement, sps::bbox_t<T>* pBox) const;
 
   /**
    * Return extent of aperture in directions: x, y, and z
    *
-   * @param bbox Bounding box enclosing aperture
+   * @param pBbox[out] Bounding box enclosing aperture
    */
-  void ExtentGet(sps::bbox_t<T>& bbox) const;
+  void ExtentGet(sps::bbox_t<T>* pBbox) const;
 
   /**
    * Total acoustic area
@@ -237,7 +253,7 @@ class ApertureData : public sps::aligned<4*sizeof(T)> {
   ApertureData(ApertureData&& other) = delete;
   ApertureData& operator=(ApertureData&& other) = delete;
 };
-}
+}  // namespace fnm
 
 /* Local variables: */
 /* indent-tabs-mode: nil */

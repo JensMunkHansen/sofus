@@ -5,7 +5,7 @@
  *
  * @brief  ANSI-C types for interface
  *
- *
+ * Copyright 2017 Jens Munk Hansen
  */
 
 /*
@@ -34,6 +34,32 @@
 extern "C" {
 #endif
 
+/*
+  Enums are only visible for MATLAB if included without recursion
+  and unfortunately not if inside a struct
+*/
+enum MyMatlabEnum2 {
+  First = 0,
+  Last = 1
+};
+
+#pragma pack(4)
+typedef struct ApertureProperty {
+  int id;
+  char name[32];
+} ApertureProperty;
+#pragma pack()
+
+struct FNM_EXPORT FNM_ExcitationTypeNS {
+  enum ExcitationType_Value {
+    ExcitationTypeNonParametric        = 0x00, ///< Specify time-domain excitation
+    ExcitationTypeDelta                = 0x01, ///< Delta pulse
+    ExcitationTypeToneBurst            = 0x02, ///< Excitation computed from f0 and nCycles
+    ExcitationTypeHanningWeightedPulse = 0x03, ///< Hanning weigted excitation computed from f0 and nCycles
+    ExcitationTypeCount                = 0x04, ///< Unused
+  } _ExcitationType_Value;
+};
+
 struct FNM_EXPORT FNM_FocusingTypeNS {
   enum FocusingType_Value {
     Rayleigh          = 0x00, ///< Rayleigh integral is solved to fix phase of complex signal
@@ -43,6 +69,7 @@ struct FNM_EXPORT FNM_FocusingTypeNS {
   } _FocusingType_Value;
 };
 
+// TODO(JMH): Consider adding an enum outside the struct also
 struct FNM_EXPORT RwParamTypeNS {
   enum RwParamType_Value {
     ElementDelays      = 0x00,
@@ -61,14 +88,15 @@ struct FNM_EXPORT RwParamTypeNS {
     Elements           = 0x0D,
     SubElements        = 0x0E,
     Apodization        = 0x0F,
-    NDivW              = 0x10,
-    NDivH              = 0x11,
+    NDivW              = 0x10,  ///< Number of width abcissas
+    NDivH              = 0x11,  ///< Number of height abcissas
 #if FNM_PULSED_WAVE
     Fs                 = 0x12,
     Normalize          = 0x13,
     Excitation         = 0x14,
     Impulse            = 0x15,
-    RwParamTypeCount   = 0x16,
+    Focus2             = 0x16,
+    RwParamTypeCount   = 0x17,
 #else
     RwParamTypeCount   = 0x12,
 #endif
@@ -77,9 +105,9 @@ struct FNM_EXPORT RwParamTypeNS {
 
 struct FNM_EXPORT FNM_TypeNS {
   enum Type_Value {
-    Float          = 0x00,
+    Float          = 0x00,  ///< Float type
     Bool           = 0x01,
-    Int32          = 0x02, /* enum */
+    Int32          = 0x02,  ///< Integer type (32-bit)
     SizeT          = 0x03,
     Struct         = 0x04,
     TypeValueCount = 0x05,
@@ -90,7 +118,7 @@ struct FNM_EXPORT FNM_ApodizationTypeNS {
   enum ApodizationType_Value {
     ApodizationTypeNonParametric = 0x00, ///< Specify element-wise apodization
     ApodizationTypeRectangular   = 0x01, ///< Rectangular window using an f-number
-    ApodizationTypeHamming       = 0x02,
+    ApodizationTypeHamming       = 0x02, ///< Hamming window
     ApodizationTypeCount         = 0x03, ///< Unused
   } _ApodizationType_Value;
 };
@@ -99,3 +127,8 @@ struct FNM_EXPORT FNM_ApodizationTypeNS {
 }
 #endif
 
+/* Local variables: */
+/* indent-tabs-mode: nil */
+/* tab-width: 2 */
+/* c-basic-offset: 2 */
+/* End: */

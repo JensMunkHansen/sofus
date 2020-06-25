@@ -15,12 +15,20 @@ namespace fnm {
 /** Type-alias for a unique two-dimensional array of elements */
 template <class T>
 using element_array =
-  sps::deleted_aligned_multi_array<sps::element_rect_t<T>, 2>;
+  sps::unique_aligned_multi_array<sps::element_rect_t<T>, 2>;
+
+template <class T>
+using point_array =
+  sps::unique_aligned_array<sps::point_t<T> >;
 
 // Function alias used in this compilation unit
 template <class T>
 constexpr element_array<T>(*element_array_create)(size_t m, size_t n) =
-  &sps::deleted_aligned_multi_array_create<sps::element_rect_t<T>, 2>;
+  &sps::unique_aligned_multi_array_create<sps::element_rect_t<T>, 2>;
+
+template <class T>
+constexpr element_array<T>(*point_array_create)(size_t m) =
+  &sps::unique_aligned_array_create<sps::point_t<T> >;
 
 }  // namespace fnm
 

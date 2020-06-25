@@ -110,6 +110,7 @@ set(fnm_HEADERS
   fnm_arrays.hpp
   fnm_basis.hpp
   fnm_common.hpp
+  fnm_delays.hpp
   circular_data.hpp
   circular_calc.hpp
   circular.hpp
@@ -128,9 +129,11 @@ set(fnm_SOURCES
   fnm_data.cpp
   fnm_basis.cpp
   fnm_calc.cpp
+  fnm_delays.cpp
   fnm.cpp
   fnm_arrays.cpp
   fnm_common.cpp
+  fnm_profiling.cpp
   if_fnm.cpp
   circular.cpp
   circular_data.cpp

@@ -70,7 +70,7 @@ def field_array(*args,**kwargs):
 
   nElements    = int(f2data[nSubElements-1,0] + 1)
   nSubElements = int(max(f2data[:,1]) + 1)
-  
+
   f2data = f2data.reshape((nElements,nSubElements,26))
 
   widths  = f2data[:,:,2]
@@ -139,7 +139,7 @@ def linear_array(*args,**kwargs):
   R     = 1.0
 
   bFocused = opt.efocus != None and opt.nSubH > 1
-  
+
   if bFocused:
       focus = opt.efocus
       elSector = 2 * np.arctan2(half_height, focus)
@@ -198,7 +198,7 @@ def linear_array3(*args, **kwargs):
   focus = opt.efocus
 
   R = np.sqrt(focus**2 + (opt.height / 2.0)**2)
-  
+
   # Sector from outer edge to outer edge
   elSector = 2.0 * np.arctan2(opt.height/2.0, focus)
 
@@ -218,10 +218,10 @@ def linear_array3(*args, **kwargs):
 
   # Sagitta (height) of the segment (not used)
   h = R*(1.0-np.cos(dEl))
-    
+
   # Height of triangular portion (not used)
   d = R - h
-    
+
   rects = []
 
   if opt.elePlacement == 'Outer':
@@ -288,14 +288,14 @@ def convex_array(*args,**kwargs):
     focus = 1.0
 
     bFocused = opt.efocus != None and opt.nSubH > 1
-    
+
     if bFocused:
         focus = opt.efocus
         elSector = 2 * np.arctan2(half_height, focus)
         R = np.sqrt(focus**2 + (half_height)**2)
     else:
         elSector = 0
-    
+
     if (opt.sector != None):
         dAz = opt.sector / max((opt.nElements - 1),1)
         if (opt.pitch == None):
@@ -329,7 +329,7 @@ def convex_array(*args,**kwargs):
         for iEl in range(opt.nSubH):
             # Center position on element
             center = np.r_[0,0,opt.radius]
-            
+
             # Candidate (no rotation is done around elevation focus)
             center = center + np.r_[0, focus * np.tan(elAngles[iEl]), -(R * np.cos(elAngles[iEl]) - focus) ]
 
@@ -348,7 +348,7 @@ def convex_array(*args,**kwargs):
             for iSubW in range(opt.nSubW):
                 # Shift center coordinate
                 center1 = center + 2 * half_width/opt.nSubW * rots[:,0] * (iSubW - (opt.nSubW-1)/2.0)
-                
+
                 r = rect(hw=half_width/opt.nSubW,hh=chordLength/2.0,
                          center=center1,
                          euler=[azAngles[iAz],-elAngles[iEl],0],conv='yxz',intrinsic=True)
@@ -383,9 +383,9 @@ def convex_array3(*args,**kwargs):
 
     if (focus == None):
       focus = 0.0
-    
+
     azR = opt.radius
-    
+
     # Arc-length from center to center
     azArcLength = opt.pitch * (opt.nElements-1.0)
 
@@ -396,9 +396,9 @@ def convex_array3(*args,**kwargs):
     azTanLength   = 2.0 * azR * np.tan(dAz/2.0)
 
     azAngles = (np.r_[0:opt.nElements] - (opt.nElements - 1.0)/2) * dAz
-    
+
     elR = np.sqrt(focus**2 + (opt.height / 2.0)**2)
-  
+
     # Sector from outer edge to outer edge
     elSector = 2.0 * np.arctan2(opt.height/2.0, focus)
 
@@ -410,7 +410,7 @@ def convex_array3(*args,**kwargs):
       elTanLength   = 2.0 * elR * np.tan(dEl/2.0)
     else:
       elTanLength   = opt.height / 2.0
-    
+
     if opt.elePlacement == 'Outer':
       elAngles = (np.r_[0:(opt.nSubH)] - (opt.nSubH-1.0)/2.0) * dEl
       hh = elTanLength / 2.0
@@ -437,18 +437,16 @@ def convex_array3(*args,**kwargs):
                  center=center1,
                  euler=[azAngles[iAz],elAngles[iEl],0],conv='yxz',intrinsic=True)
         rects.append(r)
-    
+
     elements = np.r_[[rects[i].element() for i in range(len(rects))]]
     elements = elements.reshape((opt.nElements, opt.nSubH * opt.nSubW, 8))
 
     a = fnm.ApertureFloat()
     a.subelements = elements.astype(np.float32)
     return a
-  
+
 # Local variables: #
-# indent-tab-mode: nil #
 # tab-width: 2 #
 # python-indent: 2 #
-# py-indent-offset: 2 #
 # indent-tabs-mode: nil #
 # End: #

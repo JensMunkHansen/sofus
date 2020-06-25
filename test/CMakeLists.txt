@@ -1,4 +1,5 @@
-find_package( GoogleTest REQUIRED )
+#find_package( GoogleTest REQUIRED )
+find_package( GTest REQUIRED )
 find_package( Threads REQUIRED )
 find_package( FFTW REQUIRED )
 
@@ -42,7 +43,7 @@ endif()
 add_executable(fnm_test main.cpp)
 
 # Targets are defined in GoogleTest.cmake
-target_link_libraries(fnm_test fnm sps gl gtest ${FFTW_LIBRARIES})
+target_link_libraries(fnm_test fnm sps gl ${GTEST_LIBRARIES} ${FFTW_LIBRARIES})
 if (FNM_PULSED_WAVE)
   target_link_libraries(fnm_test sofus)
 endif()
@@ -71,7 +72,7 @@ if (FNM_PULSED_WAVE)
   add_executable(angle_sum_test ${angle_sum_test_HEADERS} ${angle_sum_test_SOURCES})
 
 
-  target_link_libraries(angle_sum_test gtest)
+  target_link_libraries(angle_sum_test ${GTEST_LIBRARIES})
 
   if (UNIX)
     target_link_libraries(angle_sum_test dl)
@@ -98,7 +99,7 @@ add_test(NAME    angle_sum_test
        
 if (FNM_PULSED_WAVE)
   add_executable(sofus_test sofus_test.cpp)
-  target_link_libraries(sofus_test fnm sofus sps gl gtest ${FFTW_LIBRARIES})
+  target_link_libraries(sofus_test fnm sofus sps gl ${GTEST_LIBRARIES} ${FFTW_LIBRARIES})
   if (UNIX)
     target_link_libraries(sofus_test dl)
   endif()
@@ -107,7 +108,7 @@ if (FNM_PULSED_WAVE)
     COMMAND sofus_test)
 endif()
 
-if (1)
+if (NOT WIN32)
   add_executable(test_state ctest.c)
   add_dependencies(test_state test_state)
   add_test(test_state test_state)

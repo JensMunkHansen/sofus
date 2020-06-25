@@ -5,6 +5,7 @@
  *
  * @brief  Geometries for transducer arrays
  *
+ * Copyright 2017 Jens Munk Hansen
  *
  */
 
@@ -27,89 +28,94 @@
 
 #pragma once
 
-#include <cstdlib>
-
 #include <sps/memory>
+#include <cstdlib>
 #include <sps/smath.hpp>
+
+#include <fnm/fnm_types.hpp>
+#include <fnm/fnm_alias.hpp>
 
 namespace fnm {
 
-  /**
-   * Create Matrix array
-   *
-   * @param nRows
-   * @param nCols
-   * @param rowWidth
-   * @param rowKerf
-   * @param colWidth
-   * @param colKerf
-   * @param elements     output
-   *
-   * @return
-   */
-  template <class T>
-  void MatrixArray(const size_t nRows,
-                   const size_t nCols,
-                   const T rowWidth,
-                   const T rowKerf,
-                   const T colWidth,
-                   const T colKerf,
-                   sps::deleted_aligned_multi_array<sps::element_rect_t<T>, 2> &&elements);
+/**
+ * Create Matrix array
+ *
+ * @param[in] nRows
+ * @param[in] nCols
+ * @param[in] rowWidth
+ * @param[in] rowKerf
+ * @param[in] colWidth
+ * @param[in] colKerf
+ * @param[out] elements
+ *
+ * @return
+ */
+template <class T>
+void MatrixArray(
+  const size_t nRows,
+  const size_t nCols,
+  const T rowWidth,
+  const T rowKerf,
+  const T colWidth,
+  const T colKerf,
+  element_array<T> &&elements);
 
 
-  /**
-   * Compute focused linear array
-   *
-   * @param nElements
-   * @param nSubH
-   * @param nSubW
-   * @param width
-   * @param kerf
-   * @param height
-   * @param eFocus
-   * @param arcPlacement 0 = outside, 1 = inside
-   * @param elements     output
-   */
-  template <class T>
-  void FocusedLinearArray(const size_t nElements,
-                          const size_t nSubH, // Elevation
-                          const size_t nSubW,
-                          const T width,
-                          const T kerf,
-                          const T height,
-                          const T eFocus,
-                          const int arcPlacement,
-                          sps::deleted_aligned_multi_array<sps::element_rect_t<T>, 2> &&elements);
+/**
+ * Compute focused linear array
+ *
+ * @param[in] nElements
+ * @param[in] nSubH
+ * @param[in] nSubW
+ * @param[in] width
+ * @param[in] kerf
+ * @param[in] height
+ * @param[in] eFocus
+ * @param[in] arcPlacement 0 = outside, 1 = inside
+ * @param[out] elements
+ */
+template <class T>
+void FocusedLinearArray(
+  const size_t nElements,
+  const size_t nSubH,  // Elevation
+  const size_t nSubW,
+  const T width,
+  const T kerf,
+  const T height,
+  const T eFocus,
+  const int arcPlacement,
+  element_array<T> &&elements);
 
-  /**
-   * Compute focused convex array
-   *
-   * @param nElements
-   * @param nSubH        sub-elements: elevation
-   * @param nSubW        sub-elements: azimuth
-   * @param width
-   * @param kerf
-   * @param height
-   * @param radius
-   * @param eFocus       elevation focus
-   * @param arcPlacement 0 = outside, 1 = inside
-   * @param elements     output
-   *
-   * @return
-   */
-  template <class T>
-  void FocusedConvexArray(const size_t nElements,
-                          const size_t nSubH, // Elevation
-                          const size_t nSubW,
-                          const T width,
-                          const T kerf,
-                          const T height,
-                          const T radius,
-                          const T eFocus,
-                          const int arcPlacement,
-                          sps::deleted_aligned_multi_array<sps::element_rect_t<T>, 2> &&elements);
+/**
+ * Compute focused convex array
+ *
+ * @param[in] nElements
+ * @param[in] nSubH        sub-elements: elevation
+ * @param[in] nSubW        sub-elements: azimuth
+ * @param[in] width
+ * @param[in] kerf
+ * @param[in] height
+ * @param[in] radius
+ * @param[in] eFocus       elevation focus
+ * @param[in] arcPlacement 0 = outside, 1 = inside
+ * @param[out] elements
+ *
+ * @return
+ */
+template <class T>
+void FocusedConvexArray(
+  const size_t nElements,
+  const size_t nSubH,  // Elevation
+  const size_t nSubW,
+  const T width,
+  const T kerf,
+  const T height,
+  const T radius,
+  const T eFocus,
+  const int arcPlacement,
+  element_array<T> &&elements);
 
-}
+}  // namespace fnm
 /* Local variables: */
 /* indent-tabs-mode: nil */
 /* tab-width: 2 */
