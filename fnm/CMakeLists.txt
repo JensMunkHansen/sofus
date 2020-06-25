@@ -43,8 +43,11 @@ if (MSVC OR CYGWIN)
 endif()
 
 option(BUILD_SWIG_INTERFACE "Build SWIG interface" ON)
+option(BUILD_SWIG_DOCUMENTATION "Build SWIG documentation" ON)
 
-set(FNM_MULTI_ARRAYS 1)
+if (NOT BUILD_DOCUMENTATION)
+  set(BUILD_SWIG_DOCUMENTATION OFF)
+endif()
 
 set(FNM_CLOSURE_FUNCTIONS 0)
 option (FNM_ENABLE_Closures "FNM Enable closure functions" OFF)
@@ -210,7 +213,7 @@ if (BUILD_SWIG_INTERFACE)
   
   if (ENABLE_PYTHON3)
     set(FNM_CLOSURE_FUNCTIONS 0)
-    set(Python_ADDITIONAL_VERSIONS 3.5)
+    set(Python_ADDITIONAL_VERSIONS 3.5 3.7)
     find_package(PythonInterp 3 REQUIRED)
     find_package(PythonLibs)
   else()
@@ -228,20 +231,19 @@ if (BUILD_SWIG_INTERFACE)
   include_directories(${CMAKE_CURRENT_SOURCE_DIR})
   include_directories(${CMAKE_CURRENT_BINARY_DIR}) # config.h
 
-  if (BUILD_DOCUMENTATION AND NOT ENABLE_PYTHON3)
+  if (BUILD_DOCUMENTATION)
     set(DOXYSWIG_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/documentation.i")
     
     # Generate SWIG documentation from Doxygen XML
-    add_custom_command(OUTPUT ${DOXYSWIG_OUTPUT}
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      COMMAND echo 
-      COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../bin/doxy2swig.py ${PROJECT_BINARY_DIR}/${CMAKE_DOXYGEN_OUT}/xml/index.xml ${CMAKE_CURRENT_BINARY_DIR}/documentation.i
+    add_custom_target(swig_fnm_doxy
+      COMMAND echo
+      COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../bin/doxy2swig.py -c -a ${PROJECT_BINARY_DIR}/${CMAKE_DOXYGEN_OUT}/xml/index.xml ${DOXYSWIG_OUTPUT}
       DEPENDS fnm doc
     )
   endif()
 
   if (MSVC)
-    set(CMAKE_SWIG_FLAGS "-D_SWIG_WIN32")
+    set_propert(SOURCE swig_fnm.i PROPERTY SWIG_FLAGS "-D_SWIG_WIN32" "-DSWIG_INCLUDE_DOCUMENTATION")
   endif()
   
   set_source_files_properties(swig_fnm.i PROPERTIES CPLUSPLUS ON)
@@ -252,35 +254,16 @@ if (BUILD_SWIG_INTERFACE)
   
   set_source_files_properties(swig_fnm.i PROPERTIES OBJECT_DEPENDS "${DOXYSWIG_OUTPUT}")
 
-  if (BUILD_SWIG_DOCUMENTATION)
-    set(CMAKE_SWIG_FLAGS "${CMAKE_SWIG_FLAGS}-DSWIG_INCLUDE_DOCUMENTATION")
+  if (BUILD_SWIG_DOCUMENTATION AND NOT WIN32)
+    set_property(SOURCE swig_fnm.i PROPERTY SWIG_FLAGS "-DSWIG_INCLUDE_DOCUMENTATION")
   endif()
   
-  # TODO: Consider using swig_deps_actual here (without .i files)
-  swig_add_module(swig_fnm python swig_fnm.i ${swig_fnm_HEADERS})# ${swig_deps_actual})
 
-  if (0)
-    # HACK to make swig_fnm.i depend on input headers
-    execute_process(COMMAND swig -M -python -c++ -I${CMAKE_CURRENT_BINARY_DIR}/.. -I${CMAKE_CURRENT_SOURCE_DIR}/.. swig_fnm.i
-      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-      OUTPUT_VARIABLE swig_deps
-      INPUT_FILE swig_fnm.i)
-    # Match all lines except the first one until " \"
-    string(REGEX MATCHALL "\n  [^ ]+" temp ${swig_deps})
-    set(swig_deps_actual)
-    foreach(t ${temp})
-      string(STRIP "${t}" t)
-      # Nasty custom targets (can we avoid this)
-      # set(_custom_target_name)
-      # string(REGEX REPLACE "/" "_" _custom_target_name "${t}")
-      # add_custom_target(${_custom_target_name} DEPENDS "${t}")
-      # add_dependencies(_swig_fnm ${_custom_target_name})
-    
-      # Dependency list
-      set(swig_deps_actual ${swig_deps_actual} "${t}")
-    endforeach()
-    # TODO: This makes configure run again, but does not regenerate the SWIG interface.
-    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${swig_deps_actual})
+  if(${CMAKE_VERSION} VERSION_LESS "3.8.0")
+    # TODO: Consider using swig_deps_actual here (without .i files)
+    swig_add_module(swig_fnm python swig_fnm.i ${swig_fnm_HEADERS})# ${swig_deps_actual})
+  else()
+    swig_add_library(swig_fnm LANGUAGE python SOURCES swig_fnm.i ${swig_fnm_HEADERS})#
   endif()
 
   # Removes generated file
@@ -340,7 +323,7 @@ endif()
 
 # Enable the test
 find_package(PythonInterp)
-         
+
 # Copy dependencies on WIN32
 if (WIN32)
   if (BUILD_SHARED_LIBS)
