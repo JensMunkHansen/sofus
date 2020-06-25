@@ -18,15 +18,18 @@ matches = []
 # TODO: Python 3.0 use '**/fnm/Release', recursive=True):
 for i in range(3):
   if os.name == 'nt':
-    paths = [i*'*/' + 'fnm/Release',i*'*/' + 'fnm/Debug', i*'*/' + 'fnm']
+    paths = [i*'*/' + 'fnm',i*'*/' + 'fnm', i*'*/' + 'fnm']
   else:
-    paths = [i*'*/' + 'fnm']
+    paths = [i*'*/' + 'fnm', i*'*/' + 'release/fnm', i*'*/' + 'debug/fnm']
   paths.append(i*'*/' + 'python')
   for path in paths:
     entries = glob.glob(path)
     if len(entries) > 0:
       path = os.path.join(os.getcwd(),entries[0])
       matches.append(path)
+
+# Field (build in source)
+matches.append(os.path.join(os.getcwd(),'f2'))
 
 # Add installed version (last resort)
 paths =['lib','python','bin']
@@ -38,5 +41,8 @@ for path in paths:
 
 for path in matches:
   sys.path.append( path )
+
+# HACK
+sys.path.append('/home/jmh/git/bft4/build/bftx')
 
 os.chdir(cwd)

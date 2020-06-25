@@ -295,6 +295,11 @@ if (BUILD_SWIG_INTERFACE)
   
   swig_link_libraries(swig_fnm fnm ${PYTHON_LIBRARIES})
 
+  add_custom_command(TARGET _swig_fnm POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/dicts.py"
+    "$<TARGET_FILE_DIR:_swig_fnm>")
+
   # Add python files
   set(swig_python_files
     # Reference code

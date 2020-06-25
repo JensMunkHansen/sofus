@@ -269,6 +269,7 @@ namespace sps {
 %include <fnm/fnm_types.h>
 %include <fnm/fnm_types.hpp>
 %include <fnm/fnm.hpp>
+%include <fnm/fnm_profiling.hpp>
 %include <fnm/circular.hpp>
 
 %include <gl/gl.hpp>
