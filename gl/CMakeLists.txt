@@ -8,8 +8,8 @@ if (GL_SHARED_LIBS)
   set(GL_LIB_TYPE SHARED)
 endif()
 
-if (BUILD_TEST)
-  find_package( GoogleTest REQUIRED )
+if (BUILD_GL_TEST)
+  find_package( GTest REQUIRED )
 endif()
 
 find_package( Threads REQUIRED )
@@ -79,7 +79,7 @@ if (BUILD_DOCUMENTATION)
 endif()
 
 if (BUILD_GL_TEST)
-  add_executable(gl_test gl_test.cpp)
+  add_executable(gl_test gl_test.cpp fastgl.cpp)
 
   # Targets are defined in GoogleTest.cmake
   target_link_libraries(gl_test ${GTEST_LIBRARIES})
