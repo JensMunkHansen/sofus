@@ -286,19 +286,7 @@ if (BUILD_SWIG_INTERFACE)
   add_custom_command(TARGET _swig_fnm POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "${CMAKE_CURRENT_SOURCE_DIR}/dicts.py"
-    "$<TARGET_FILE_DIR:swig_fnm>")
-
-  if (0)
-    add_custom_command(TARGET _swig_fnm POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      "${CMAKE_CURRENT_SOURCE_DIR}/../python/pyutils.py"
-      "$<TARGET_FILE_DIR:swig_fnm>")
-
-    add_custom_command(TARGET _swig_fnm POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      "${CMAKE_CURRENT_SOURCE_DIR}/euler.py"
-      "$<TARGET_FILE_DIR:swig_fnm>")
-  endif()
+    "$<TARGET_FILE_DIR:_swig_fnm>")
 
   # Add python files
   set(swig_python_files

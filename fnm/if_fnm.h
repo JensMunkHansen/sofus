@@ -216,3 +216,4 @@ FNM_EXTERNAL_API int ApertureCalcCwFieldFast(Aperture* obj, float* pos, size_t n
 /* tab-width: 2 */
 /* c-basic-offset: 2 */
 /* End: */
+

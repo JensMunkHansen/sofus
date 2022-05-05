@@ -134,9 +134,9 @@ add_subdirectory(sps)
 
 add_subdirectory(gl)
 
-add_subdirectory(fnm)
-
 add_subdirectory(sofus)
+
+add_subdirectory(fnm)
 
 add_subdirectory(python)
 
@@ -149,7 +149,7 @@ endif()
 # ===============================
 
 # Add all targets to the build-tree export set
-export(TARGETS fnm gl sps
+export(TARGETS fnm sofus gl sps
   FILE "${PROJECT_BINARY_DIR}/SofusTargets.cmake")
 
 #export(TARGETS sofus
