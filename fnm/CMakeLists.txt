@@ -101,7 +101,8 @@ if (UNIX)
   endif()
 endif()
 
-find_package(FFTW REQUIRED)
+# Used by ASA
+find_package(FFTW REQUIRED COMPONENTS FLOAT_LIB DOUBLE_LIB)
 include_directories(${FFTW_INCLUDES})
 
 set(fnm_HEADERS
@@ -151,6 +152,7 @@ if (UNIX AND NOT WIN32)
   set(fnm_SOURCES "${fnm_SOURCES}" "../sps/strace.cpp")
 endif()
 
+if (0)
 generate_product_version(
    VersionFilesOutputVariable
    NAME "${PROJECT_NAME}"
@@ -160,6 +162,7 @@ generate_product_version(
    VERSION_PATCH ${FNM_PATHC_VERSION} #${BUILD_COUNTER}
    VERSION_REVISION ${FNM_TWEAK_VERSION} # Dev uses data format 20110222
 )
+endif()
 
 add_library(fnm ${LIB_TYPE} ${fnm_SOURCES} ${fnm_HEADERS} ${fnm_PUBLIC_HEADERS} config.h.in ${VersionFilesOutputVariable})
 
@@ -200,34 +203,15 @@ if (BUILD_SWIG_INTERFACE)
   if (MSVC)
     add_definitions(-DSWIG_PYTHON_INTERPRETER_NO_DEBUG)
   endif()
-  if (UNIX AND NOT CYGWIN)
-    set(SWIG_EXECUTABLE swig3.0)
-  endif()
+
   find_package(SWIG REQUIRED)
   include(${SWIG_USE_FILE})
 
-  if (CYGWIN)
-    set(PYTHON_LIBRARY "/usr/lib/libpython2.7.dll.a")
-    set(PYTHON_INCLUDE_DIR "/usr/include/python2.7")
-  endif()
-  
-  if (ENABLE_PYTHON3)
-    set(FNM_CLOSURE_FUNCTIONS 0)
-    set(Python_ADDITIONAL_VERSIONS 3.5 3.7)
-    find_package(PythonInterp 3 REQUIRED)
-    find_package(PythonLibs)
-  else()
-    set(Python_ADDITIONAL_VERSIONS 2.7)
-    # HACK
-    if (WIN32)
-      find_package(PythonInterp 2.7 REQUIRED)
-    else()
-      find_package(PythonInterp 2.7 EXACT REQUIRED)
-    endif()
-    find_package(PythonLibs 2.7 REQUIRED)
-  endif()
-  
-  include_directories(${PYTHON_INCLUDE_PATH})
+  find_package(Python3 COMPONENTS Interpreter Development NumPy)
+
+  include_directories(${Python3_INCLUDE_DIRS})
+  include_directories(${Python3_NumPy_INCLUDE_DIRS})
+
   include_directories(${CMAKE_CURRENT_SOURCE_DIR})
   include_directories(${CMAKE_CURRENT_BINARY_DIR}) # config.h
 
@@ -243,11 +227,13 @@ if (BUILD_SWIG_INTERFACE)
   endif()
 
   if (MSVC)
-    set_propert(SOURCE swig_fnm.i PROPERTY SWIG_FLAGS "-D_SWIG_WIN32" "-DSWIG_INCLUDE_DOCUMENTATION")
+    set_property(SOURCE swig_fnm.i PROPERTY SWIG_FLAGS "-D_SWIG_WIN32" "-DSWIG_INCLUDE_DOCUMENTATION")
   endif()
   
   set_source_files_properties(swig_fnm.i PROPERTIES CPLUSPLUS ON)
-  
+  set_property(SOURCE swig_fnm.i PROPERTY SWIG_MODULE_NAME swig_fnm)
+  set_property(SOURCE swig_fnm.i PROPERTY INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/..")
+
   set(swig_fnm_HEADERS
     fnm.hpp
   )
@@ -260,14 +246,16 @@ if (BUILD_SWIG_INTERFACE)
   if (BUILD_SWIG_DOCUMENTATION AND NOT WIN32)
     set_property(SOURCE swig_fnm.i PROPERTY SWIG_FLAGS "-DSWIG_INCLUDE_DOCUMENTATION")
   endif()
-  
 
-  if(${CMAKE_VERSION} VERSION_LESS "3.8.0")
-    # TODO: Consider using swig_deps_actual here (without .i files)
-    swig_add_module(swig_fnm python swig_fnm.i ${swig_fnm_HEADERS} ${swig_deps_actual})
-  else()
-    swig_add_library(swig_fnm LANGUAGE python SOURCES swig_fnm.i ${swig_fnm_HEADERS} ${swig_deps_actual})
+  # By adding USE_SWIG_DEPENDENCIES TRUE in
+  # set_source_files_properties, the swig wrapper is rebuilt each time
+  # a C++ header is modified!
+  # Available from CMake 3.20
+  if(NOT ${CMAKE_VERSION} VERSION_LESS 3.20)
+    set_property(SOURCE swig_fnm.i PROPERTY USE_SWIG_DEPENDENCIES TRUE)
   endif()
+
+  swig_add_library(swig_fnm LANGUAGE python SOURCES swig_fnm.i ${swig_fnm_HEADERS} ${swig_deps_actual})
 
   # Removes generated file
   add_custom_command(
@@ -298,7 +286,19 @@ if (BUILD_SWIG_INTERFACE)
   add_custom_command(TARGET _swig_fnm POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "${CMAKE_CURRENT_SOURCE_DIR}/dicts.py"
-    "$<TARGET_FILE_DIR:_swig_fnm>")
+    "$<TARGET_FILE_DIR:swig_fnm>")
+
+  if (0)
+    add_custom_command(TARGET _swig_fnm POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      "${CMAKE_CURRENT_SOURCE_DIR}/../python/pyutils.py"
+      "$<TARGET_FILE_DIR:swig_fnm>")
+
+    add_custom_command(TARGET _swig_fnm POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      "${CMAKE_CURRENT_SOURCE_DIR}/euler.py"
+      "$<TARGET_FILE_DIR:swig_fnm>")
+  endif()
 
   # Add python files
   set(swig_python_files

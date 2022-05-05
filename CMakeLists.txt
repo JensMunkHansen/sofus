@@ -1,6 +1,28 @@
-cmake_minimum_required(VERSION 3.0)
+set(FNM_CMAKE_MINIMUM_REQUIRED_VERSION 3.7)
+set(FNM_CMAKE_MAXIMUM_TESTED_VERSION 3.18)
 
-project(Fnm C CXX)
+cmake_minimum_required(VERSION ${FNM_CMAKE_MINIMUM_REQUIRED_VERSION})
+
+if(${CMAKE_VERSION} VERSION_LESS FNM_CMAKE_MAXIMUM_TESTED_VERSION)
+  cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
+else()
+  cmake_policy(VERSION ${FNM_CMAKE_MAXIMUM_TESTED_VERSION})
+endif()
+
+#set(project_policies CMP0078 CMP0086)
+cmake_policy(SET CMP0078 NEW) # You can switch between LEGACY (SWIG_MODULE_<name>_REAL_NAME) or NEW (targets prefix'ed with _) by setting UseSWIG_TARGET_NAME_PREFERENCE. If CMP0078=NEW actual targets name equal swig target.
+
+cmake_policy(SET CMP0086 NEW) # NEW target names can be set using -module flag to the swig executable. To use this define SWIG_TARGET_NAME property on .i files
+
+set(project_policies CMP0078 CMP0086)
+
+foreach(policy ${project_policies})
+  if(POLICY ${policy})
+    cmake_policy(SET ${policy} NEW)
+  endif()
+endforeach()
+
+project(fnm C CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -94,6 +116,7 @@ if(CMAKE_COMPILER_IS_GNUCXX)
   set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS} -msse2 -msse3 -msse4 -mavx -pedantic -Wall")
 endif()
 
+# The intention is to include this at a later time
 set(FNM_PULSED_WAVE 0)
 option(SOFUS_Pulsed_waves "Support pulsed waves" OFF)
 if (SOFUS_Pulsed_waves)
@@ -127,10 +150,10 @@ endif()
 
 # Add all targets to the build-tree export set
 export(TARGETS fnm gl sps
-  FILE "${PROJECT_BINARY_DIR}/FnmTargets.cmake")
+  FILE "${PROJECT_BINARY_DIR}/SofusTargets.cmake")
 
-export(TARGETS sofus
-    FILE "${PROJECT_BINARY_DIR}/FnmTargets.cmake")
+#export(TARGETS sofus
+#    FILE "${PROJECT_BINARY_DIR}/SofusTargets.cmake")
 
 # Export the package for use from the build-tree
 export(PACKAGE Fnm)
@@ -164,20 +187,20 @@ configure_file(FnmConfig.cmake.in
 set(CONF_INCLUDE_DIRS "\${FNM_CMAKE_DIR}/${REL_INCLUDE_DIR}")
 set(CONF_LIBRARY_DIRS "\${FNM_CMAKE_DIR}/${REL_BIN_DIR}")
 configure_file(FnmConfig.cmake.in
-  "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/FnmConfig.cmake" @ONLY)
+  "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/SofusConfig.cmake" @ONLY)
 
 # ... for both
-configure_file(FnmConfigVersion.cmake.in
-  "${PROJECT_BINARY_DIR}/FnmConfigVersion.cmake" @ONLY)
+configure_file(SofusConfigVersion.cmake.in
+  "${PROJECT_BINARY_DIR}/SofusConfigVersion.cmake" @ONLY)
 
 # Install the FnmConfig.cmake and FnmConfigVersion.cmake
 install(FILES
-  "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/FnmConfig.cmake"
-  "${PROJECT_BINARY_DIR}/FnmConfigVersion.cmake"
+  "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/SofusConfig.cmake"
+  "${PROJECT_BINARY_DIR}/SofusConfigVersion.cmake"
   DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
 
 # Install the export set for use with the install-tree
-install(EXPORT FnmTargets DESTINATION
+install(EXPORT SofusTargets DESTINATION
   "${INSTALL_CMAKE_DIR}" COMPONENT dev)
 
 # Add uninstall target, in linux simply issue xargs rm < install_manifest.txt
