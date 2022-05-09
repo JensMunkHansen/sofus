@@ -105,6 +105,8 @@ endif()
 find_package(FFTW REQUIRED COMPONENTS FLOAT_LIB DOUBLE_LIB)
 include_directories(${FFTW_INCLUDES})
 
+# dump_cmake_variables("FFTW")
+
 set(fnm_HEADERS
   ../sps/progress.hpp
   fnm_types.hpp
@@ -292,27 +294,6 @@ if (BUILD_SWIG_INTERFACE)
   endif()
   
   swig_link_libraries(swig_fnm fnm ${Python3_LIBRARIES})
-  #message(${PYTHON_LIBRARIES})
-
-  # Utility function for dumping variable names.....
-  function(dump_cmake_variables)
-    get_cmake_property(_variableNames VARIABLES)
-    list (SORT _variableNames)
-    foreach (_variableName ${_variableNames})
-      if (ARGV0)
-        unset(MATCHED)
-        string(REGEX MATCH ${ARGV0} MATCHED ${_variableName})
-        if (NOT MATCHED)
-          continue()
-        endif()
-      endif()
-      message(STATUS "${_variableName}=${${_variableName}}")
-    endforeach()
-  endfunction()
-
-  # Used to figure out what find_package(Python3) exposes
-  # dump_cmake_variables("Python")
-
 
   add_custom_command(TARGET swig_fnm POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -372,6 +353,38 @@ if (WIN32)
         "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION:fnm>")
     endforeach()
   endif()
+
+  # Copy FFTW dlls into target directory
+  file(GLOB FFTW_DLLs "${FFTW_INCLUDES}/*.dll")
+
+  # List of DLLs
+  set(dll_copied_modules)
+
+  foreach (input_dll_file IN LISTS FFTW_DLLs)
+    # CMake mixes \ and /'s
+    string(REPLACE "\\" "/" input_dll_file "${input_dll_file}")
+
+    # Output file
+    get_filename_component(dll_file "${input_dll_file}" NAME)
+
+    set(output_dll_file
+      "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION:fnm>/${dll_file}")
+
+    add_custom_command(
+      OUTPUT  "${output_dll_file}"
+      DEPENDS "${input_dll_file}"
+      COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+      "${input_dll_file}"
+      "${output_dll_file}"
+      COMMENT "Copying ${dll_file} to the binary directory")
+
+    list(APPEND dll_copied_modules
+      "${output_dll_file}")
+  endforeach()
+
+  add_custom_target(sofus_fftw_copy ALL
+    DEPENDS
+    ${dll_copied_modules})
 endif()
 
 install(TARGETS fnm swig_fnm

@@ -40,11 +40,11 @@ find_package(Doxygen 1.9.4)
 include(SetInstallDir)
 
 # Uncommented for Windows Visual Studio 2019
-if (1) #NOT WIN32)
-  include(DoxygenTarget)
-endif()
+include(DoxygenTarget)
 
 include(SetWarningLevels)
+
+include(DumpVariables)
 
 string(TIMESTAMP timestring %Y%m%d%H%M%S UTC)
 set(FNM_MAJOR_VERSION 0)
