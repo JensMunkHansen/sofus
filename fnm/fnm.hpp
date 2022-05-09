@@ -923,23 +923,6 @@ class Aperture {
                         T** odata, size_t* nSignals, size_t* nSamples,
                         int mask = 0x1F);
 
-  /**
-   * Calculate pulsed wave field using fast near-field method
-   *
-   * @param[in] pos
-   * @param[in] nPositions
-   * @param[in] nDim
-   * @param[out] odata
-   * @param[out] nSignals
-   * @param[out] nSamples
-   * @param[in] mask
-   *
-   * @return
-   */
-  T CalcPwFnmThreaded(const T* pos, const size_t nPositions,
-                      const size_t nDim,
-                      T** odata, size_t* nSignals, size_t* nSamples,
-                      int mask = 0x1F);
 
   /**
    *
@@ -1067,6 +1050,25 @@ class Aperture {
                        std::complex<T>** odata, size_t* nOutPositions);
 
   /*** @} */
+
+
+  /**
+   * Calculate pulsed wave field using fast near-field method.
+   *
+   * @param[in] pos
+   * @param[in] nPositions
+   * @param[in] nDim
+   * @param[out] odata
+   * @param[out] nSignals
+   * @param[out] nSamples
+   * @param[in] mask
+   *
+   * @return
+   */
+  T CalcPwFnmThreaded(const T* pos, const size_t nPositions,
+                      const size_t nDim,
+                      T** odata, size_t* nSignals, size_t* nSamples,
+                      int mask = 0x1F);
 
 #ifdef FNM_PULSED_WAVE
 

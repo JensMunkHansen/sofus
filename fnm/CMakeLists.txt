@@ -212,7 +212,7 @@ if (BUILD_SWIG_INTERFACE)
   if (WIN32)
     find_package(Python3 COMPONENTS Interpreter Development NumPy)
   else()
-    find_package(Python3 COMPONENTS Interpreter Development)
+    find_package(Python3 3.9 COMPONENTS Interpreter Development)
   endif()
   include_directories(${Python3_INCLUDE_DIRS})
   include_directories(${Python3_NumPy_INCLUDE_DIRS})
@@ -223,8 +223,6 @@ if (BUILD_SWIG_INTERFACE)
   if (BUILD_DOCUMENTATION)
     set(DOXYSWIG_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/documentation.i")
 
-    message("LORT")
-    message(${PYTHON_EXECUTABLE})
     # Generate SWIG documentation from Doxygen XML
     add_custom_target(swig_fnm_doxy
       COMMAND echo
@@ -298,6 +296,16 @@ if (BUILD_SWIG_INTERFACE)
   add_custom_command(TARGET swig_fnm POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "${CMAKE_CURRENT_SOURCE_DIR}/dicts.py"
+    "$<TARGET_FILE_DIR:swig_fnm>")
+
+  add_custom_command(TARGET swig_fnm POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/../python/pyutils.py"
+    "$<TARGET_FILE_DIR:swig_fnm>")
+
+  add_custom_command(TARGET swig_fnm POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/euler.py"
     "$<TARGET_FILE_DIR:swig_fnm>")
 
   # Add python files

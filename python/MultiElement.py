@@ -1,6 +1,7 @@
 import numpy as np
 
-from fnm import (rect,linear_array)
+from fnm import (rect, linear_array)
+
 from timeit import default_timer as timer
 
 import matplotlib.pyplot as plt

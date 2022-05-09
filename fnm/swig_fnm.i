@@ -79,9 +79,15 @@
 %include "typemaps.i"
 
 #ifdef SWIGPYTHON
- %include "swig_fnm_python.i"
- %fnm_typemaps(float)
- %fnm_typemaps(double)
+# if SWIG_VERSION <= 0x030012
+  %include "swig_fnm_python.i"
+  %fnm_typemaps(float)
+  %fnm_typemaps(double)
+# else
+  %include "swig4_fnm_python.i"
+  %fnm_typemaps(float)
+  %fnm_typemaps(double)
+# endif
 #endif
 
 // TODO: Make work using swig 3.0.10 (works using 3.0.8) 
