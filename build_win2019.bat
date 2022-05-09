@@ -11,7 +11,7 @@ REM set PYPIPATH=c:/Users/jem/Environments/fis
 REM set PYPIPATH=c:/ProgramData/Anaconda3
 REM REM set PYPIPATH=c:/Users/jem/AppData/Local/Programs/Python/Python36
 REM set PYVER=37
-REM set SEDPATH=c:/cygwin64/bin
+set SEDPATH=c:/cygwin64/bin
 REM set GRAPHVIZ_PATH=C:\Program Files (x86)\Graphviz\bin
 REM set SWIG_DIR=C:\Program Files\SWIG4.0
 REM REM set SWIG_DIR=C:\Program Files\swig
@@ -26,7 +26,7 @@ call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliar
 
 mkdir build
 
-set PATH="C:\Program Files\CMake\bin";%SWIG_DIR%;%CONDAPATH%;%PATH%
+set PATH="C:\Program Files\CMake\bin";%SWIG_DIR%;%CONDAPATH%;%SEDPATH%;%PATH%
 
 REM ;%DOXYGEN_DIR%;%GRAPHVIZ_PATH%;%SWIG_DIR%;%PATH%;%SEDPATH%
 

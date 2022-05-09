@@ -79,6 +79,11 @@ option(USE_MQUEUE "Use message queues" OFF)
 
 option (ENABLE_PYTHON3 "Python 3" ON)
 
+find_program(SED_CMD NAMES sed)
+if (NOT EXISTS "${SED_CMD}")
+  message( FATAL_ERROR "sed command is required for building this library")
+endif()
+
 option(BUILD_DOCUMENTATION
     "Create and install the HTML based API documentation (requires Doxygen)" ${DOXYGEN_FOUND})
 

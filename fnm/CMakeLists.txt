@@ -230,7 +230,9 @@ if (BUILD_SWIG_INTERFACE)
   endif()
 
   if (MSVC)
-    set_property(SOURCE swig_fnm.i PROPERTY SWIG_FLAGS "-D_SWIG_WIN32" "-DSWIG_INCLUDE_DOCUMENTATION")
+    if (BUILD_SWIG_DOCUMENTATION)
+      set_property(SOURCE swig_fnm.i PROPERTY SWIG_FLAGS "-D_SWIG_WIN32" "-DSWIG_INCLUDE_DOCUMENTATION")
+    endif()
   endif()
   
   set_source_files_properties(swig_fnm.i PROPERTIES CPLUSPLUS ON)
@@ -274,8 +276,10 @@ if (BUILD_SWIG_INTERFACE)
     swigtrick
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/swig.stamp
     )
-  # Depedency
-  add_dependencies(_swig_fnm swig_fnm_doxy)
+  if (BUILD_SWIG_DOCUMENTATION)
+    # Depedency
+    add_dependencies(_swig_fnm swig_fnm_doxy)
+  endif()
 
   if (MSVC)
     # Potential uninitialized variable in SWIG_AsVal_
@@ -285,7 +289,28 @@ if (BUILD_SWIG_INTERFACE)
     string(REPLACE "_d" "" PYTHON_LIBRARIES "${PYTHON_LIBRARIES}")
   endif()
   
-  swig_link_libraries(swig_fnm fnm ${PYTHON_LIBRARIES})
+  swig_link_libraries(swig_fnm fnm ${Python3_LIBRARIES})
+  #message(${PYTHON_LIBRARIES})
+
+  # Utility function for dumping variable names.....
+  function(dump_cmake_variables)
+    get_cmake_property(_variableNames VARIABLES)
+    list (SORT _variableNames)
+    foreach (_variableName ${_variableNames})
+      if (ARGV0)
+        unset(MATCHED)
+        string(REGEX MATCH ${ARGV0} MATCHED ${_variableName})
+        if (NOT MATCHED)
+          continue()
+        endif()
+      endif()
+      message(STATUS "${_variableName}=${${_variableName}}")
+    endforeach()
+  endfunction()
+
+  # Used to figure out what find_package(Python3) exposes
+  # dump_cmake_variables("Python")
+
 
   add_custom_command(TARGET _swig_fnm POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different

@@ -39,6 +39,8 @@ void InteriorEllipsis(const sps::point_t<T>* pPositions,
 }
 
 // Never pass smart pointer by value or reference!!!! Pass the underlying array instead by ref
+
+// TODO: Make explicit specialization using std::copysignf<T> for float
 template <class T>
 int PytDelays0(const sps::unique_aligned_array<sps::point_t<T> >& positions,
                const size_t& nElements,
