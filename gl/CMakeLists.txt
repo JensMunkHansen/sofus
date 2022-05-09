@@ -13,7 +13,7 @@ if (BUILD_GL_TEST)
 endif()
 
 find_package( Threads REQUIRED )
-find_package( Mathematica )
+find_package( Mathematica QUIET )
 
 include_directories(${GTEST_INCLUDE_DIRS})
 
