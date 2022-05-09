@@ -207,8 +207,11 @@ if (BUILD_SWIG_INTERFACE)
   find_package(SWIG REQUIRED)
   include(${SWIG_USE_FILE})
 
-  find_package(Python3 COMPONENTS Interpreter Development NumPy)
-
+  if (WIN32)
+    find_package(Python3 COMPONENTS Interpreter Development NumPy)
+  else()
+    find_package(Python3 COMPONENTS Interpreter Development)
+  endif()
   include_directories(${Python3_INCLUDE_DIRS})
   include_directories(${Python3_NumPy_INCLUDE_DIRS})
 
@@ -237,9 +240,10 @@ if (BUILD_SWIG_INTERFACE)
   set(swig_fnm_HEADERS
     fnm.hpp
   )
-  
-  set_source_files_properties(swig_fnm.i PROPERTIES OBJECT_DEPENDS "${DOXYSWIG_OUTPUT}")
 
+  if (BUILD_SWIG_DOCUMENTATION)
+    set_source_files_properties(swig_fnm.i PROPERTIES OBJECT_DEPENDS "${DOXYSWIG_OUTPUT}")
+  endif()
   execute_process(COMMAND swig -python -c++ -external-runtime ${CMAKE_CURRENT_BINARY_DIR}/swig_runtime.h
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
