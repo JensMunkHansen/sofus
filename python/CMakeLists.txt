@@ -5,12 +5,7 @@ option (TEST_INCLUDE_PYTHON_TESTS "Include Python tests" ON)
 # Copy DLL and Python wrapper to test directory if Python test are included
 if (TEST_INCLUDE_PYTHON_TESTS)
 
-  find_package(PythonInterp REQUIRED)
-
-  if (WIN32 AND NOT CYGWIN)
-    # Hack to avoid Cygwin's Python
-    set(PYTHON_EXECUTABLE "C://Python27_64//python-2.7.6.amd64//python.exe")
-  endif()
+  find_package(Python3 COMPONENTS Interpreter)
 
   add_custom_target(copy ALL)
 
@@ -33,8 +28,8 @@ if (TEST_INCLUDE_PYTHON_TESTS)
   if (BUILD_SWIG_INTERFACE)
     add_custom_command(TARGET copy
       PRE_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:_swig_fnm> ${CMAKE_CURRENT_SOURCE_DIR}
-      DEPENDS $<TARGET_FILE:_swig_fnm>)
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:swig_fnm> ${CMAKE_CURRENT_SOURCE_DIR}
+      DEPENDS $<TARGET_FILE:swig_fnm>)
   endif()
 
   enable_testing()

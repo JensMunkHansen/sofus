@@ -9,7 +9,6 @@ else()
   cmake_policy(VERSION ${FNM_CMAKE_MAXIMUM_TESTED_VERSION})
 endif()
 
-#set(project_policies CMP0078 CMP0086)
 cmake_policy(SET CMP0078 NEW) # You can switch between LEGACY (SWIG_MODULE_<name>_REAL_NAME) or NEW (targets prefix'ed with _) by setting UseSWIG_TARGET_NAME_PREFERENCE. If CMP0078=NEW actual targets name equal swig target.
 
 cmake_policy(SET CMP0086 NEW) # NEW target names can be set using -module flag to the swig executable. To use this define SWIG_TARGET_NAME property on .i files
@@ -28,11 +27,6 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# UseSWIG
-if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.13")
-  cmake_policy(SET CMP0078 OLD)
-endif()
-
 # Add path for custom modules
 set(CMAKE_MODULE_PATH
   ${CMAKE_MODULE_PATH}
@@ -41,10 +35,15 @@ set(CMAKE_MODULE_PATH
 # Prefix used for dependencies
 set(CMAKE_PREFIX_PATH "${CMAKE_CURRENT_BINARY_DIR}/deps-prefix" CACHE STRING "Prefix path for dependencies")
 
-find_package(Doxygen 1.8.13)
+find_package(Doxygen 1.9.4)
 
 include(SetInstallDir)
-include(DoxygenTarget)
+
+# Uncommented for Windows Visual Studio 2019
+if (1) #NOT WIN32)
+  include(DoxygenTarget)
+endif()
+
 include(SetWarningLevels)
 
 string(TIMESTAMP timestring %Y%m%d%H%M%S UTC)
@@ -114,7 +113,11 @@ if (BUILD_SHARED_LIBS)
 endif()
 
 if (BUILD_DOCUMENTATION)
-  add_doxygen_target(doc)
+  if(DOXYGEN_FOUND)
+    add_doxygen_target(doc)
+  else()
+    message(FATAL_ERROR "Doxygen is required.")
+  endif()
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX)
