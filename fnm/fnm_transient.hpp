@@ -36,7 +36,7 @@ class ApertureData;
 }
 
 namespace fnm {
-#ifdef FNM_PULSED_WAVE
+#if 1 //def FNM_PULSED_WAVE
 template <class T, template <typename> class A>
 T TransientSingleRect(const sysparm_t<T>* pSysparm,
                       const ApertureData<T>* data,

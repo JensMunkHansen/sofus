@@ -16,7 +16,7 @@
 
 #include <sps/cenv.h>
 
-#if FNM_PULSED_WAVE
+#if 1 //FNM_PULSED_WAVE
 # include <sofus/sofus_types.hpp>
 #endif
 

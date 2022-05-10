@@ -148,6 +148,10 @@ set(fnm_SOURCES
 
 set(fnm_HEADERS "${fnm_HEADERS}" "fnm_transient.hpp")
 set(fnm_SOURCES "${fnm_SOURCES}" "fnm_transient.cpp")
+#set(fnm_HEADERS "${fnm_HEADERS}" "fnm_transient_threaded.hpp")
+#set(fnm_SOURCES "${fnm_SOURCES}" "fnm_transient_threaded.cpp")
+set(fnm_HEADERS "${fnm_HEADERS}" "fnm_response.hpp")
+set(fnm_SOURCES "${fnm_SOURCES}" "fnm_response.cpp")
 
 if (UNIX AND NOT WIN32)
   set(fnm_HEADERS "${fnm_HEADERS}" "../sps/strace.hpp")
