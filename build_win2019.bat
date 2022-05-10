@@ -13,11 +13,13 @@ set DOXYGEN_DIR=C:/PFx64/doxygen
 
 set(GTEST_ROOT="C:/Program Files/googletest-distribution")
 
-set FFTWDIR="C:\Program Files\fftw-3.3.5"
-
 call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
 
-call "c:\cygwin64\home\jem\Environments\PyPI38\Scripts\activate.bat"
+IF EXIST "c:\cygwin64\home\jem\Environments\PyPI38\Scripts\activate.bat" (
+  call "c:\cygwin64\home\jem\Environments\PyPI38\Scripts\activate.bat"
+) ELSE (
+  call "c:\Users\jem\Environments\PyPI38\Scripts\activate.bat"
+)
 
 mkdir build
 
@@ -25,7 +27,7 @@ set PATH="C:\Program Files\CMake\bin";%SWIG_DIR%;%SEDPATH%;%GRAPHVIZ_PATH%;%PATH
 
 REM ;%DOXYGEN_DIR%;%GRAPHVIZ_PATH%;%SWIG_DIR%;%PATH%;%SEDPATH%
 
-cmake -H%~dp0 -B%~dp0\build -G "Visual Studio 16 2019" -A "x64" -DBUILD_SPS_TEST=OFF -DBUILD_DOCUMENTATION=ON -DBUILD_SWIG_DOCUMENTATION=ON -DBUILD_FNM_TEST=ON -DBUILD_GL_TEST=ON -DDOXYGEN_EXECUTABLE=%DOXYGEN_DIR%/bin/doxygen.exe -DPYTHON_EXECUTABLE="C:\cygwin64\home\jem\Environments\PyPI38\Scripts\python.exe"
+cmake -H%~dp0 -B%~dp0\build -G "Visual Studio 16 2019" -A "x64" -DBUILD_SPS_TEST=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SWIG_DOCUMENTATION=OFF -DBUILD_FNM_TEST=OFF -DBUILD_GL_TEST=OFF -DDOXYGEN_EXECUTABLE=%DOXYGEN_DIR%/bin/doxygen.exe -DPYTHON_EXECUTABLE="C:\cygwin64\home\jem\Environments\PyPI38\Scripts\python.exe"
 
 REM Create solution
 cd %~dp0\build

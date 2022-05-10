@@ -35,7 +35,7 @@ set(CMAKE_MODULE_PATH
 # Prefix used for dependencies
 set(CMAKE_PREFIX_PATH "${CMAKE_CURRENT_BINARY_DIR}/deps-prefix" CACHE STRING "Prefix path for dependencies")
 
-find_package(Doxygen 1.9)
+find_package(Doxygen 1.9 QUIET)
 
 include(SetInstallDir)
 
