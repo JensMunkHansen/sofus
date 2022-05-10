@@ -640,6 +640,21 @@ class Aperture {
 
   ///@}
 
+  /**
+   * Get excitation type
+   *
+   *
+   * @return
+   */
+  int ExcitationTypeGet() const;
+
+  /**
+   * Set Excitation type (0: ToneBurst, 1: Hamming-weighted pulse)
+   *
+   * @param iExcitationType
+   */
+  void ExcitationTypeSet(const int iExcitationType);
+
 #if FNM_PULSED_WAVE
   /**
    * Create a number of lines, which can be used for focusing
@@ -690,21 +705,6 @@ class Aperture {
    * @param iImpulseType
    */
   void ImpulseTypeSet(const int iImpulseType);
-
-  /**
-   * Get excitation type
-   *
-   *
-   * @return
-   */
-  int ExcitationTypeGet() const;
-
-  /**
-   * Set Excitation type (0: ToneBurst, 1: Hamming-weighted pulse)
-   *
-   * @param iExcitationType
-   */
-  void ExcitationTypeSet(const int iExcitationType);
 
   /**
      * Get sampling frequency

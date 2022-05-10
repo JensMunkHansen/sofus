@@ -21,10 +21,12 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY
 set(sofus_HEADERS
   rect_int_limits.hpp
   sofus_version.hpp
+  sofus_pulses.hpp
   )
 
 set(sofus_SOURCES
   sofus_version.cpp
+  sofus_pulses.cpp
   )
 
 add_library(sofus ${SOFUS_LIB_TYPE} ${sofus_SOURCES} ${sofus_HEADERS} config.h.in)

@@ -48,9 +48,10 @@
 
 #include <fnm/fnm_calc.hpp>       // fnm::Calc routines
 
-#ifdef FNM_PULSED_WAVE
 # include <fnm/fnm_transient.hpp>  // fnm::CalcFd routines
 # include <fnm/fnm_transient_threaded.hpp>  // fnm::CalcFd routines
+
+#ifdef FNM_PULSED_WAVE
 # include <fnm/fnm_transient_vectorized.hpp>
 #endif
 
@@ -861,6 +862,16 @@ void Aperture<T>::DensitySet(const T& rho) {
   m_sysparm->rho = rho;
 }
 
+template <class T>
+int Aperture<T>::ExcitationTypeGet() const {
+  return this->m_pData->m_pulses->m_excitationType;
+}
+
+  template <class T>
+  void Aperture<T>::ExcitationTypeSet(const int iExcitationType) {
+    this->m_pData->m_pulses->m_excitationType = (sofus::ExcitationType) iExcitationType;
+  }
+
 #if FNM_PULSED_WAVE
 template <class T>
 void Aperture<T>::
@@ -907,15 +918,6 @@ void Aperture<T>::ImpulseTypeSet(const int iImpulseType) {
   }
 }
 
-template <class T>
-int Aperture<T>::ExcitationTypeGet() const {
-  return this->m_pData->m_pulses->m_excitationType;
-}
-
-template <class T>
-void Aperture<T>::ExcitationTypeSet(const int iExcitationType) {
-  this->m_pData->m_pulses->m_excitationType = (sofus::ExcitationType) iExcitationType;
-}
 
 template <class T>
 T Aperture<T>::CalcMatchedFilter(
@@ -2412,40 +2414,6 @@ int Aperture<T>::CalcCwFieldFourRef(
   return tStart;
 }
 
-#if FNM_PULSED_WAVE
-
-template <class T>
-T Aperture<T>::CalcPwFnmEcho(
-  const Aperture<T>* other,
-  const T* pos, const size_t nPositions, const size_t nDim,
-  const T* data, const size_t nData,
-  T** odata, size_t* nSignals, size_t* nSamples) {
-  assert(nDim == 3);
-
-  if ((nDim != 3) || (!pos) || nPositions == 0) {
-    *odata = NULL;
-    *nSignals = 0;
-    *nSamples = 0;
-    return T(0.0);
-  }
-
-  if (m_pData->m_focus_type == FocusingType::Rayleigh) {
-    fprintf(stderr,
-            "Rayleigh focusing type is not supported for pulsed wave calculations\n");
-    fprintf(stderr, "Focusing type is reset to Pythagorean\n");
-    m_pData->m_focus_type = FocusingType::Pythagorean;
-  }
-  this->FocusUpdate();
-
-  T retval = fnm::CalcPwFnmEcho(*m_sysparm,
-                                m_pData,
-                                other->m_pData,
-                                pos, nPositions, nDim,
-                                data, nData,
-                                odata, nSignals, nSamples);
-  return retval;
-}
-
 template <class T>
 T Aperture<T>::CalcPwFnmThreaded(
   const T* pos, const size_t nPositions, const size_t nDim,
@@ -2481,6 +2449,40 @@ T Aperture<T>::CalcPwFnmThreaded(
   }
   *nSignals = nPositions;
   return tstart;
+}
+
+#if FNM_PULSED_WAVE
+
+template <class T>
+T Aperture<T>::CalcPwFnmEcho(
+  const Aperture<T>* other,
+  const T* pos, const size_t nPositions, const size_t nDim,
+  const T* data, const size_t nData,
+  T** odata, size_t* nSignals, size_t* nSamples) {
+  assert(nDim == 3);
+
+  if ((nDim != 3) || (!pos) || nPositions == 0) {
+    *odata = NULL;
+    *nSignals = 0;
+    *nSamples = 0;
+    return T(0.0);
+  }
+
+  if (m_pData->m_focus_type == FocusingType::Rayleigh) {
+    fprintf(stderr,
+            "Rayleigh focusing type is not supported for pulsed wave calculations\n");
+    fprintf(stderr, "Focusing type is reset to Pythagorean\n");
+    m_pData->m_focus_type = FocusingType::Pythagorean;
+  }
+  this->FocusUpdate();
+
+  T retval = fnm::CalcPwFnmEcho(*m_sysparm,
+                                m_pData,
+                                other->m_pData,
+                                pos, nPositions, nDim,
+                                data, nData,
+                                odata, nSignals, nSamples);
+  return retval;
 }
 
 template <class T>

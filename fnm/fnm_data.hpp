@@ -41,8 +41,9 @@
 # include <sofus/sofus_types.hpp>
 # include <sofus/sofus_focus_line.hpp>
 # include <vector>
-# include <sofus/sofus_pulses.hpp>
 #endif
+
+# include <sofus/sofus_pulses.hpp>
 
 namespace fnm {
 
@@ -132,7 +133,7 @@ class ApertureData : public sps::aligned<4*sizeof(T)> {
 
   //@}
 
-#ifdef FNM_PULSED_WAVE
+#if 1 //def FNM_PULSED_WAVE
   sofus::AperturePulses<T>* m_pulses;
 #endif
 
