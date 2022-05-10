@@ -38,7 +38,7 @@
 #include <fnm/fnm_basis.hpp>
 
 
-#ifdef FNM_PULSED_WAVE
+#if 1 //def FNM_PULSED_WAVE
 # include <sofus/rect_int_limits.hpp>  // calcProjectionAndLimits
 # include <sofus/sofus_calc.hpp>       // ComputeBoxTimes
 # include <sps/msignals.hpp>
@@ -58,7 +58,7 @@
 
 namespace fnm {
 
-#ifdef FNM_PULSED_WAVE
+#if 1 //def FNM_PULSED_WAVE
 
 // TODO(JMH): Support odd number of abcissas.
 template <class T>
@@ -829,7 +829,7 @@ T TransientSingleRect(const sysparm_t<T>* pSysparm,
 
 #endif
 
-#ifdef FNM_PULSED_WAVE
+#if 1 //def FNM_PULSED_WAVE
 
 template void
 EdgeResponse<float, ToneBurst>(
