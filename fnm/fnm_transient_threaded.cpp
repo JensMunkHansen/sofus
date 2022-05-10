@@ -23,8 +23,8 @@
 
 #ifdef FNM_PULSED_WAVE
 # include <sofus/rect_int_limits.hpp> // calcProjectionAndLimits
-# include <sofus/sofus_calc.hpp>      // ComputeBoxTimes
 #endif
+# include <sofus/sofus_calc.hpp>      // ComputeBoxTimes
 
 #include <sps/profiler.h>
 #include <sps/progress.hpp>

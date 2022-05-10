@@ -22,11 +22,13 @@ set(sofus_HEADERS
   rect_int_limits.hpp
   sofus_version.hpp
   sofus_pulses.hpp
+  sofus_calc.hpp
   )
 
 set(sofus_SOURCES
   sofus_version.cpp
   sofus_pulses.cpp
+  sofus_calc.cpp
   )
 
 add_library(sofus ${SOFUS_LIB_TYPE} ${sofus_SOURCES} ${sofus_HEADERS} config.h.in)
