@@ -186,7 +186,7 @@ const T Aperture<T>::dB_Neper = T(8.685889638065035);
 // Static content declared in interface
 /////////////////////////////////////////////////
 
-#if FNM_PULSED_WAVE
+#if 1 // FNM_PULSED_WAVE
 // TODO(JEM): Remove static variable
 template <class T>
 bool Aperture<T>::normalize = true;
@@ -867,17 +867,29 @@ int Aperture<T>::ExcitationTypeGet() const {
   return this->m_pData->m_pulses->m_excitationType;
 }
 
-  template <class T>
-  void Aperture<T>::ExcitationTypeSet(const int iExcitationType) {
-    this->m_pData->m_pulses->m_excitationType = (sofus::ExcitationType) iExcitationType;
-  }
-
-#if FNM_PULSED_WAVE
 template <class T>
-void Aperture<T>::
-FocusLinesCreate(size_t nLines, sofus::FocusLineList<T>** obj) const {
-  const size_t nElements = m_pData->m_nelements;
-  *obj = new sofus::FocusLineList<T>(nLines, nElements);
+void Aperture<T>::ExcitationTypeSet(const int iExcitationType) {
+  this->m_pData->m_pulses->m_excitationType = (sofus::ExcitationType) iExcitationType;
+}
+
+template <class T>
+void fnm::Aperture<T>::BandWidthSet(const T& value) {
+  this->m_pData->m_pulses->BandWidthSet(value);
+}
+
+template <class T>
+const T& fnm::Aperture<T>::BandWidthGet() const {
+  return this->m_pData->m_pulses->m_impulseBandwidth;
+}
+
+template <class T>
+const bool& Aperture<T>::NormalizeGet() const {
+  return Aperture<T>::normalize;
+}
+
+template <class T>
+void Aperture<T>::NormalizeSet(const bool& value) {
+  Aperture<T>::normalize = value;
 }
 
 template <class T>
@@ -903,6 +915,32 @@ void Aperture<T>::FCSet(const T& f0) {
     }
   }
 }
+
+template <class T>
+const T& Aperture<T>::FsGet() const {
+  return m_sysparm->fs;
+}
+
+template <class T>
+int Aperture<T>::FsSet(const T& value) {
+  int retval = -1;
+  if (value > T(1.0)) {
+    m_sysparm->fs = value;
+    // Sysparm and pulse must be in sync
+    this->m_pData->m_pulses->FsSet(value);
+    retval = 0;
+  }
+  return retval;
+}
+
+#if FNM_PULSED_WAVE
+template <class T>
+void Aperture<T>::
+FocusLinesCreate(size_t nLines, sofus::FocusLineList<T>** obj) const {
+  const size_t nElements = m_pData->m_nelements;
+  *obj = new sofus::FocusLineList<T>(nLines, nElements);
+}
+
 
 template <class T>
 int Aperture<T>::ImpulseTypeGet() const {
@@ -1128,42 +1166,7 @@ T Aperture<T>::CalcPwEcho(
   return retval;
 }
 
-template <class T>
-const T& Aperture<T>::FsGet() const {
-  return m_sysparm->fs;
-}
 
-template <class T>
-int Aperture<T>::FsSet(const T& value) {
-  int retval = -1;
-  if (value > T(1.0)) {
-    m_sysparm->fs = value;
-    // Sysparm and pulse must be in sync
-    this->m_pData->m_pulses->FsSet(value);
-    retval = 0;
-  }
-  return retval;
-}
-
-template <class T>
-void fnm::Aperture<T>::BandWidthSet(const T& value) {
-  this->m_pData->m_pulses->BandWidthSet(value);
-}
-
-template <class T>
-const T& fnm::Aperture<T>::BandWidthGet() const {
-  return this->m_pData->m_pulses->m_impulseBandwidth;
-}
-
-template <class T>
-const bool& Aperture<T>::NormalizeGet() const {
-  return Aperture<T>::normalize;
-}
-
-template <class T>
-void Aperture<T>::NormalizeSet(const bool& value) {
-  Aperture<T>::normalize = value;
-}
 
 template <class T>
 void Aperture<T>::ImpulseGet(T** data, size_t* nData) const {
@@ -2101,7 +2104,6 @@ void Aperture<T>::FocusUpdateRef() {
   m_pData->m_focus_valid = m_pData->m_focus_type;
 }
 
-
 template <class T>
 void Aperture<T>::FocusUpdate() {
 
@@ -2190,180 +2192,6 @@ void Aperture<T>::FocusUpdate() {
   m_pData->m_focus_valid = m_pData->m_focus_type;
 }
 
-#ifdef FNM_PULSED_WAVE
-template <class T>
-T Aperture<T>::CalcPwBackScat(const T* pos, const size_t nPositions,
-                              const size_t nDim,
-                              const T* data, const size_t nData,  // Amplitudes
-                              T** odata, size_t* nSignals, size_t* nSamples) {
-  SPS_UNREFERENCED_PARAMETERS(data,nData);
-  assert(nDim == 3);
-  if (nDim != 3) {
-    *odata = NULL;
-    *nSignals = 0;
-    *nSamples = 0;
-    return T(0.0);
-  }
-
-  sofus::sysparm_t<T> sysparm;
-  sysparm.c        = m_sysparm->c;
-  sysparm.fs       = m_sysparm->fs;
-  sysparm.normalize= Aperture<T>::normalize;
-  sysparm.att      = m_sysparm->att;
-  sysparm.beta     = m_sysparm->beta;
-  sysparm.use_att  = m_sysparm->use_att;
-  sysparm.f0       = m_pData->m_f0;
-  sysparm.timeDomainCalcType = m_sysparm->timeDomainCalcType;
-  sysparm.timeDomainIntOrder = m_sysparm->timeDomainIntOrder;
-  sysparm.soft_baffle = false;
-
-  T tStart =
-    sofus::CalcPwBackField(
-      sysparm,
-      m_pData,
-      this->m_pData->m_pulses,
-      pos, nPositions, nDim,
-      odata, nSignals, nSamples,
-      m_pbar);
-  return tStart;
-}
-
-
-// Calculations
-template <class T>
-T Aperture<T>::CalcPwField(
-  const T* pos, const size_t nPositions, const size_t nDim,
-  T** odata, size_t* nSignals, size_t* nSamples) {
-  assert(nDim == 3);
-  if (nDim != 3) {
-    *odata = NULL;
-    *nSignals = 0;
-    *nSamples = 0;
-    return T(0.0);
-  }
-
-  if (m_pData->m_focus_type == FocusingType::Rayleigh) {
-    fprintf(stderr, "Rayleigh focusing type is not supported for pulsed wave calculations\n");
-    fprintf(stderr, "Focusing type is reset to Pythagorean\n");
-    m_pData->m_focus_type = FocusingType::Pythagorean;
-  }
-  this->FocusUpdate();
-
-  // TODO: Find better way - agree on content of sysparm or split in two
-  sofus::sysparm_t<T> sysparm;
-  sysparm.c        = m_sysparm->c;
-  sysparm.fs = m_sysparm->fs;
-  sysparm.normalize= Aperture<T>::normalize;
-  sysparm.att      = m_sysparm->att;
-  sysparm.beta     = m_sysparm->beta;
-  sysparm.use_att  = m_sysparm->use_att;
-  sysparm.f0       = m_pData->m_f0;
-  sysparm.timeDomainCalcType = m_sysparm->timeDomainCalcType;
-  sysparm.timeDomainIntOrder = m_sysparm->timeDomainIntOrder;
-  sysparm.soft_baffle = false;
-
-  T tStart =
-    sofus::CalcPwField(
-      sysparm,
-      m_pData,
-      pos, nPositions, nDim,
-      odata, nSignals, nSamples,
-      m_pbar);
-
-  return tStart;
-}
-
-
-
-template <class T>
-T Aperture<T>::CalcPwFieldRef(
-  const T* pos, const size_t nPositions, const size_t nDim,
-  T** odata, size_t* nSignals, size_t* nSamples) {
-  assert(nDim == 3);
-  if (nDim != 3) {
-    *odata = NULL;
-    *nSignals = 0;
-    *nSamples = 0;
-    return T(0.0);
-  }
-
-  if (m_pData->m_focus_type == FocusingType::Rayleigh) {
-    fprintf(stderr, "Rayleigh focusing type is not supported for pulsed wave calculations\n");
-    fprintf(stderr, "Focusing type is reset to Pythagorean\n");
-    m_pData->m_focus_type = FocusingType::Pythagorean;
-  }
-  this->FocusUpdate();
-
-  // TODO: Find better way - agree on content of sysparm or split in two
-  sofus::sysparm_t<T> sysparm;
-  sysparm.c       = m_sysparm->c;
-  sysparm.fs = m_sysparm->fs;
-  sysparm.normalize = Aperture<T>::normalize;
-
-  sysparm.att     = m_sysparm->att;
-  sysparm.beta    = m_sysparm->beta;
-  sysparm.use_att = m_sysparm->use_att;
-  sysparm.soft_baffle = false;
-  sysparm.f0      = m_pData->m_f0;
-  sysparm.timeDomainCalcType = m_sysparm->timeDomainCalcType;
-  sysparm.timeDomainIntOrder = m_sysparm->timeDomainIntOrder;
-
-  T tStart =
-    sofus::CalcPwFieldRef(
-      sysparm,
-      m_pData,
-      this->m_pData->m_pulses,
-      pos, nPositions, nDim,
-      odata, nSignals, nSamples);
-
-  return tStart;
-}
-
-//# ifndef FNM_DOUBLE_SUPPORT
-template <class T>
-T Aperture<T>::CalcPwFieldThreaded(
-  const T* pos, const size_t nPositions, const size_t nDim,
-  T** odata, size_t* nSignals, size_t* nSamples) {
-  assert(nDim == 3);
-  if (nDim != 3) {
-    *odata = NULL;
-    *nSignals = 0;
-    *nSamples = 0;
-    return T(0.0);
-  }
-
-  if ((m_pData->m_focus_type != FocusingType::Pythagorean) &&
-      (m_pData->m_focus_type != FocusingType::Delays)) {
-    fprintf(stderr, "Focusing type must be Pythagorean or set using "
-            "delays for pulsed wave calculations\n");
-  }
-  this->FocusUpdate();
-
-  sofus::sysparm_t<T> sysparm;
-  sysparm.c        = m_sysparm->c;
-  sysparm.fs = m_sysparm->fs;
-  sysparm.normalize = Aperture<T>::normalize;
-  sysparm.nThreads = m_sysparm->nThreads;
-
-  sysparm.att      = m_sysparm->att;
-  sysparm.beta     = m_sysparm->beta;
-  sysparm.use_att  = m_sysparm->use_att;
-  sysparm.soft_baffle = m_sysparm->soft_baffle;
-  sysparm.timeDomainIntOrder = m_sysparm->timeDomainIntOrder;
-  sysparm.timeDomainCalcType = m_sysparm->timeDomainCalcType;
-
-  T tStart = sofus::CalcPwFieldThreaded(sysparm,
-                                        m_pData,
-                                        this->m_pData->m_pulses,
-                                        pos, nPositions, nDim,
-                                        odata, nSignals, nSamples,
-                                        m_pbar);
-
-  return tStart;
-}
-//# endif
-#endif
-
 template <class T>
 int Aperture<T>::CalcCwFieldNaive(
   const T* pos, const size_t nPositions, const size_t nDim,
@@ -2451,107 +2279,6 @@ T Aperture<T>::CalcPwFnmThreaded(
   return tstart;
 }
 
-#if FNM_PULSED_WAVE
-
-template <class T>
-T Aperture<T>::CalcPwFnmEcho(
-  const Aperture<T>* other,
-  const T* pos, const size_t nPositions, const size_t nDim,
-  const T* data, const size_t nData,
-  T** odata, size_t* nSignals, size_t* nSamples) {
-  assert(nDim == 3);
-
-  if ((nDim != 3) || (!pos) || nPositions == 0) {
-    *odata = NULL;
-    *nSignals = 0;
-    *nSamples = 0;
-    return T(0.0);
-  }
-
-  if (m_pData->m_focus_type == FocusingType::Rayleigh) {
-    fprintf(stderr,
-            "Rayleigh focusing type is not supported for pulsed wave calculations\n");
-    fprintf(stderr, "Focusing type is reset to Pythagorean\n");
-    m_pData->m_focus_type = FocusingType::Pythagorean;
-  }
-  this->FocusUpdate();
-
-  T retval = fnm::CalcPwFnmEcho(*m_sysparm,
-                                m_pData,
-                                other->m_pData,
-                                pos, nPositions, nDim,
-                                data, nData,
-                                odata, nSignals, nSamples);
-  return retval;
-}
-
-template <class T>
-T Aperture<T>::CalcPwFnmVectorized(
-  const T* pos, const size_t nPositions, const size_t nDim,
-  T** odata, size_t* nSignals, size_t* nSamples, int mask) {
-  assert(nDim == 3);
-  if (nDim != 3) {
-    *odata = NULL;
-    *nSignals = 0;
-    *nSamples = 0;
-    return T(0.0);
-  }
-
-  if ((m_pData->m_focus_type != FocusingType::Pythagorean) &&
-      (m_pData->m_focus_type != FocusingType::Delays)) {
-    fprintf(stderr, "Focusing type must be Pythagorean or set using "
-            "delays for pulsed wave calculations\n");
-  }
-  this->FocusUpdate();
-
-  T tstart = T(0.0);
-  if (ExcitationTypeGet() == ExcitationType::ExcitationTypeToneBurst) {
-    tstart = fnm::CalcPwFnmVectorized<T, ToneBurst>(
-               this->m_sysparm, this->m_pData, pos, nPositions, odata, nSamples, mask);
-    *nSignals = nPositions;
-    printf("nSignals: %zu, nSamples: %zu\n", *nSignals, *nSamples);
-  } else {
-    *nSignals = 0;
-    *nSamples = 0;
-  }
-
-  return tstart;
-}
-
-template <class T>
-T Aperture<T>::CalcPwFnmVecThreaded(
-  const T* pos,const size_t nPositions,const size_t nDim,
-  T** odata,size_t* nSignals,size_t* nSamples,int mask) {
-  assert(nDim == 3);
-  if(nDim != 3) {
-    *odata = NULL;
-    *nSignals = 0;
-    *nSamples = 0;
-    return T(0.0);
-  }
-
-  if((m_pData->m_focus_type != FocusingType::Pythagorean) &&
-      (m_pData->m_focus_type != FocusingType::Delays)) {
-    fprintf(stderr,"Focusing type must be Pythagorean or set using "
-            "delays for pulsed wave calculations\n");
-  }
-  this->FocusUpdate();
-
-  T tstart = T(0.0);
-  if(ExcitationTypeGet() == ExcitationType::ExcitationTypeToneBurst) {
-    tstart = fnm::CalcPwFnmVecThreaded<T,ToneBurst>(
-               this->m_sysparm,this->m_pData,pos,nPositions,odata,nSamples,mask,this->m_pbar);
-    *nSignals = nPositions;
-    printf("nSignals: %zu, nSamples: %zu\n",*nSignals,*nSamples);
-  } else {
-    *nSignals = 0;
-    *nSamples = 0;
-  }
-
-  return tstart;
-}
-
-
 template <class T>
 T Aperture<T>::CalcTransientSingleElementNoDelay(
   const T* pos, const size_t nPositions, const size_t nDim,
@@ -2566,17 +2293,14 @@ T Aperture<T>::CalcTransientSingleElementNoDelay(
   T tstart = T(0.0);
   if (this->ExcitationTypeGet() == ExcitationType::ExcitationTypeHanningWeightedPulse) {
     tstart = fnm::TransientSingleRect<T, HanningWeightedPulse>(
-               this->m_sysparm, this->m_pData, pos, nPositions, odata, nSamples, mask);
+                                                               this->m_sysparm, this->m_pData, pos, nPositions, odata, nSamples, mask);
   } else {
     tstart = fnm::TransientSingleRect<T, ToneBurst>(
-               this->m_sysparm, this->m_pData, pos, nPositions, odata, nSamples, mask);
+                                                    this->m_sysparm, this->m_pData, pos, nPositions, odata, nSamples, mask);
   }
   *nSignals = nPositions;
   return tstart;
 }
-
-#endif
-
 
 // Optimal sampling for integral (reduced integration path)
 template <class T>
@@ -3070,5 +2794,3 @@ IS_CPP (void ArrayList_insert(ArrayList *arrlst, Buffer *data, int i))
 /* tab-width: 2 */
 /* c-basic-offset: 2 */
 /* End: */
-
-

@@ -8,8 +8,6 @@
  * Copyright 2017 Jens Munk Hansen
  */
 
-// TODO(JEM): Split projection into (compute limits)  + (projection)
-
 #include <sofus/config.h>
 #include <sps/debug.h>
 #include <sps/profiler.h>
@@ -36,18 +34,9 @@ void ComputeBoxTimes(const sysparm_t<T>& sysparm,
   T delay_min = T(0.0);
   T delay_max = T(0.0);
 
-#if 0
-  // Temporarily we ignore apodization for timing to ensure equal tstart
-  sps::unique_aligned_array<T> apodizations0 = sps::unique_aligned_array_create<T>(nElements);
-  std::fill(apodizations0.get(), apodizations0.get() + nElements, T(1.0));
-
-  // Find minimum and maximum delay (one-way, e.g. transmit)
-  std::pair<T, T> delay_minmax =
-    sps::minmax_delay(delays, apodizations0.get(), nElements);
-#else
   std::pair<T, T> delay_minmax =
     sps::minmax_delay(delays, apodizations, nElements);
-#endif
+
   delay_min = delay_minmax.first;
   delay_max = delay_minmax.second;
 

@@ -83,7 +83,7 @@ void AperturePulses<T>::TemporalPulseCalc(
 
 
 template <class T>
-AperturePulses<T>::AperturePulses() :
+AperturePulses<T>::AperturePulses() : 
   m_impulseType(ImpulseType::ImpulseTypeNonParametric),
   m_excitationType(ExcitationType::ExcitationTypeNonParametric) {
   this->m_f0 = 1e6;

@@ -37,12 +37,9 @@
 #include <fnm/fnm_common.hpp>
 #include <fnm/fnm_basis.hpp>
 
-
-#if 1 //def FNM_PULSED_WAVE
-# include <sofus/rect_int_limits.hpp>  // calcProjectionAndLimits
-# include <sofus/sofus_calc.hpp>       // ComputeBoxTimes
-# include <sps/msignals.hpp>
-#endif
+#include <sofus/rect_int_limits.hpp>  // calcProjectionAndLimits
+#include <sofus/sofus_calc.hpp>       // ComputeBoxTimes
+#include <sps/msignals.hpp>
 
 #include <sps/algorithm>
 
@@ -829,8 +826,6 @@ T TransientSingleRect(const sysparm_t<T>* pSysparm,
 
 #endif
 
-#if 1 //def FNM_PULSED_WAVE
-
 template void
 EdgeResponse<float, ToneBurst>(
   const sysparm_t<float>* pSysparm,
@@ -975,7 +970,6 @@ TransientSingleRect<double, HanningWeightedPulse>(
   double** odata, size_t* nSamples, int mask);
 #endif
 
-#endif
 }  // namespace fnm
 
 /* Local variables: */

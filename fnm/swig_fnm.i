@@ -10,7 +10,7 @@
   #include <sps/progress.hpp>
   #include <fnm/config.h>
   #include <sps/cenv.h>
-#if FNM_PULSED_WAVE
+#if 1 // FNM_PULSED_WAVE
   #include <sofus/sofus_types.h>
   #include <sofus/sofus_types.hpp>
 #endif
@@ -90,7 +90,7 @@
 # endif
 #endif
 
-// TODO: Make work using swig 3.0.10 (works using 3.0.8) 
+// TODO: Make work using swig 3.0.10 (works using 3.0.8)
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY) (const float* iMultiData)
 {
   $1 = is_array($input) || PySequence_Check($input);
@@ -140,7 +140,7 @@
       SWIG_fail;
     }
   }
-  
+
   // Verify each dimension from the NumPy array
   for (i=0 ; i < $2 ; i++) {
     dim = (size_t) array_dimensions(array)[i];
@@ -161,7 +161,7 @@
 
 %feature("action") fnm::Aperture<float>::RwFloatParamSet {
   size_t **vargs = (size_t **) arg5;
-  result = arg1->RwFloatParamSet(arg2, arg3, arg4, vargs[0], vargs[1], vargs[2], NULL); 
+  result = arg1->RwFloatParamSet(arg2, arg3, arg4, vargs[0], vargs[1], vargs[2], NULL);
 }
 
 // Works using swig 3.0.10
@@ -171,7 +171,7 @@
 {
   int i;
   for (i = 0; i < 3; i++) vargs[i] = 0;
-  
+
   /* Could use $symname to branch between input and */
   $1 = &data_temp;            // arg3
   $2 = PyInt_AsSsize_t(obj2); // arg4
@@ -184,9 +184,9 @@
 
   size_t* vargs = (size_t*) arg5;
   result = arg1->RwFloatParamGet(arg2, arg3, arg4, &(vargs[0]), &(vargs[1]), &(vargs[2]), NULL);
-  
+
 }
- 
+
 %typemap(argout)
 (float** oMultiData, size_t nDim, ...)
 {
@@ -207,7 +207,7 @@
 
   if (arg4 == 0) {
     // For scalars, an array is returned
-    dims[0] = 1; 
+    dims[0] = 1;
     obj = PyArray_SimpleNewFromData(1, dims, NPY_FLOAT, (void*)(*$1));
     // return PyFloat_FromDouble(**$1);
   }
@@ -224,7 +224,7 @@
 %#else
     PyObject* cap = PyCObject_FromVoidPtr((void*)(*$1), free);
 %#endif
-  
+
 %#if NPY_API_VERSION < 0x00000007
   PyArray_BASE(array) = cap;
 %#else
@@ -249,7 +249,7 @@ namespace sps {
 %include <sps/cenv.h>
 %include <fnm/fnm_export.h>
 
-#if FNM_PULSED_WAVE
+#if 1 //FNM_PULSED_WAVE
 %include <sofus/sofus_export.h>
 #endif
 
@@ -268,7 +268,7 @@ namespace sps {
 
 %rename(SuperType) FNM_TypeNS;
 
-#if FNM_PULSED_WAVE
+#if 1
   %include <sofus/sofus_types.h>
   %include <sofus/sofus_types.hpp>
 #endif
@@ -303,8 +303,7 @@ namespace fnm {
 #endif
 
 /* Local variables: */
-/* indent-tab-mode: nil */
+/* indent-tabs-mode: nil */
 /* tab-width: 2 */
 /* c-basic-offset: 2 */
-/* indent-tabs-mode: nil */
 /* End: */

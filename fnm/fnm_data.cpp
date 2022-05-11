@@ -88,7 +88,7 @@ ApertureData<T>::ApertureData() : m_nelements(0), m_nsubelements(0), m_npos(0) {
   c_ptr = nullptr;
 #endif
 
-#if FNM_PULSED_WAVE
+#if 1
   m_pulses     = new sofus::AperturePulses<T>();
 #endif
 }
@@ -96,7 +96,7 @@ ApertureData<T>::ApertureData() : m_nelements(0), m_nsubelements(0), m_npos(0) {
 template <class T>
 ApertureData<T>::~ApertureData() {
   // For time-domain pulsed-wave simulation, another data object is used
-#if FNM_PULSED_WAVE
+#if 1
   if (m_pulses) {
     delete m_pulses;
     m_pulses = nullptr;

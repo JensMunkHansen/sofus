@@ -195,6 +195,7 @@ def __dir__(self):
 %}
 };
 
+%attribute(fnm::Aperture<DATA_TYPE>, DATA_TYPE, fs, FsGet, FsSet);
 %attribute(fnm::Aperture<DATA_TYPE>, int, focus_type, FocusingTypeGet, FocusingTypeSet);
 %attribute(fnm::Aperture<DATA_TYPE>, size_t, nthreads, NThreadsGet, NThreadsSet);
 
@@ -210,12 +211,13 @@ def __dir__(self):
 
 %attribute(fnm::Aperture<DATA_TYPE>, size_t, nelements, NElementsGet);
 
+%attribute(fnm::Aperture<DATA_TYPE>, int, excitation_type, ExcitationTypeGet, ExcitationTypeSet);
+%attribute(fnm::Aperture<DATA_TYPE>, DATA_TYPE, fc, FCGet, FCSet);
+%attribute(fnm::Aperture<DATA_TYPE>, DATA_TYPE, c, CGet, CSet);
+%attribute(fnm::Aperture<DATA_TYPE>, bool, normalize, NormalizeGet, NormalizeSet);
+
 #if FNM_PULSED_WAVE
-  %attribute(fnm::Aperture<DATA_TYPE>, DATA_TYPE, fc, FCGet, FCSet);
   %attribute(fnm::Aperture<DATA_TYPE>, int, impulse_type, ImpulseTypeGet, ImpulseTypeSet);
-  %attribute(fnm::Aperture<DATA_TYPE>, DATA_TYPE, c, CGet, CSet);
-  %attribute(fnm::Aperture<DATA_TYPE>, int, excitation_type, ExcitationTypeGet, ExcitationTypeSet);
-  %attribute(fnm::Aperture<DATA_TYPE>, bool, normalize, NormalizeGet, NormalizeSet);
 #endif
 
 %extend fnm::Aperture<DATA_TYPE> {
@@ -394,8 +396,7 @@ def __dir__(self):
 %enddef    /* %fnm_circular() */
 
 /* Local variables: */
-/* indent-tab-mode: nil */
+/* indent-tabs-mode: nil */
 /* tab-width: 2 */
 /* c-basic-offset: 2 */
-/* indent-tabs-mode: nil */
 /* End: */

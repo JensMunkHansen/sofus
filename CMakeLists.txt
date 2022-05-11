@@ -47,8 +47,8 @@ include(SetWarningLevels)
 include(DumpVariables)
 
 string(TIMESTAMP timestring %Y%m%d%H%M%S UTC)
-set(FNM_MAJOR_VERSION 0)
-set(FNM_MINOR_VERSION 7)
+set(FNM_MAJOR_VERSION 1)
+set(FNM_MINOR_VERSION 0)
 set(FNM_PATCH_VERSION 0)
 set(FNM_TWEAK_VERSION ${timestring})
 
@@ -77,6 +77,17 @@ option (BUILD_FNM_TEST "Build tests" OFF)
 option(USE_MQUEUE "Use message queues" OFF)
 
 option (ENABLE_PYTHON3 "Python 3" ON)
+
+set (_DEBUG_USING_PYTHON_RELEASE_RUNTIME 0)
+
+if (MSVC)
+  option(SOFUS_DEBUG_USING_PYTHON_RELEASE_RUNTIME "Debug using Python release runtime" ON)
+endif()
+
+if (SOFUS_DEBUG_USING_PYTHON_RELEASE_RUNTIME)
+  set (_DEBUG_USING_PYTHON_RELEASE_RUNTIME 1)
+endif()
+
 
 find_program(SED_CMD NAMES sed)
 if (NOT EXISTS "${SED_CMD}")

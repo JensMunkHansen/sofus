@@ -105,7 +105,6 @@ endif()
 find_package(FFTW REQUIRED COMPONENTS FLOAT_LIB DOUBLE_LIB)
 include_directories(${FFTW_INCLUDES})
 
-# dump_cmake_variables("FFTW")
 
 set(fnm_HEADERS
   ../sps/progress.hpp
@@ -207,7 +206,9 @@ endif()
 
 if (BUILD_SWIG_INTERFACE)
   if (MSVC)
-    add_definitions(-DSWIG_PYTHON_INTERPRETER_NO_DEBUG)
+    if(_DEBUG_USING_PYTHON_RELEASE_RUNTIME)
+      add_definitions(-DSWIG_PYTHON_INTERPRETER_NO_DEBUG)
+    endif()
   endif()
 
   find_package(SWIG REQUIRED)
@@ -292,7 +293,9 @@ if (BUILD_SWIG_INTERFACE)
     set_source_files_properties( ${swig_generated_file_fullname} PROPERTIES COMPILE_FLAGS "/wd4701 /wd4127")
 
     # Allow to debug under windows, if debug versions of Python are missing
-    string(REPLACE "_d" "" PYTHON_LIBRARIES "${PYTHON_LIBRARIES}")
+    if(_DEBUG_USING_PYTHON_RELEASE_RUNTIME)
+      string(REPLACE "_d" "" PYTHON_LIBRARIES "${PYTHON_LIBRARIES}")
+    endif()
   endif()
   
   swig_link_libraries(swig_fnm fnm ${Python3_LIBRARIES})
@@ -398,6 +401,9 @@ if (WIN32)
     DEPENDS
     ${dll_copied_modules})
 endif()
+
+dump_cmake_variables("Python")
+dump_cmake_variables("PYTHON")
 
 install(TARGETS fnm swig_fnm
   EXPORT SofusTargets

@@ -6,4 +6,5 @@ Examples (TODO: Move to an examples folder)
 * [test_cw_pressure](./test_cw_pressure.py) CW field calculation
   matching an example provided with the program FOCUS by McGough
 * [test_element](./test_element.py) CW field for single element
+* [test_circ_transient](./test_circ_transient.py) Transient for circular element
 

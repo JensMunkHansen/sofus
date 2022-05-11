@@ -1,48 +1,28 @@
 import sys
+from sys import version_info
 import os
-import glob
+import fnmatch
 
-# Improved version
-filedir = os.path.dirname(os.path.realpath(__file__))
-cwd     = os.getcwd()
+mydir = os.path.dirname(os.path.realpath(__file__))
 
-# Go one levels up (if possible)
-os.chdir(filedir)
+# Go two levels up (os.path.split saturates to ['/', ''])
 iDir = 1
 while (iDir > 0):
-    os.chdir('..')
-    iDir = iDir - 1;
+  mydir = os.path.split(mydir)[0]
+  iDir = iDir - 1;
 
 matches = []
-
-# TODO: Python 3.0 use '**/fnm/Release', recursive=True):
-for i in range(3):
-  if os.name == 'nt':
-    paths = [i*'*/' + 'fnm',i*'*/' + 'fnm', i*'*/' + 'fnm']
-  else:
-    paths = [i*'*/' + 'fnm', i*'*/' + 'release/fnm', i*'*/' + 'debug/fnm']
-  paths.append(i*'*/' + 'python')
-  for path in paths:
-    entries = glob.glob(path)
-    if len(entries) > 0:
-      path = os.path.join(os.getcwd(),entries[0])
-      matches.append(path)
-
-# Field (build in source)
-matches.append(os.path.join(os.getcwd(),'f2'))
-
-# Add installed version (last resort)
-paths =['lib','python','bin']
-for path in paths:
-  entries = glob.glob(path)
-  if len(entries) > 0:
-    path = os.path.join(os.getcwd(),entries[0])
-    matches.append(path)
+for root, dirnames, filenames in os.walk(mydir):
+  for dirname in fnmatch.filter(dirnames, 'fnm'):
+    matches.append(os.path.join(root, dirname))
+  for dirname in fnmatch.filter(dirnames, 'Release'):
+    matches.append(os.path.join(root, dirname))
+  for dirname in fnmatch.filter(dirnames, 'Debug'):
+    matches.append(os.path.join(root, dirname))
+  for dirname in fnmatch.filter(dirnames, 'python'):
+    matches.append(os.path.join(root, dirname))
 
 for path in matches:
   sys.path.append( path )
-
-# HACK
-sys.path.append('/home/jmh/git/bft4/build/bftx')
-
-os.chdir(cwd)
+  if version_info >= (3, 8, 0):
+    os.add_dll_directory( path )

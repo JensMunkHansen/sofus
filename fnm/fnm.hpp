@@ -535,6 +535,21 @@ class Aperture {
   void DensitySet(const T& rho);
 
   /**
+   * Get sampling frequency
+   *
+   * @return
+   */
+  const T& FsGet() const;
+
+  /**
+   * Set sampling frequency
+   *
+   * @param[in] fs
+   */
+  int FsSet(const T& fs);
+
+
+  /**
    * Get speed of sound
    *
    *
@@ -655,15 +670,6 @@ class Aperture {
    */
   void ExcitationTypeSet(const int iExcitationType);
 
-#if FNM_PULSED_WAVE
-  /**
-   * Create a number of lines, which can be used for focusing
-   *
-   * @param[out] nLines
-   * @param[out] obj
-   */
-  void FocusLinesCreate(size_t nLines, sofus::FocusLineList<T>** obj) const;
-
   /**
    * Get transducer center frequency used for computing impulse response
    *
@@ -693,34 +699,6 @@ class Aperture {
   void BandWidthSet(const T& value);
 
   /**
-   * Get impulse type
-   *
-   * @return
-   */
-  int ImpulseTypeGet() const;
-
-  /**
-   * Set impulse type
-   *
-   * @param iImpulseType
-   */
-  void ImpulseTypeSet(const int iImpulseType);
-
-  /**
-     * Get sampling frequency
-     *
-     * @return
-     */
-  const T& FsGet() const;
-
-  /**
-   * Set sampling frequency
-   *
-   * @param[in] fs
-   */
-  int FsSet(const T& fs);
-
-  /**
    * Get normalization state
    *
    *
@@ -734,6 +712,32 @@ class Aperture {
    * @param[in] value
    */
   void NormalizeSet(const bool& value);
+
+#if FNM_PULSED_WAVE
+  /**
+   * Create a number of lines, which can be used for focusing
+   *
+   * @param[out] nLines
+   * @param[out] obj
+   */
+  void FocusLinesCreate(size_t nLines, sofus::FocusLineList<T>** obj) const;
+
+
+  /**
+   * Get impulse type
+   *
+   * @return
+   */
+  int ImpulseTypeGet() const;
+
+  /**
+   * Set impulse type
+   *
+   * @param iImpulseType
+   */
+  void ImpulseTypeSet(const int iImpulseType);
+
+
 
   /**
    * Get excitation (reference to or view of)
@@ -848,7 +852,8 @@ class Aperture {
 
   static const size_t nElementPosParameters = 8; /**< Number of parameters for an element */
 
-#if FNM_PULSED_WAVE
+#if 1 // FNM_PULSED_WAVE
+  // TODO: Not needed
   static bool normalize;  ///< Normalize responses
 #endif
 
@@ -878,30 +883,6 @@ class Aperture {
   void FocusUpdateRef();
 
 #ifdef FNM_PULSED_WAVE
-  /**
-   * Compute transient for first element.
-   *
-   * Mask bits: 0x01: Direct,
-   *            0x02: Edge (q0->q3)
-   *            0x04: Edge (q0->q1)
-   *            0x08: Edge (q1->q2)
-   *            0x10: Edge (q2->q3)
-   *            0x1F: All contributions (default)
-   *
-   * @param[in] pos
-   * @param[in] nPositions
-   * @param[in] nDim
-   * @param[out] odata
-   * @param[out] nSignals
-   * @param[out] nSamples
-   * @param[in] mask
-   *
-   * @return
-   */
-  T CalcTransientSingleElementNoDelay(const T* pos, const size_t nPositions,
-                                      const size_t nDim,
-                                      T** odata, size_t* nSignals,
-                                      size_t* nSamples, int mask = 0x1F);
 
   /**
    * Calculate pulsed wave field using fast near-field method
@@ -1069,6 +1050,31 @@ class Aperture {
                       const size_t nDim,
                       T** odata, size_t* nSignals, size_t* nSamples,
                       int mask = 0x1F);
+
+  /**
+   * Compute transient for first element.
+   *
+   * Mask bits: 0x01: Direct,
+   *            0x02: Edge (q0->q3)
+   *            0x04: Edge (q0->q1)
+   *            0x08: Edge (q1->q2)
+   *            0x10: Edge (q2->q3)
+   *            0x1F: All contributions (default)
+   *
+   * @param[in] pos
+   * @param[in] nPositions
+   * @param[in] nDim
+   * @param[out] odata
+   * @param[out] nSignals
+   * @param[out] nSamples
+   * @param[in] mask
+   *
+   * @return
+   */
+  T CalcTransientSingleElementNoDelay(const T* pos, const size_t nPositions,
+                                      const size_t nDim,
+                                      T** odata, size_t* nSignals,
+                                      size_t* nSamples, int mask = 0x1F);
 
 #ifdef FNM_PULSED_WAVE
 
