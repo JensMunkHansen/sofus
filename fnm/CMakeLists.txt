@@ -303,6 +303,11 @@ if (BUILD_SWIG_INTERFACE)
 
   add_custom_command(TARGET swig_fnm POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/grid.py"
+    "$<TARGET_FILE_DIR:swig_fnm>")
+
+  add_custom_command(TARGET swig_fnm POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "${CMAKE_CURRENT_SOURCE_DIR}/../python/pyutils.py"
     "$<TARGET_FILE_DIR:swig_fnm>")
 
