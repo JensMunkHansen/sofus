@@ -4,13 +4,14 @@ REM This can be made a lot more elegant - focus is right now to make it work
 
 pushd %~dp0
 
-REM Required for documentation and inline documentation in Python
+set SWIG_DIR=C:\Program Files\SWIG
+
+REM Only required if documentation is build
 set SEDPATH=c:/cygwin64/bin
 set GRAPHVIZ_PATH=C:\Program Files (x86)\Graphviz2.38\bin
 set DOXYGEN_DIR=C:/PFx64/doxygen
 
-set SWIG_DIR=C:\Program Files\SWIG
-
+REM Only required if tests are build (-DBUILD_FNM_TEST=ON)
 set GTEST_ROOT="C:/Program Files/googletest-distribution"
 
 REM Visual Studio environment
