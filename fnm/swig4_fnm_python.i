@@ -208,7 +208,7 @@ def __dir__(self):
 %attribute(fnm::Aperture<DATA_TYPE>, DATA_TYPE, nDivH, NDivHGet, NDivHSet);
 %attribute(fnm::Aperture<DATA_TYPE>, DATA_TYPE, nDivW, NDivWGet, NDivWSet);
 %attribute(fnm::Aperture<DATA_TYPE>, bool, att_enabled, AttenuationEnabledGet, AttenuationEnabledSet);
-
+%attribute(fnm::Aperture<DATA_TYPE>, DATA_TYPE, bandwidth, BandWidthGet, BandWidthSet);
 %attribute(fnm::Aperture<DATA_TYPE>, size_t, nelements, NElementsGet);
 
 %attribute(fnm::Aperture<DATA_TYPE>, int, excitation_type, ExcitationTypeGet, ExcitationTypeSet);
