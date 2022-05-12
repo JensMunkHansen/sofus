@@ -125,7 +125,7 @@ tSpentOptimized = (tSpent64 / 1.0)
 print('\nSeconds for 100x100 pixels, 64 channels: %f (threaded)' % (tSpentOptimized))
 
 
-            
+
 # animation test
 
 from mpl_toolkits.mplot3d import axes3d
@@ -146,17 +146,17 @@ if show3D:
   fig = plt.figure()
   ax = axes3d.Axes3D(fig)
   from matplotlib import cm
-  
+
   wframe = ax.plot_wireframe(xs, zs, data[0], rstride=5, cstride=5)
   ax.set_zlim(vmin, vmax)
-  
+
   # colors = cm.viridis(data[0])
   # rcount, ccount, _ = colors.shape
   # wframe = ax.plot_surface(xs, zs, data[0], rcount=rcount, ccount=ccount,
   #                      facecolors=colors, shade=False)
   # wframe.set_facecolor((0,0,0,0))
   # fig.show()
-  
+
   def update(i, ax, fig, data):
       ax.cla()
       wframe = ax.plot_wireframe(xs, zs, data[i], rstride=5, cstride=5)
@@ -169,23 +169,23 @@ if show3D:
       #fig.show()
 
       return wframe,
-  
-  ani = animation.FuncAnimation(fig, update, 
+
+  ani = animation.FuncAnimation(fig, update,
                                 frames=xrange(nFrames),
                                 fargs=(ax, fig, data), interval=2)
-else: 
+else:
   fig = plt.figure()
   im = plt.imshow(data[0], aspect='auto', cmap=cmap, extent=np.round(1000*np.r_[0,d,1.5*d/2,-1.5*d/2]), vmin=vmin, vmax=vmax, animated=True)
-  
+
   i = 0
   def updatefig(*args):
     global i, data;
     i = (i + 1) % nFrames
     im.set_array(data[i])
     return im,
-  
+
   anim_running = True
-  
+
   def onClick(event):
     global anim_running
     if anim_running:
@@ -193,11 +193,11 @@ else:
       anim_running = False
     else:
       ani.event_source.start()
-      anim_running = True  
-  
+      anim_running = True
+
   fig.canvas.mpl_connect('button_press_event', onClick)
   # Could we add two functions, simPoints and simData
-  ani = animation.FuncAnimation(fig, updatefig, 
+  ani = animation.FuncAnimation(fig, updatefig,
                                 interval=20, blit=True)
 
 plt.show()
