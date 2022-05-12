@@ -214,9 +214,9 @@ def __dir__(self):
 %attribute(fnm::Aperture<DATA_TYPE>, int, excitation_type, ExcitationTypeGet, ExcitationTypeSet);
 %attribute(fnm::Aperture<DATA_TYPE>, DATA_TYPE, fc, FCGet, FCSet);
 %attribute(fnm::Aperture<DATA_TYPE>, DATA_TYPE, c, CGet, CSet);
-%attribute(fnm::Aperture<DATA_TYPE>, bool, normalize, NormalizeGet, NormalizeSet);
 
 #if FNM_PULSED_WAVE
+  %attribute(fnm::Aperture<DATA_TYPE>, bool, normalize, NormalizeGet, NormalizeSet);
   %attribute(fnm::Aperture<DATA_TYPE>, int, impulse_type, ImpulseTypeGet, ImpulseTypeSet);
 #endif
 

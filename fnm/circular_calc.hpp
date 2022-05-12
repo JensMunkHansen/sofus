@@ -34,19 +34,11 @@
 #include <fnm/circular.hpp>
 
 namespace fnm {
-#if 0
-  template <class T, template <typename> class A>
-  T CalcCircularTransientFieldRef(const fnm::sysparm_t<T>* sysparm,
-                                  const fnm::CircularApertureData<T>& data,
-                                  const T* pos, const size_t nPositions,
-                                  T** odata, size_t* nSamples);
-#endif
-
   /**
    * Transient field computed. The result is in units of [Pa]. The tone burst used is +/- 1.0 V.
    *
    * @param sysparm
-   * @param data
+   * @param data Data describing the transducer
    * @param pos
    * @param nPositions
    * @param odata
@@ -60,6 +52,16 @@ namespace fnm {
       const T* pos, const size_t nPositions,
       T** odata, size_t* nSamples);
 
+  /**
+   * Compute CW field from circular transducer
+   *
+   * @param sysparm
+   * @param data
+   * @param pos
+   * @param nPositions
+   * @param odata
+   * @return success
+  */
   template <class T>
   int CalcCircularCwFieldRef(const fnm::sysparm_t<T>* sysparm,
                              const fnm::CircularApertureData<T>& data,

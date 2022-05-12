@@ -56,11 +56,6 @@ if (FNM_ENABLE_Closures)
 endif()
 
 set(N_MAX_THREADS 8)
-set(ACCURATE_TRIGONOMETRICS 0)
-option (USE_Accurate_trigonometrics "Use scalar versions" OFF)
-if (USE_Accurate_trigonometrics)
-  set(ACCURATE_TRIGONOMETRICS 1)
-endif()
 
 set (FNM_ENABLE_ATTENUATION 0)
 option (FNM_ENABLE_Attenuation "FNM Enable attenuation" ON)
@@ -78,7 +73,7 @@ endif()
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
 
-# TODO: Use this everywhere
+# This is only used for non-public version of this library
 if (UNIX)
   set(CMAKE_CXX_FLAGS "-std=c++11 -pedantic -Wall ${CMAKE_CXX_FLAGS}")  
   if (ENABLE_SSE2)
@@ -116,6 +111,9 @@ set(fnm_HEADERS
   fnm_basis.hpp
   fnm_common.hpp
   fnm_delays.hpp
+  fnm_transient.hpp
+  fnm_transient_threaded.hpp
+  fnm_response.hpp
   circular_data.hpp
   circular_calc.hpp
   circular.hpp
@@ -139,18 +137,14 @@ set(fnm_SOURCES
   fnm_arrays.cpp
   fnm_common.cpp
   fnm_profiling.cpp
+  fnm_transient.cpp
+  fnm_transient_threaded.cpp
+  fnm_response.cpp
   if_fnm.cpp
   circular.cpp
   circular_data.cpp
   circular_calc.cpp
 )
-
-set(fnm_HEADERS "${fnm_HEADERS}" "fnm_transient.hpp")
-set(fnm_SOURCES "${fnm_SOURCES}" "fnm_transient.cpp")
-set(fnm_HEADERS "${fnm_HEADERS}" "fnm_transient_threaded.hpp")
-set(fnm_SOURCES "${fnm_SOURCES}" "fnm_transient_threaded.cpp")
-set(fnm_HEADERS "${fnm_HEADERS}" "fnm_response.hpp")
-set(fnm_SOURCES "${fnm_SOURCES}" "fnm_response.cpp")
 
 if (UNIX AND NOT WIN32)
   set(fnm_HEADERS "${fnm_HEADERS}" "../sps/strace.hpp")
@@ -171,9 +165,9 @@ endif()
 
 add_library(fnm ${LIB_TYPE} ${fnm_SOURCES} ${fnm_HEADERS} ${fnm_PUBLIC_HEADERS} config.h.in ${VersionFilesOutputVariable})
 
+# Old CMake way of linking. TODO: Make this more up-to-date
 if (WIN32)
   if (BUILD_SHARED_LIBS)
-    # Works with CMake 2.4
     target_link_libraries(fnm sps gl ${FFTW_LIBRARIES})
     if (FNM_PULSED_WAVE)
       target_link_libraries(fnm sofus)
@@ -193,7 +187,7 @@ endif()
 
 target_link_libraries(fnm sofus)
 
-generate_export_header(fnm)# DEFINE_NO_DEPRECATED)
+generate_export_header(fnm)
 
 set_target_properties(fnm PROPERTIES
   PUBLIC_HEADER "${fnm_PUBLIC_HEADERS};${CMAKE_CURRENT_BINARY_DIR}/config.h;${CMAKE_CURRENT_BINARY_DIR}/fnm_export.h")
@@ -215,8 +209,10 @@ if (BUILD_SWIG_INTERFACE)
   include(${SWIG_USE_FILE})
 
   if (WIN32)
+    # Versions tested include 3.7, 3.8, and 3.9
     find_package(Python3 COMPONENTS Interpreter Development NumPy)
   else()
+    # On linux, we require a specific version of Python
     find_package(Python3 3.9 COMPONENTS Interpreter Development)
   endif()
   include_directories(${Python3_INCLUDE_DIRS})
@@ -290,7 +286,7 @@ if (BUILD_SWIG_INTERFACE)
 
   if (MSVC)
     # Potential uninitialized variable in SWIG_AsVal_
-    set_source_files_properties( ${swig_generated_file_fullname} PROPERTIES COMPILE_FLAGS "/wd4701 /wd4127")
+    set_source_files_properties( ${swig_generated_file_fullname} PROPERTIES COMPILE_FLAGS "/wd4701 /wd4706 /wd4127 /wd4456")
 
     # Allow to debug under windows, if debug versions of Python are missing
     if(_DEBUG_USING_PYTHON_RELEASE_RUNTIME)
@@ -326,7 +322,7 @@ if (BUILD_SWIG_INTERFACE)
     ${swig_extra_generated_files}
     fnm_arrays.py
     fnm_test.py
-    # Examples (TODO: move to examples folder)
+    # Examples (TODO: consider using an examples folder)
     test_cw_pressure.py
     test_element.py
     )
@@ -346,6 +342,9 @@ endif()
 
 # Copy dependencies on WIN32
 if (WIN32)
+  #####################################################
+  # Copy dependent DLLs into the location of target fnm
+  #####################################################
   if (BUILD_SHARED_LIBS)
     add_custom_command(TARGET fnm POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -357,6 +356,9 @@ if (WIN32)
       "$<TARGET_FILE_DIR:fnm>")
   endif()
 
+  ##########################################################
+  # Copy generated python file into the active configuration
+  ##########################################################
   if (BUILD_SWIG_INTERFACE)
     set(SwigFnmOutputFiles
       swig_fnm.py
@@ -369,7 +371,9 @@ if (WIN32)
     endforeach()
   endif()
 
+  ######################################
   # Copy FFTW dlls into target directory
+  ######################################
   file(GLOB FFTW_DLLs "${FFTW_INCLUDES}/*.dll")
 
   # List of DLLs
@@ -400,10 +404,8 @@ if (WIN32)
   add_custom_target(sofus_fftw_copy ALL
     DEPENDS
     ${dll_copied_modules})
-endif()
 
-dump_cmake_variables("Python")
-dump_cmake_variables("PYTHON")
+endif()
 
 install(TARGETS fnm swig_fnm
   EXPORT SofusTargets

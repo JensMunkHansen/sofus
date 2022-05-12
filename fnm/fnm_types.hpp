@@ -16,9 +16,7 @@
 
 #include <sps/cenv.h>
 
-#if 1 //FNM_PULSED_WAVE
-# include <sofus/sofus_types.hpp>
-#endif
+#include <sofus/sofus_types.hpp>
 
 #include <sps/globals.hpp>
 
@@ -26,7 +24,7 @@
 
 namespace fnm {
 
-// TODO(JMH): Use this construct for handling system parameters, i.e. sysparm_t
+// TODO(JMH): Consider using sps::Default for handling system parameters
 template <class T>
 struct FNM_EXPORT bla : public sps::Default<bla<T> > {
   T k;
@@ -92,26 +90,6 @@ struct FNM_EXPORT sysparm_t {
   T w;
 
   ///@}
-
-#if FNM_PULSED_WAVE
-  /** @name Time domain parameters
-   *
-   */
-  ///@{
-
-  /// Time-domain calculation type
-  sofus::TimeDomainCalcType timeDomainCalcType;
-
-  /// Time-domain integration order
-  sofus::TimeDomainIntOrder timeDomainIntOrder;
-
-  /// Enforce positive delays, when derived from a focus point
-  bool enforcePositiveDelays;
-
-  /// Soft-baffle
-  bool soft_baffle;
-  ///@}
-#endif
 };
 
 typedef FNM_ExcitationTypeNS::ExcitationType_Value ExcitationType;

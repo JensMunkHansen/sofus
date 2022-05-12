@@ -186,7 +186,7 @@ const T Aperture<T>::dB_Neper = T(8.685889638065035);
 // Static content declared in interface
 /////////////////////////////////////////////////
 
-#if 1 // FNM_PULSED_WAVE
+#if FNM_PULSED_WAVE
 // TODO(JEM): Remove static variable
 template <class T>
 bool Aperture<T>::normalize = true;
@@ -883,16 +883,6 @@ const T& fnm::Aperture<T>::BandWidthGet() const {
 }
 
 template <class T>
-const bool& Aperture<T>::NormalizeGet() const {
-  return Aperture<T>::normalize;
-}
-
-template <class T>
-void Aperture<T>::NormalizeSet(const bool& value) {
-  Aperture<T>::normalize = value;
-}
-
-template <class T>
 const T& Aperture<T>::FCGet() const {
   return this->m_pData->m_pulses->m_f0;
 }
@@ -934,6 +924,16 @@ int Aperture<T>::FsSet(const T& value) {
 }
 
 #if FNM_PULSED_WAVE
+template <class T>
+const bool& Aperture<T>::NormalizeGet() const {
+  return Aperture<T>::normalize;
+}
+
+template <class T>
+void Aperture<T>::NormalizeSet(const bool& value) {
+  Aperture<T>::normalize = value;
+}
+
 template <class T>
 void Aperture<T>::
 FocusLinesCreate(size_t nLines, sofus::FocusLineList<T>** obj) const {
@@ -1255,8 +1255,13 @@ const size_t& Aperture<T>::NDivWGet() const {
 template <class T>
 int Aperture<T>::NDivWSet(const size_t& nDivW) {
   int retval = -1;
+  size_t _nDivW = nDivW;
   if (nDivW > 1) {
-    this->m_sysparm->nDivW = nDivW;
+    if (nDivW % 2 == 1) {
+      printf("\nNDivW rounded up to be even\n");
+      _nDivW = _nDivW + 1;
+    }
+    this->m_sysparm->nDivW = _nDivW;
     retval = 0;
   }
   return retval;
@@ -1270,8 +1275,14 @@ const size_t& Aperture<T>::NDivHGet() const {
 template <class T>
 int Aperture<T>::NDivHSet(const size_t& nDivH) {
   int retval = -1;
+  size_t _nDivH = nDivH;
+
   if (nDivH > 1) {
-    this->m_sysparm->nDivH = nDivH;
+    if (nDivH % 2 == 1) {
+      printf("\nNDivH rounded up to be even\n");
+      _nDivH = _nDivH + 1;
+    }
+    this->m_sysparm->nDivH = _nDivH;
     retval = 0;
   }
   return retval;

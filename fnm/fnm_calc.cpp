@@ -206,15 +206,16 @@ unsigned int __stdcall CalcCwThreadFunc(void *ptarg)
 
           // TODO: Use CalcHzFast for comparison with reference
 #if 0
-          // This is worse not reducing the number of integrals
+          // This is an early implementation, where the number of integrals
+          // are not reduced to 4
           result = CalcHzFast<T>(element, projection, k,
                                  uxs, uweights, nDivW,
                                  vxs, vweights, nDivH);
 #elif 1
-          // This is more correct - number of integral are reduced to 4,
-          // but do not match Python reference
+          // This is more correct - number of integral are reduced to 4. There
+          // is no python reference matching the result of this
 
-          // Any works for all nDivH, nDivW. Any2 works for nDivH/nDivW even
+          // Any2 works for nDivH and nDivW even
 
           // TODO(JMH): Make CalcFastFour call these two and use GLQuad2D
           //            Make CalcCwFourRef match this

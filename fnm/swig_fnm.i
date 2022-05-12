@@ -10,10 +10,9 @@
   #include <sps/progress.hpp>
   #include <fnm/config.h>
   #include <sps/cenv.h>
-#if 1 // FNM_PULSED_WAVE
   #include <sofus/sofus_types.h>
   #include <sofus/sofus_types.hpp>
-#endif
+
   #include <fnm/fnm_export.h>
   #include <fnm/fnm_types.h>
   #include <fnm/fnm_types.hpp>
@@ -249,9 +248,7 @@ namespace sps {
 %include <sps/cenv.h>
 %include <fnm/fnm_export.h>
 
-#if 1 //FNM_PULSED_WAVE
 %include <sofus/sofus_export.h>
-#endif
 
 %include <gl/gl_export.h>
 
@@ -268,10 +265,9 @@ namespace sps {
 
 %rename(SuperType) FNM_TypeNS;
 
-#if 1
-  %include <sofus/sofus_types.h>
-  %include <sofus/sofus_types.hpp>
-#endif
+%include <sofus/sofus_types.h>
+%include <sofus/sofus_types.hpp>
+
 %include <fnm/fnm_types.h>
 %include <fnm/fnm_types.hpp>
 %include <fnm/fnm.hpp>

@@ -698,6 +698,8 @@ class Aperture {
    */
   void BandWidthSet(const T& value);
 
+
+#if FNM_PULSED_WAVE
   /**
    * Get normalization state
    *
@@ -713,7 +715,6 @@ class Aperture {
    */
   void NormalizeSet(const bool& value);
 
-#if FNM_PULSED_WAVE
   /**
    * Create a number of lines, which can be used for focusing
    *
@@ -852,7 +853,7 @@ class Aperture {
 
   static const size_t nElementPosParameters = 8; /**< Number of parameters for an element */
 
-#if 1 // FNM_PULSED_WAVE
+#if FNM_PULSED_WAVE
   // TODO: Not needed
   static bool normalize;  ///< Normalize responses
 #endif

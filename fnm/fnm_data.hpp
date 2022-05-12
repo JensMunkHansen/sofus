@@ -37,12 +37,6 @@
 #include <fnm/fnm_types.hpp>  // FocusingType, element_rect_t
 #include <fnm/fnm_alias.hpp>
 
-#ifdef FNM_PULSED_WAVE
-# include <sofus/sofus_types.hpp>
-# include <sofus/sofus_focus_line.hpp>
-# include <vector>
-#endif
-
 # include <sofus/sofus_pulses.hpp>
 
 namespace fnm {
@@ -133,9 +127,7 @@ class ApertureData : public sps::aligned<4*sizeof(T)> {
 
   //@}
 
-#if 1 //def FNM_PULSED_WAVE
   sofus::AperturePulses<T>* m_pulses;
-#endif
 
 #ifdef FNM_CLOSURE_FUNCTIONS
   //@{  Closure captured variables

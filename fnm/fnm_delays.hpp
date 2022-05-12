@@ -47,6 +47,7 @@ int PytDelays2(const sps::unique_aligned_array<sps::point_t<T> >& positions,
                const T& c,
                sps::unique_aligned_array<T>& delays, bool allPositive = false);
 
+// The function PytDelays2 (Pythagorean Delays 2) is aliased as PytDelays
 SPS_ALIAS_TEMPLATE_FUNCTION(PytDelays, PytDelays2)
 
 }  // namespace fnm
