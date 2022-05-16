@@ -7,6 +7,7 @@ from grid import grid
 
 plt.ion()
 
+# 9085
 nElements = 160
 width = 0.32e-3
 kerf = 1.5e-5

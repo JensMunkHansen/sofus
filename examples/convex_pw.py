@@ -56,8 +56,12 @@ a.XmtFNumberSet(fxmt)
 # Length of pulse
 a.w = 2 * (1.0/f0)
 
-#a.excitation_type = fnm.ExcitationType.ExcitationTypeToneBurst # Error here
-a.excitation_type = fnm.ExcitationType.ExcitationTypeHanningWeightedPulse
+a.excitation_type = fnm.ExcitationType.ExcitationTypeToneBurst # Error here
+#a.excitation_type = fnm.ExcitationType.ExcitationTypeHanningWeightedPulse
+
+# Length of pulse
+a.w = 2 * (1.0/f0)
+
 
 # Not very elegant
 myGrid = grid(nx=100, dx=0.4e-3, nz=100, offset_z=51, dz=1.38e-3)

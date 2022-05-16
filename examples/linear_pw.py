@@ -32,11 +32,12 @@ a.c  = c
 a.fs = fs
 
 nCycles = 2
-# Length of pulse
-a.w = nCycles * (1.0/f0)
 
 #a.excitation_type = fnm.ExcitationType.ExcitationTypeToneBurst # Error here
 a.excitation_type = fnm.ExcitationType.ExcitationTypeHanningWeightedPulse
+
+# Length of pulse
+a.w = nCycles * (1.0/f0)
 
 a.f0 = f0
 a.nDivH = nDivH
@@ -61,7 +62,7 @@ a.apodization_type = fnm.ApodizationType.ApodizationTypeRectangular
 # Apodization set using f-number
 a.XmtFNumberSet(fxmt)
 
-a.nthreads = 4
+a.nthreads = 8
 
 # Not very elegant
 myGrid = grid(nx=100, dx=6e-5, nz=100, offset_z=60, dz=4e-4)
