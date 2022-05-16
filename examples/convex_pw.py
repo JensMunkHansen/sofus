@@ -18,7 +18,7 @@ density = 919.60 # kg/m^3
 c = 1540.0
 fxmt = 6.0
 f0 = 2e6
-fs = 10*f0
+fs = 5*f0
 
 nDivH = int(18)
 nDivW = int(4)
@@ -69,7 +69,7 @@ pos = myGrid.values()
 
 # Compute pulsed-wave field
 myField = a.CalcPwFnmThreaded(pos)[1]
-img = np.sum(myField**2,axis=1).reshape((100,100))
+img = np.sum(myField**2 / fs,axis=1).reshape((100,100))
 
 logimg = 20*np.log10(img/img.max())
 

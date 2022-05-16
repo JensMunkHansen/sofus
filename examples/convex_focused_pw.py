@@ -20,6 +20,7 @@ density = 919.60 # kg/m^3
 c = 1540.0
 fxmt = 6.0
 f0 = 2e6
+fs = 5*f0
 nCycles = 3
 
 nDivH = int(18)
@@ -35,7 +36,7 @@ a = fnm.ApertureFloat_FocusedConvexArrayCreate(nElements,
 a.f0 = f0
 a.c  = c
 a.fc = f0
-a.fs = 6*f0
+a.fs = fs
 a.rho = density
 a.nDivH = nDivH
 a.nDivW = nDivW
@@ -68,7 +69,7 @@ a.ProgressBarSet(pbar)
 
 # Compute pulsed-wave field
 myField = a.CalcPwFnmThreaded(pos)[1]
-img = np.sum(np.abs(myField),axis=1).reshape((100,100))
+img = np.sum(myField**2 / fs,axis=1).reshape((100,100))
 
 logimg = 20*np.log10(img/img.max())
 
