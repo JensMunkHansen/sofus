@@ -2348,8 +2348,6 @@ int Aperture<T>::CalcCwEcho(const Aperture<T>* pOther,
     return retval;
   }
 
-  // std::complex<T>* pFieldData  = (std::complex<T>*) malloc(nPositions*sizeof(std::complex<T>));
-  // memset(pFieldData, 0, nPositions*sizeof(std::complex<T>));
   std::complex<T>* pFieldData  = (std::complex<T>*) calloc(nPositions, sizeof(std::complex<T>));
 
   this->FocusUpdate();
@@ -2358,8 +2356,6 @@ int Aperture<T>::CalcCwEcho(const Aperture<T>* pOther,
 
   const size_t nElements = pOther->m_pData->m_nelements;
 
-  //*odata = (std::complex<T>*) malloc(nElements*sizeof(std::complex<T>));
-  //memset(*odata, 0, nElements*sizeof(std::complex<T>));
   *odata = (std::complex<T>*) calloc(nElements, sizeof(std::complex<T>));
   *nOutPositions = nElements;
 
@@ -2391,8 +2387,6 @@ int Aperture<T>::CalcCwBack(const T* pos,
 
   const size_t nElements = this->m_pData->m_nelements;
 
-  //*odata = (std::complex<T>*) malloc(nElements*sizeof(std::complex<T>));
-  //memset(*odata, 0, nElements*sizeof(std::complex<T>));
   *odata = (std::complex<T>*) calloc(nElements, sizeof(std::complex<T>));
 
   *nOutPositions = nElements;
@@ -2422,12 +2416,6 @@ int Aperture<T>::CalcCwTimeReversal(
     retval = -1;
     return retval;
   }
-
-  /*
-  *odata =
-    static_cast<std::complex<T>*>(malloc(nPositions*nPositions*sizeof(std::complex<T>)));
-  memset(*odata, 0, nPositions*nPositions*sizeof(std::complex<T>));
-  */
 
   *odata =
     static_cast<std::complex<T>*>(calloc(nPositions*nPositions, sizeof(std::complex<T>)));
@@ -2459,8 +2447,6 @@ int Aperture<T>::CalcCwFast(const T* pos,
     return retval;
   }
 
-  //*odata = (std::complex<T>*) malloc(nPositions*sizeof(std::complex<T>));
-  //memset(*odata, 0, nPositions*sizeof(std::complex<T>));
   *odata = (std::complex<T>*) calloc(nPositions, sizeof(std::complex<T>));
   *nOutPositions = nPositions;
 
@@ -2487,8 +2473,6 @@ int Aperture<T>::CalcCwFocus(
     return retval;
   }
 
-  // *odata = (std::complex<T>*) malloc(nPositions*sizeof(std::complex<T>));
-  // memset(*odata, 0, nPositions*sizeof(std::complex<T>));
   *odata = (std::complex<T>*) calloc(nPositions, sizeof(std::complex<T>));
 
   *nOutPositions = nPositions;
@@ -2511,8 +2495,6 @@ int Aperture<T>::CalcCwFocusRef(
     return retval;
   }
 
-  // *odata = (std::complex<T>*) malloc(nPositions*sizeof(std::complex<T>));
-  // memset(*odata, 0, nPositions*sizeof(std::complex<T>));
   *odata = (std::complex<T>*) calloc(nPositions, sizeof(std::complex<T>));
   *nOutPositions = nPositions;
 
@@ -2539,8 +2521,6 @@ int Aperture<T>::CalcCwFieldNaiveFast(
   }
 
   size_t nScatterers = nPositions;
-  //*odata = (std::complex<T>*) malloc(nScatterers*sizeof(std::complex<T>));
-  //memset(*odata, 0, nScatterers*sizeof(std::complex<T>));
   *odata = (std::complex<T>*) calloc(nScatterers, sizeof(std::complex<T>));
   *nOutPositions = nScatterers;
 
