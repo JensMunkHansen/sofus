@@ -113,6 +113,7 @@ a.ProgressBarSet(pbar)
 #               no impact for negative delays
 #a.delays = [30.0/fs]
 bum = a.CalcTransientSingleElementNoDelay(pos,0x1F)[1]
+#bum = a.CalcTransientSingleElementNoDelay(pos,0x03)[1]
 
 end = timer()
 tSpent = end - start

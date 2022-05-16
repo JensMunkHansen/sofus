@@ -90,8 +90,8 @@ struct FNM_EXPORT RwParamTypeNS {
     Apodization        = 0x0F,
     NDivW              = 0x10,  ///< Number of width abcissas
     NDivH              = 0x11,  ///< Number of height abcissas
-#if FNM_PULSED_WAVE
     Fs                 = 0x12,
+#if FNM_PULSED_WAVE
     Normalize          = 0x13,
     Excitation         = 0x14,
     Impulse            = 0x15,

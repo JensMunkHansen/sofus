@@ -57,8 +57,8 @@ a.apodization_type = fnm.ApodizationType.ApodizationTypeRectangular
 # Apodization set using f-number
 a.XmtFNumberSet(fxmt)
 
-#a.excitation_type = fnm.ExcitationType.ExcitationTypeToneBurst # Error here
-a.excitation_type = fnm.ExcitationType.ExcitationTypeHanningWeightedPulse
+a.excitation_type = fnm.ExcitationType.ExcitationTypeToneBurst
+#a.excitation_type = fnm.ExcitationType.ExcitationTypeHanningWeightedPulse
 
 # Not very elegant
 myGrid = grid(nx=100, dx=0.4e-3, nz=100, offset_z=51, dz=1.38e-3)
@@ -67,10 +67,16 @@ pos = myGrid.values()
 pbar = fnm.ProgressBarStdOut()
 a.ProgressBarSet(pbar)
 
-# Compute pulsed-wave field
-myField = a.CalcPwFnmThreaded(pos)[1]
-img = np.sum(myField**2 / fs,axis=1).reshape((100,100))
+a.nthreads = 1
 
-logimg = 20*np.log10(img/img.max())
-
+if 1:
+  # Compute pulsed-wave field
+  myField = a.CalcPwFnmThreaded(pos)[1]
+  img = np.sum(myField**2 / fs,axis=1).reshape((100,100))
+  logimg = 20*np.log10(img/img.max())
+else:
+  # CW field
+  myField = a.CalcCwFast(pos)[1]
+  img = np.abs(myField).reshape((100,100))
+  logimg = 20*np.log10(img/img.max())
 plt.imshow(logimg)

@@ -49,9 +49,10 @@ struct SOFUS_EXPORT SOFUS_ImpulseTypeNS {
 struct SOFUS_EXPORT SOFUS_ExcitationTypeNS {
   enum ExcitationType_Value {
     ExcitationTypeNonParametric        = 0x00, ///< Specify time-domain excitation
-    ExcitationTypeToneBurst            = 0x01, ///< Excitation computed from f0 and nCycles
-    ExcitationTypeHanningWeightedPulse = 0x02, ///< Hanning weigted excitation computed from f0 and nCycles
-    ExcitationTypeCount                = 0x03, ///< Unused
+    ExcitationTypeDelta                = 0x01, ///< Delta pulse
+    ExcitationTypeToneBurst            = 0x02, ///< Excitation computed from f0 and nCycles
+    ExcitationTypeHanningWeightedPulse = 0x03, ///< Hanning weigted excitation computed from f0 and nCycles
+    ExcitationTypeCount                = 0x04, ///< Unused
   } _ExcitationType_Value;
 };
 
