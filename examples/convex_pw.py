@@ -72,4 +72,5 @@ img = np.sum(myField**2 / fs,axis=1).reshape((100,100))
 
 logimg = 20*np.log10(img/img.max())
 
-plt.imshow(logimg)
+plt.figure()
+plt.imshow(logimg,extent=[pos[:,2].min(), pos[:,2].max(), pos[:,0].min(), pos[:,0].max()])

@@ -1,5 +1,8 @@
-# sofus
-SIMD optimized fast ultrasound simulator
+sofus
+=====
+
+SIMD optimized fast ultrasound simulator. Only continuous-wave pressure
+is optimized using SIMD in this repository
 
 ## Installation
 At the moment, a reference implementation of the fast nearfield method
@@ -17,6 +20,21 @@ An example of the continuous-wave (CW) pressure in front of an
     cd ../sofus
 	ipython
 	run test_cw_pressure.py
+
+Further examples with transients and pulsed-wave fields can be found
+in the examples folder.
+
+### FFTW
+
+An implementation of the angular spectrum approach (ASA) for field propagation
+is included and this requires FFTW.
+
+#### Windows
+
+For windows, binaries can be fetched from
+http://www.fftw.org/install/windows.html. You need to use the lib.exe
+tool for generating lib files as described on the webpage.
+
 
 ## Documentation
 The documentation can be found as the io page. [Doxygen documentation](http://jensmunkhansen.github.io/sofus "SOFUS")

@@ -112,8 +112,19 @@ a.ProgressBarSet(pbar)
 # Not working - pulse gets to short (for positive delays)
 #               no impact for negative delays
 #a.delays = [30.0/fs]
-bum = a.CalcTransientSingleElementNoDelay(pos,0x1F)[1]
-#bum = a.CalcTransientSingleElementNoDelay(pos,0x03)[1]
+
+# Different contributions to field calculation
+contrib = 'kerfedges'
+contrib = 'topbottom'
+contrib = 'all'
+
+if contrib == 'kerfedges':
+  bum = a.CalcTransientSingleElementNoDelay(pos,0x0A)[1]
+elif contrib == 'topbottom':
+  bum = a.CalcTransientSingleElementNoDelay(pos,0x14)[1]
+elif contrib == 'all':
+  bum = a.CalcTransientSingleElementNoDelay(pos,0x1F)[1]
+
 
 end = timer()
 tSpent = end - start
