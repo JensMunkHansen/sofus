@@ -215,6 +215,8 @@ def __dir__(self):
 %attribute(fnm::Aperture<DATA_TYPE>, DATA_TYPE, fc, FCGet, FCSet);
 %attribute(fnm::Aperture<DATA_TYPE>, DATA_TYPE, c, CGet, CSet);
 
+%attribute(fnm::Aperture<DATA_TYPE>, int, apodization_type, ApodizationTypeGet, ApodizationTypeSet);
+
 #if FNM_PULSED_WAVE
   %attribute(fnm::Aperture<DATA_TYPE>, bool, normalize, NormalizeGet, NormalizeSet);
   %attribute(fnm::Aperture<DATA_TYPE>, int, impulse_type, ImpulseTypeGet, ImpulseTypeSet);
@@ -368,7 +370,8 @@ def __setstate__(self, state):
   self.CSet(c)
   self.SubElementsSet(subelements)
   self.ApodizationSet(apodization)
-  self.ExcitationSet(excitation)
+  if 'FNM_PULSED_WAVE' in globals():
+    self.ExcitationSet(excitation)
   self.ImpulseSet(impulse)
   self.FocusSet(focus)
   self.CenterFocusSet(center_focus)

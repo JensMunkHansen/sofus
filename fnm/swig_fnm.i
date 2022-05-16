@@ -254,6 +254,8 @@ namespace sps {
 
 %rename(FocusingType) FNM_FocusingTypeNS;
 
+%rename(ApodizationType) FNM_ApodizationTypeNS;
+
 %rename(ImpulseType) SOFUS_ImpulseTypeNS;
 
 %rename(ExcitationType) SOFUS_ExcitationTypeNS;

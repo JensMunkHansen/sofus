@@ -51,10 +51,6 @@
 # include <fnm/fnm_transient.hpp>  // fnm::CalcFd routines
 # include <fnm/fnm_transient_threaded.hpp>  // fnm::CalcFd routines
 
-#ifdef FNM_PULSED_WAVE
-# include <fnm/fnm_transient_vectorized.hpp>
-#endif
-
 #include <fnm/fnm_basis.hpp>
 
 #if FNM_PULSED_WAVE
@@ -242,9 +238,7 @@ Aperture<T>::Aperture() : m_sysparm(NULL) {
   m_pbar = nullptr;
 
   // Data needed for time-domain pulsed waves
-#if FNM_PULSED_WAVE
   this->m_pData->m_pulses->m_fs = m_sysparm->fs;
-#endif
 }
 
 template <class T>
