@@ -1,0 +1,46 @@
+digraph "SwigPyObject_long"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="RL";
+  Node1 [label="SwigPyObject_long",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="SwigPyObject_format",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$de/d48/swig__runtime_8h.html#aae6ca01869202c83b1a0e94c89e99531",tooltip=" "];
+  Node2 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="SwigPyObject_hex",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$de/d48/swig__runtime_8h.html#a2f84a1f8f23c3799674771805cc21231",tooltip=" "];
+  Node3 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="SwigPyObject_TypeOnce",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$de/d48/swig__runtime_8h.html#aea7d4126c1b77d06d8fcdf22619e9d77",tooltip=" "];
+  Node4 -> Node5 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="SwigPyObject_type",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$de/d48/swig__runtime_8h.html#ae8dc28636254904148bf0ecbaa84559d",tooltip=" "];
+  Node5 -> Node6 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 [label="SwigPyObject_Check",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$de/d48/swig__runtime_8h.html#a918ad69f91e617193f190aed101c3cc4",tooltip=" "];
+  Node6 -> Node7 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node7 [label="SWIG_Python_GetSwigThis",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$de/d48/swig__runtime_8h.html#ad0f863f0634d92d40cbc7dab4bba2f9b",tooltip=" "];
+  Node7 -> Node8 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node8 [label="SWIG_Python_AcquirePtr",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$de/d48/swig__runtime_8h.html#afddb1b639fb789e0f8aa35e8e5f2635f",tooltip=" "];
+  Node7 -> Node9 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node9 [label="SWIG_Python_ConvertPtrAndOwn",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$de/d48/swig__runtime_8h.html#ab5bec3f786db25fd4085c1534d785a0d",tooltip=" "];
+  Node9 -> Node9 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node7 -> Node7 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node7 -> Node10 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node10 [label="SWIG_Python_InitShadowInstance",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$de/d48/swig__runtime_8h.html#af6b04c7cf42a9e06a528481c86d2c41c",tooltip=" "];
+  Node6 -> Node11 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node11 [label="SWIG_Python_TypeError",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$de/d48/swig__runtime_8h.html#ac487bf25fd5238c01ad35edf4dde586f",tooltip=" "];
+  Node11 -> Node12 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node12 [label="SWIG_Python_MustGetPtr",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$de/d48/swig__runtime_8h.html#a9585a9047da4331406bfc603efc994d9",tooltip=" "];
+  Node6 -> Node13 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node13 [label="SwigPyObject_append",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$de/d48/swig__runtime_8h.html#a36a192da95e9bd2f973d97f3cb668f02",tooltip=" "];
+  Node13 -> Node10 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 -> Node14 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node14 [label="SwigPyObject_New",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$de/d48/swig__runtime_8h.html#adaf049b6445afcfd0890cabe0d5539d4",tooltip=" "];
+  Node14 -> Node15 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node15 [label="SWIG_Python_NewPointerObj",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$de/d48/swig__runtime_8h.html#aafcef2f28a43f6f687dc7114cc6e2f2b",tooltip=" "];
+  Node14 -> Node16 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node16 [label="SwigPyObject_dealloc",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$de/d48/swig__runtime_8h.html#a31a09386e839d2080e2f56602c011263",tooltip=" "];
+  Node16 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 -> Node17 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node17 [label="SwigPyObject_oct",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$de/d48/swig__runtime_8h.html#af46a9a17b9d632d0a73132eeb0ce1339",tooltip=" "];
+  Node17 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node1 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+}

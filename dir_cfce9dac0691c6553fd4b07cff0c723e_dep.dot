@@ -1,0 +1,14 @@
+digraph "sps"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  compound=true
+  subgraph clusterdir_cfce9dac0691c6553fd4b07cff0c723e {
+    graph [ bgcolor="#edf0f7", pencolor="grey25", style="filled,bold,", label="", fontname="Helvetica", fontsize="10", URL="dir_cfce9dac0691c6553fd4b07cff0c723e.html"]
+    dir_cfce9dac0691c6553fd4b07cff0c723e [shape=plaintext, label="sps"];
+  dir_4f82593ba38ca1fbeb8ab57a5195b1e7 [shape=box, label="unix", style="filled,", fillcolor="#a2b4d6", color="grey25", URL="dir_4f82593ba38ca1fbeb8ab57a5195b1e7.html"];
+  dir_80e976374a40b7690b910c67923b6546 [shape=box, label="win32", style="filled,", fillcolor="#a2b4d6", color="grey25", URL="dir_80e976374a40b7690b910c67923b6546.html"];
+  }
+  dir_cfce9dac0691c6553fd4b07cff0c723e->dir_4f82593ba38ca1fbeb8ab57a5195b1e7 [headlabel="1", labeldistance=1.5 headhref="dir_000004_000005.html"];
+}

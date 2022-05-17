@@ -1,0 +1,16 @@
+digraph "SWIG_Python_ConvertFunctionPtr"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="SWIG_Python_ConvertFunctionPtr",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="SWIG_TypeCast",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$de/d48/swig__runtime_8h.html#afffa0f94d47fd5cdf487592e5541c61a",tooltip=" "];
+  Node1 -> Node3 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="SWIG_TypeCheck",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$de/d48/swig__runtime_8h.html#ac1dbd2df27970f40895c52f0f0f1e47c",tooltip=" "];
+  Node1 -> Node4 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="SWIG_UnpackVoidPtr",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$de/d48/swig__runtime_8h.html#a5de83b7bb4a7b529efc5d11ba9a0f3d0",tooltip=" "];
+  Node4 -> Node5 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="SWIG_UnpackData",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$de/d48/swig__runtime_8h.html#a737f157f6af483c5bba403459e9e8351",tooltip=" "];
+}

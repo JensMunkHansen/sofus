@@ -1,22 +1,180 @@
-\form#0:\[ \int_{-1}^{1} f(x) dx = \sum_{i=1}^{n} \omega_i f(x_i) \]
-\form#1:$f(x)$
-\form#2:$[−1, 1]$
-\form#3:$ f(x)=\omega (x)g(x)\,$
-\form#4:$g(x)$
-\form#5:$\omega(x)$
-\form#6:$\omega_{i}'$
-\form#7:$ x_{i}'$
-\form#8:\[ \int_{-1}^{1}f(x)\,dx=\int_{-1}^{1}\omega (x)g(x)\,dx\approx \sum_{i=1}^{n}\omega_{i}'g(x_{i}'). \]
-\form#9:$ \omega (x)=1/{\sqrt {1-x^{2}}}\,$
-\form#10:$\omega (x)=e^{-x^{2}}$
-\form#11:$\omega (x)=1$
-\form#12:$P_n(x)$
-\form#13:$P_n(1) = 1$
-\form#14:$x_i$
-\form#15:$P_n$
-\form#16:\[ \omega_{i}={\frac {2}{\left(1-x_{i}^{2}\right)[P'_{n}(x_{i})]^{2}}}. \]
-\form#17:\[ \int_{a}^{b}f(x)\,dx={\frac {b-a}{2}}\int_{-1}^{1}f\left({\frac {b-a}{2}}x+{\frac {a+b}{2}}\right)\,dx. \]
-\form#18:\[ \int_{a}^{b}f(x)\,dx={\frac {b-a}{2}}\sum _{i=1}^{n}\omega_{i}f\left({\frac {b-a}{2}}x_{i}+{\frac {a+b}{2}}\right). \]
-\form#19:$s$
-\form#20:$l$
-\form#21:\begin{eqnarray*}H_{s,l}(z;k) = - i/(2\pi k) ( &s \int_0^l (exp(-ik\sqrt{\sigma^2+z^2+s^2}) - exp(-ikz)) / (\sigma^2+s^2) d\sigma + \\ &l \int_0^s (exp(-ik\sqrt{\sigma^2+z^2+l^2}) - exp(-ikz)) / (\sigma^2+l^2) d\sigma) \end{eqnarray*}
+\_form#0=310x58:\[
+S = \int dt\int d^{3}x \frac{1}{2\kappa (\vec{r})}\partial_{t}^{2}p(\vec{r},t) - \frac{1}{2\rho (r)} \nabla p(\vec{r},t)\cdot \nabla p(\vec{r},t),
+\]
+\_form#1=24x13:$\kappa (\vec{r})$
+\_form#2=24x13:$\rho(\vec{r})$
+\_form#3=38x9:$\delta S=0$
+\_form#4=231x60:\[
+\nabla \cdot \left(\frac{1}{\rho (\vec{r})}\nabla p(\vec{r},t) \right) - 1/\kappa (\vec{r}) \partial_{t}^{2}p(\vec{r},t)= 0.
+\]
+\_form#5=13x9:$\vec{r}_{0}$
+\_form#6=364x44:\begin{eqnarray}\label{eq:1}
+&p(\vec{r}_{0},t) = \nonumber \\
+&-\frac{1}{4\pi }\int_{S}dS\, \rho^{-
+1}(\vec{r})\left[p(\vec{r},t)\frac{\partial
+\mathcal{G}(\vec{r},t;\vec{r}_{0})}{\partial n} - \mathcal{G}(\vec{r},t;\vec{r}_{0})\frac{\partial
+p(\vec{r},t)}{\partial n}\right],
+\end{eqnarray}
+\_form#7=69x13:$\partial /\partial n = \vec{n}\cdot \nabla $
+\_form#8=8x10:$\mathcal{G}$
+\_form#9=34x13:$h(\vec{r},t)$
+\_form#10=286x13:\begin{equation}\label{eq:2}
+p(\vec{r}_{0},t) = \rho_{0}\dot{v}(t) \ast h(\vec{r}_{0},t),
+\end{equation}
+\_form#11=5x5:$\ast$
+\_form#12=8x9:$\dot{v}$
+\_form#13=16x13:$(\ref{eq:1})$
+\_form#14=181x59:\[
+h(\vec{r}_{0},t) = \int_{S}dS\frac{\delta (t - | \vec{r} - \vec{r}_{0}|/c)}{2\pi |\vec{r}-\vec{r}_{0}|}.
+\]
+\_form#15=5x8:$t$
+\_form#16=210x59:\[
+h(\vec{r}_{0},t) = \int_{S}dS\cos{\varphi }\frac{\delta (t - |\vec{r}-\vec{r}_{0}|/c)}{2\pi |\vec{r}-\vec{r}_{0}|},
+\]
+\_form#17=8x9:$\varphi $
+\_form#18=24x9:$\cos{\varphi }$
+\_form#19=75x13:$\cos{\varphi } = z/(ct)$
+\_form#20=6x6:$z$
+\_form#21=23x13:$(\ref{eq:4})$
+\_form#22=21x13:$v(t)$
+\_form#23=143x13:\[
+p(\vec{r}_{0},t) = \rho_{0}v(t) \ast \dot{h}(\vec{r}_{0},t),
+\]
+\_form#24=8x9:$\dot{h}$
+\_form#25=8x9:$\vec{u}$
+\_form#26=8x9:$\vec{v}$
+\_form#27=8x9:$\vec{r}$
+\_form#28=300x56:\[
+r_{1} = \min\left(\frac{|\vec{r}\cdot\vec{u}|}{r}, \frac{|\vec{r}\cdot \vec{v}|}{r} \right)\quad r_{2} = \max\left(\frac{|\vec{r}\cdot \vec{u}|}{r}, \frac{|\vec{r}\cdot \vec{v}|}{r} \right),
+\]
+\_form#29=5x6:$r$
+\_form#30=108x88:\begin{eqnarray}
+t_{1} &= \frac{1}{c}\left(r - \frac{r_{1}+r_{2}}{2} \right) \nonumber \\
+t_{2} &= t_{1} + \frac{r_{1}}{c} \nonumber \\
+t_{3} &= t_{1} + \frac{r_{2}}{c} \nonumber \\ 
+t_{4} &= t_{1} + \frac{r_{1}+r_{2}}{c} \nonumber
+\end{eqnarray}
+\_form#31=334x70:\begin{equation}\label{eq:7}
+h(t) = \left\{\begin{array}{@{}l l r@{\ t\ }l}
+\frac{(t-t_{1})^{2}}{2 \Delta t_{2}} & \mathrm{for } &
+t_{1}\leq & \leq t_{2}\\
+\frac{\Delta t_{1} + 2(t-t_{2})}{2\Delta t_{2}} & \mathrm{for } &
+t_{2}\leq & \leq t_{3}\\
+1-\frac{(t-t_{3})^{2}}{2\Delta t_{1}\Delta t_{2}}& \mathrm{for } &
+t_{3}\leq & \leq t_{4}\\
+\end{array}\right\},
+\end{equation}
+\_form#32=23x9:$\Delta t_{1}$
+\_form#33=24x9:$\Delta t_{2}$
+\_form#34=179x9:\[
+\Delta t_{1} = t_{2}-t_{1}\qquad \Delta t_{2} = t_{3}-t_{1}.
+\]
+\_form#35=21x16:$\frac{4ab}{2\pi r}$
+\_form#36=6x6:$a$
+\_form#37=5x9:$b$
+\_form#38=43x16:$r \gg \frac{ab}{4\lambda }$
+\_form#39=538x75:\[
+h(z,t)=\left\{\begin{array}{@{}l l r@{\ t\ }l}
+c/(2\pi) \left\{\frac{\pi }{2} \right\} & \mathrm{for } &
+\frac{z}{c}\leq & \leq \frac{\sqrt{z^{2}+a^{2}}}{c}\\
+c/(2\pi) \left\{\frac{\pi }{2} -
+\arccos{\left(\frac{a}{\sqrt{c^{2}t^{2}-z^{2}}} \right)}\right\} & \mathrm{for } &
+\frac{\sqrt{z^{2}+a^{2}}}{c} \leq & \leq \frac{\sqrt{z^{2}+b^{2}}}{c}\\
+c/(2\pi) \left\{\frac{\pi }{2} -
+\arccos{\left(\frac{a}{\sqrt{c^{2}t^{2}-z^{2}}} \right)} -
+\arccos{\left(\frac{b}{\sqrt{c^{2}t^{2}-z^{2}}} \right)}\right\} & \mathrm{for } &
+\frac{\sqrt{z^{2}+b^{2}}}{c} \leq & \leq \frac{\sqrt{z^{2}+a^{2}+b^{2}}}{c}\\
+\end{array} \right.,
+\]
+\_form#40=26x10:$b\geq a$
+\_form#41=608x88:\begin{equation}\label{eq:6}
+H(z,k)=-\frac{\mathrm{i}}{2\pi
+k}\left(a\int_{0}^{b}d\sigma\frac{\exp{(-\mathrm{i}k\sqrt{z^{2}+\sigma^{2}+a^{2}})}-\exp{(-\mathrm{i}kz)}}{\sigma^{2}+a^{2}}
++ b\int_{0}^{a}d\sigma\frac{\exp{(-\mathrm{i}k\sqrt{z^{2}+\sigma^{2}+b^{2}})}-\exp{(-\mathrm{i}kz)}}{\sigma^{2}+b^{2}}
+\right)
+\end{equation}
+\_form#42=16x13:$(\ref{eq:6})$
+\_form#43=13x9:$\vec{r}_{0} $
+\_form#44=13x9:$\theta_{0}$
+\_form#45=11x9:$\theta_{1} $
+\_form#46=74x9:$\Delta \theta =\theta_{1}-\theta_{0}$
+\_form#47=11x9:$\theta_{1}$
+\_form#48=13x9:$2\pi $
+\_form#49=16x13:$(\ref{eq:7})$
+\_form#50=196x13:$
+p(r,z;\omega) = v(w) rho_0 * a * c / pi * int
+$
+\_form#51=130x13:$
+H(r,z;k) = a / (ik\pi) int
+$
+\_form#52=139x13:$
+p(r,z,k) = -i v(\omega) * \rho_0 \omega H
+$
+\_form#53=295x49:\begin{align}
+h(x,y,z) &\mapsto \exp{(-f \beta \, d\,)} h(x,y,z)\nonumber\\
+&\mapsto \exp{(-(f-f_0)\beta \, d\,)}\exp{(-\beta f0 \, d\,)} h(x,y,z)\nonumber\\
+&\mapsto \exp{(-(f-f_0)\beta \, d\,)}\exp{(-\alpha\, d\,)} h(x,y,z),\nonumber
+\end{align}
+\_form#54=6x9:$ d$
+\_form#55=5x6:$s$
+\_form#56=4x9:$l$
+\_form#57=445x53:\begin{eqnarray*}H_{s,l}(z;k) =
+  - i/(2\pi k) ( &s \int_0^l (exp(-ik\sqrt{\sigma^2+z^2+s^2}) - exp(-ikz)) / (\sigma^2+s^2) d\sigma + \\
+                 &l \int_0^s (exp(-ik\sqrt{\sigma^2+z^2+l^2}) - exp(-ikz)) / (\sigma^2+l^2) d\sigma) \end{eqnarray*}
+\_form#58=604x194:\begin{eqnarray}
+  H(x,y,z,k) &= H_{hw+|x|,hh+|y|}(z;k) - H_{|x|-hw,hh+|y|}(z;k) - H_{hw+|x|,|y|-hh}(z;k) + H_{|x|-hw,|y|-hh}(z;k)\nonumber\\
+  &= H_{hw+|x|,hh+|y|}(z;k) + H_{hw-|x|,hh+|y|}(z;k) + H_{hw+|x|,hh-|y|}(z;k) + H_{hw-|x|,hh-|y|}(z;k)\nonumber\\
+  &= -\frac{i}{2\pi k} \Big( (hh+|y|)\int_{0}^{|x|+hw} M(hh+|y|,\sigma, z, k)d\sigma +(hw+|x|)\int_{0}^{|y|+hh} M(hw+|x|,\sigma, z, k)d\sigma \nonumber\\
+  &\phantom{= -\frac{i}{2\pi k} \Big(} -(hh+|y|)\int_{0}^{|x|-hw} M(hh+|y|,\sigma, z, k)d\sigma - (hw-|x|)\int_{0}^{|y|-hh} M(hw-|x|,\sigma, z, k)d\sigma\nonumber\\
+  &\phantom{= -\frac{i}{2\pi k} \Big(} - (hh-|y|)\int_{0}^{|x|-hw} M(hh-|y|,\sigma, z, k)d\sigma -(hw+|x|)\int_{0}^{|y|-hh} M(hw+|x|,\sigma, z, k)d\sigma \nonumber\\
+  &\phantom{= -\frac{i}{2\pi k} \Big(} + (hh-|y|)\int_{0}^{|x|+hw} M(hh-|y|,\sigma, z, k)d\sigma + (hw-|x|)\int_{0}^{|y|+hh} M(hw-|x|,\sigma, z, k)d\sigma\nonumber\\
+  &= -\frac{i}{2\pi k} \Big( (hh+|y|)\int_{|x|-hw}^{|x|+hw} M(hh+|y|,\sigma, z, k)d\sigma + (hh-|y|)\int_{|x|-hw}^{|x|+hw} M(hh-|y|,\sigma, z, k)d\sigma \nonumber\\
+  &\phantom{= -\frac{i}{2\pi k} \Big(} +  (hw+|x|)\int_{|y|-hh}^{|y|+hh} M(hw+|x|,\sigma, z, k)d\sigma + (hw-|x|)\int_{|y|-hh}^{|y|+hh} M(hw-|x|,\sigma, z, k)d\sigma\Big),
+  \end{eqnarray}
+\_form#59=73x13:$M(s,\sigma,z,k)$
+\_form#60=294x45:\[
+  M(s,\sigma,z,k) = \frac{exp(-ik\sqrt{\sigma^2+z^2+s^2}) - exp(-ikz)}{\sigma^2+s^2}
+\]
+\_form#61=63x13:$d = |\mathbf{a}-\mathbf{b}|$
+\_form#62=45x9:$d= \mathbf{a}\cdot\mathbf{b}$
+\_form#63=13x13:$|\mathbf{a}|$
+\_form#64=8x8:$\mathbf{p}$
+\_form#65=8x8:$\mathbf{q}$
+\_form#66=8x6:$\mathbf{n}$
+\_form#67=79x13:$d = (\mathbf{p} - \mathbf{q})\cdot \mathbf{n}$
+\_form#68=59x10:$i = 1,\ldots,n$
+\_form#69=36x13:$[-1,1]$
+\_form#70=144x60:\[
+\int_{-1}^{1} f(x) dx = \sum_{i=1}^{n} \omega_i f(x_i)
+\]
+\_form#71=25x13:$f(x)$
+\_form#72=36x13:$[-1, 1]$
+\_form#73=90x13:$ f(x)=\omega (x)g(x)\,$
+\_form#74=24x13:$g(x)$
+\_form#75=28x13:$\omega(x)$
+\_form#76=15x14:$\omega_{i}'$
+\_form#77=14x14:$
+x_{i}'$
+\_form#78=251x60:\[
+\int_{-1}^{1}f(x)\,dx=\int_{-1}^{1}\omega (x)g(x)\,dx\approx \sum_{i=1}^{n}\omega_{i}'g(x_{i}').
+\]
+\_form#79=106x30:$ \omega (x)=1/{\sqrt
+{1-x^{2}}}\,$
+\_form#80=69x18:$\omega (x)=e^{-x^{2}}$
+\_form#81=49x13:$\omega (x)=1$
+\_form#82=35x13:$P_n(x)$
+\_form#83=55x13:$P_n(1) = 1$
+\_form#84=14x9:$x_i$
+\_form#85=16x9:$P_n$
+\_form#86=133x26:\[
+\omega_{i}={\frac {2}{\left(1-x_{i}^{2}\right)[P'_{n}(x_{i})]^{2}}}.
+\]
+\_form#87=25x13:$[a,b]$
+\_form#88=36x13:$[-1,
+1]$
+\_form#89=269x60:\[
+\int_{a}^{b}f(x)\,dx={\frac {b-a}{2}}\int_{-1}^{1}f\left({\frac {b-a}{2}}x+{\frac {a+b}{2}}\right)\,dx.
+\]
+\_form#90=268x63:\[
+\int_{a}^{b}f(x)\,dx={\frac {b-a}{2}}\sum _{i=1}^{n}\omega_{i}f\left({\frac {b-a}{2}}x_{i}+{\frac {a+b}{2}}\right).
+\]

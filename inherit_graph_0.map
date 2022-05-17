@@ -1,3 +1,11 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node1" href="$classfnm_1_1Aperture.html" title="Aperture class. " alt="" coords="5,5,108,32"/>
+<area shape="rect" id="node1" title=" " alt="" coords="5,183,68,209"/>
+<area shape="rect" id="node2" href="$d9/d73/classfnm_1_1ApertureData.html" title="ApertureData structure." alt="" coords="138,5,267,32"/>
+<area shape="rect" id="node3" href="$d6/da4/structfnm_1_1CircularApertureData.html" title=" " alt="" coords="116,56,289,83"/>
+<area shape="rect" id="node4" href="$d5/d56/classsofus_1_1focus__line__t.html" title=" " alt="" coords="141,107,264,133"/>
+<area shape="rect" id="node5" href="$d9/d01/structsofus_1_1proj__limit__dist__t.html" title=" " alt="" coords="131,157,275,184"/>
+<area shape="rect" id="node6" href="$d5/d6c/structsps_1_1circle__t.html" title=" " alt="" coords="155,208,250,235"/>
+<area shape="rect" id="node7" href="$d3/d2d/structsps_1_1element__circular__t.html" title=" " alt="" coords="123,259,282,285"/>
+<area shape="rect" id="node8" href="$d3/ddc/structsps_1_1ellipsis__t.html" title=" " alt="" coords="151,309,255,336"/>
+<area shape="rect" id="node9" href="$d7/d85/structsps_1_1euler__t.html" title="Euler angles." alt="" coords="157,360,249,387"/>
 </map>

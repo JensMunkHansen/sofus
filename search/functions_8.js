@@ -1,13 +1,12 @@
 var searchData=
 [
-  ['ndivhget',['NDivHGet',['../classfnm_1_1Aperture.html#a60d4b397ce55604848f2b8b92ce23f51',1,'fnm::Aperture']]],
-  ['ndivhset',['NDivHSet',['../classfnm_1_1Aperture.html#aa01cd8acfe2f084f20172afb68c2983a',1,'fnm::Aperture']]],
-  ['ndivwget',['NDivWGet',['../classfnm_1_1Aperture.html#a67496fa5642e3becc2531aa0bee54041',1,'fnm::Aperture']]],
-  ['ndivwset',['NDivWSet',['../classfnm_1_1Aperture.html#a85ddb5a2c36e41d4b2b4714372abe931',1,'fnm::Aperture']]],
-  ['nearest_5fpoint_5fon_5fbbox',['nearest_point_on_bbox',['../namespacesps.html#a49f2545f74f9a6cf30e04d428badaf27',1,'sps']]],
-  ['nelementsget',['NElementsGet',['../classfnm_1_1Aperture.html#ab0d91160f41e515aa56b4a961c528e32',1,'fnm::Aperture']]],
-  ['norm',['norm',['../namespacesps.html#ac8e58e03b1ed250e4dd83774401fb670',1,'sps']]],
-  ['nsubelementsget',['NSubElementsGet',['../classfnm_1_1Aperture.html#a5c28c71c5172cfe9ecce41f112297073',1,'fnm::Aperture']]],
-  ['nthreadsget',['NThreadsGet',['../classfnm_1_1Aperture.html#a6697d507490040a87dbd4a3d67a13fc7',1,'fnm::Aperture']]],
-  ['nthreadsset',['NThreadsSet',['../classfnm_1_1Aperture.html#a4cfa8bc49387e8ab7d2ac23ed1b1ccf6',1,'fnm::Aperture']]]
+  ['identity_0',['Identity',['../d0/d02/classfnm_1_1Identity.html#a187c8f04a72a7a88b9cba192ed8681e2',1,'fnm::Identity']]],
+  ['impulseget_1',['ImpulseGet',['../d3/d85/classfnm_1_1Aperture.html#a63ea2130f1c5f297eb9f16fdbf33a512',1,'fnm::Aperture']]],
+  ['impulseset_2',['ImpulseSet',['../d3/d85/classfnm_1_1Aperture.html#a4696ed8e20379a3b5a586a1116e7dd46',1,'fnm::Aperture']]],
+  ['impulsetypeget_3',['ImpulseTypeGet',['../d3/d85/classfnm_1_1Aperture.html#a3597bdc20d7ce13f3222cdb351f712fd',1,'fnm::Aperture']]],
+  ['impulsetypeset_4',['ImpulseTypeSet',['../d3/d85/classfnm_1_1Aperture.html#a51938323b84a6696d35086c776fce4ce',1,'fnm::Aperture']]],
+  ['initialize_5',['Initialize',['../d6/da4/structfnm_1_1CircularApertureData.html#a98b1050f09da390896f964fb7a892391',1,'fnm::CircularApertureData']]],
+  ['inplaceop_6',['InPlaceOP',['../d3/d85/classfnm_1_1Aperture.html#a709f1f00f71ae1facf8143b213ea0aa8',1,'fnm::Aperture']]],
+  ['inplacescale_7',['InPlaceScale',['../d7/d93/classsofus_1_1AperturePulses.html#a8e8dca24d7eaa981e08dff5f2215eeb3',1,'sofus::AperturePulses']]],
+  ['intcp_5fline_5frect_8',['intcp_line_rect',['../d7/d45/namespacesps.html#a4844573d07f9a21c99f4a524926d9ec9',1,'sps']]]
 ];

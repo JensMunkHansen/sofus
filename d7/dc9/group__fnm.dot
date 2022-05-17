@@ -1,0 +1,9 @@
+digraph "Fast Near-field Method"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=box];
+  rankdir=LR;
+  Node1 [label="Fast Near-field Method",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip="This module is used for computing pressures and transients using the Fast Nearfield Method (FNM)"];
+  Node2 [label="FNM Calculation functions",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$d0/df8/group__fnm__calc__functions.html",tooltip=" "];
+  Node1->Node2 [shape=plaintext, dir="back", style="solid"];
+}

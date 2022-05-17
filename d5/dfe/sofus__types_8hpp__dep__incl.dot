@@ -1,0 +1,41 @@
+digraph "sofus/sofus_types.hpp"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="sofus/sofus_types.hpp",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip="Structure types used for time-domain field simulations."];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="fnm/fnm.hpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$d0/d54/fnm_8hpp.html",tooltip="Contains Aperture class with methods using the fast nearfield method (FNM)"];
+  Node1 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="fnm/fnm_types.hpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$db/d3f/fnm__types_8hpp.html",tooltip="Structure types used for field simulations."];
+  Node3 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="fnm/FnmSIMD.hpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$d2/d03/FnmSIMD_8hpp.html",tooltip=" "];
+  Node3 -> Node5 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="fnm/circular.hpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$df/dc5/circular_8hpp.html",tooltip=" "];
+  Node5 -> Node6 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 [label="fnm/circular_calc.hpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$df/d66/circular__calc_8hpp.html",tooltip=" "];
+  Node3 -> Node7 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node7 [label="fnm/circular_data.hpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$d9/d7b/circular__data_8hpp.html",tooltip=" "];
+  Node3 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 -> Node8 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node8 [label="fnm/fnm_arrays.hpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$df/d6e/fnm__arrays_8hpp.html",tooltip="Geometries for transducer arrays."];
+  Node3 -> Node9 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node9 [label="fnm/fnm_data.hpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$d2/d0e/fnm__data_8hpp.html",tooltip="Data structures containing data for field computation."];
+  Node9 -> Node10 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node10 [label="fnm/fnm_calc.hpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$de/d0e/fnm__calc_8hpp.html",tooltip="Function used for Fast-Nearfield-Method."];
+  Node9 -> Node11 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node11 [label="sofus/sofus_calc.hpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$d0/d2c/sofus__calc_8hpp.html",tooltip=" "];
+  Node3 -> Node12 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node12 [label="fnm/fnm_pd.hpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$d6/dea/fnm__pd_8hpp.html",tooltip=" "];
+  Node12 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 -> Node13 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node13 [label="fnm/fnm_ps.hpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$db/d34/fnm__ps_8hpp.html",tooltip=" "];
+  Node13 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 -> Node14 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node14 [label="fnm/fnm_transient.hpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$d1/dd3/fnm__transient_8hpp.html",tooltip=" "];
+  Node3 -> Node15 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node15 [label="fnm/fnm_transient_threaded.hpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$da/dc5/fnm__transient__threaded_8hpp.html",tooltip=" "];
+  Node1 -> Node16 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node16 [label="sofus/rect_int_limits.hpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$d8/d2a/rect__int__limits_8hpp.html",tooltip=" "];
+  Node1 -> Node11 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+}

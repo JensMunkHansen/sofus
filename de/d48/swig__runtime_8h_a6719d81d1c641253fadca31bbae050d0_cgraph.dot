@@ -1,0 +1,14 @@
+digraph "SWIG_Python_DestroyModule"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="SWIG_Python_DestroyModule",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="SWIG_This",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$de/d48/swig__runtime_8h.html#ac3a66f5e4a274b17e1f7f5180250d1c8",tooltip=" "];
+  Node2 -> Node3 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="SWIG_Python_str_FromChar",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$de/d48/swig__runtime_8h.html#ada53ff51e4581c1caf6bf62482216fb4",tooltip=" "];
+  Node1 -> Node4 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="SwigPyClientData_Del",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$de/d48/swig__runtime_8h.html#acfc84d6965502d26fff3ac72e1bf5702",tooltip=" "];
+}

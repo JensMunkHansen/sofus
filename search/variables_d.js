@@ -1,0 +1,20 @@
+var searchData=
+[
+  ['name_0',['name',['../dd/dee/structswig__type__info.html#a8f8f80d37794cde9472343e4487ba3eb',1,'swig_type_info::name()'],['../d6/d72/structswig__const__info.html#a8f8f80d37794cde9472343e4487ba3eb',1,'swig_const_info::name()'],['../d4/db1/structApertureProperty.html#abc1e86d7c344fe34ff09e72d4595ab7e',1,'ApertureProperty::name()']]],
+  ['ndiva_1',['nDivA',['../d1/d92/structfnm_1_1sysparm__t.html#a4f3bebc38b7aae012e64a96ee703c3ce',1,'fnm::sysparm_t']]],
+  ['ndivh_2',['nDivH',['../d1/d92/structfnm_1_1sysparm__t.html#a26cce015a626b46108d07cdbab336011',1,'fnm::sysparm_t']]],
+  ['ndivw_3',['nDivW',['../d1/d92/structfnm_1_1sysparm__t.html#a676de84ecc719ad3223182fb136690af',1,'fnm::sysparm_t']]],
+  ['nelementposparameters_4',['nElementPosParameters',['../d3/d85/classfnm_1_1Aperture.html#adaffd7c31c339cecbb613daa7eae4f64',1,'fnm::Aperture']]],
+  ['neper_5fdb_5',['Neper_dB',['../d3/d85/classfnm_1_1Aperture.html#a5b3083fb9866df4d688d2aacedcc2cd4',1,'fnm::Aperture']]],
+  ['newargs_6',['newargs',['../d5/d6b/structSwigPyClientData.html#a3f965a13b63b1a28ab3880b8852f89d0',1,'SwigPyClientData']]],
+  ['newraw_7',['newraw',['../d5/d6b/structSwigPyClientData.html#ac343cdc04c579bb3d46e9be516791975',1,'SwigPyClientData']]],
+  ['next_8',['next',['../d2/d87/structswig__cast__info.html#af4349454713002040fd3799016337b36',1,'swig_cast_info::next()'],['../d8/d1b/structswig__module__info.html#af0954fbff8a3ad66e8e856a4f544a3d9',1,'swig_module_info::next()'],['../d4/d88/structSwigPyObject.html#a6ff221eaf6fa7553a0d69c6caad8c815',1,'SwigPyObject::next()']]],
+  ['next_5ffocus_5fline_9',['next_focus_line',['../d5/d56/classsofus_1_1focus__line__t.html#ad389c24337926e3f98b76e77e4b22191',1,'sofus::focus_line_t']]],
+  ['nextid_10',['nextID',['../d6/da4/structfnm_1_1CircularApertureData.html#a52f7f46dd8600d6c7f736234eff59da8',1,'fnm::CircularApertureData::nextID()'],['../d9/d73/classfnm_1_1ApertureData.html#a52f7f46dd8600d6c7f736234eff59da8',1,'fnm::ApertureData::nextID()']]],
+  ['nmaxsectors_11',['nMaxSectors',['../d1/d92/structfnm_1_1sysparm__t.html#a862b61671ac391a93b646731d7c7bd8d',1,'fnm::sysparm_t']]],
+  ['normal_12',['normal',['../d3/d2d/structsps_1_1element__circular__t.html#a99c99d1ccebb8ae9fc305ed2dbbaa12f',1,'sps::element_circular_t']]],
+  ['normalize_13',['normalize',['../d3/d85/classfnm_1_1Aperture.html#af605523fa15cd8296704092afd159029',1,'fnm::Aperture::normalize()'],['../d2/d8e/structsofus_1_1sysparm__t.html#af605523fa15cd8296704092afd159029',1,'sofus::sysparm_t::normalize()']]],
+  ['nthreads_14',['nThreads',['../d1/d92/structfnm_1_1sysparm__t.html#ae4474675776bcb66e15434c822327b8c',1,'fnm::sysparm_t::nThreads()'],['../d2/d8e/structsofus_1_1sysparm__t.html#ae4474675776bcb66e15434c822327b8c',1,'sofus::sysparm_t::nThreads()']]],
+  ['nverticesperelement_15',['nVerticesPerElement',['../d3/d85/classfnm_1_1Aperture.html#ac08006cf2e1c77856e2332b6d98ca861',1,'fnm::Aperture']]],
+  ['nx_16',['nx',['../dd/dea/structfnm_1_1GLQuad1D.html#a6b757254e775590ba12b60c7586aee44',1,'fnm::GLQuad1D']]]
+];

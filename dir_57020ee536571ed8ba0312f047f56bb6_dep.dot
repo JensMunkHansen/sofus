@@ -1,0 +1,12 @@
+digraph "sofus"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  compound=true
+  dir_57020ee536571ed8ba0312f047f56bb6 [shape=box, label="sofus", style="filled,bold,", fillcolor="#edf0f7", color="grey25", URL="dir_57020ee536571ed8ba0312f047f56bb6.html"];
+  dir_cd41f1afc10ad4605c1fed3e638b0021 [shape=box, label="fnm", style="", fillcolor="#edf0f7", color="grey25", URL="dir_cd41f1afc10ad4605c1fed3e638b0021.html"];
+  dir_cfce9dac0691c6553fd4b07cff0c723e [shape=box, label="sps", style="", fillcolor="#edf0f7", color="red", URL="dir_cfce9dac0691c6553fd4b07cff0c723e.html"];
+  dir_57020ee536571ed8ba0312f047f56bb6->dir_cd41f1afc10ad4605c1fed3e638b0021 [headlabel="2", labeldistance=1.5 headhref="dir_000003_000001.html"];
+  dir_57020ee536571ed8ba0312f047f56bb6->dir_cfce9dac0691c6553fd4b07cff0c723e [headlabel="5", labeldistance=1.5 headhref="dir_000003_000004.html"];
+}

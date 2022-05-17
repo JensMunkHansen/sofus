@@ -1,0 +1,10 @@
+digraph "SWIG_Python_RaiseOrModifyTypeError"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="SWIG_Python_RaiseOrModify\lTypeError",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="SWIG_Python_TypeErrorOccurred",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$de/d48/swig__runtime_8h.html#a66d128690d2aecf79804e6241d9ad74e",tooltip=" "];
+}

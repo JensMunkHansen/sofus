@@ -1,6 +1,11 @@
 var searchData=
 [
-  ['gl',['GL',['../namespacegl.html#aa2fa29b0a69c2eeb23b4e0b9613e7fc5',1,'gl']]],
-  ['glquad',['GLQuad',['../namespacegl.html#a8dfc38fe28db34846c60086d6ecf508c',1,'gl']]],
-  ['gls',['GLS',['../namespacegl.html#a7f251958ee6d2c65e37b0f9e61a9fe30',1,'gl']]]
+  ['gausspulseset_0',['GaussPulseSet',['../d7/d93/classsofus_1_1AperturePulses.html#aaa9b88be5aa77fa8342ef8fb5099ea02',1,'sofus::AperturePulses']]],
+  ['get_1',['get',['../db/dff/classsps_1_1nix_1_1unique__aligned__multi__array_3_01T_00_012_00_01void_01_4.html#a570cca7c8257a21eb7d63b733c77ade7',1,'sps::nix::unique_aligned_multi_array&lt; T, 2, void &gt;::get()'],['../db/dff/classsps_1_1nix_1_1unique__aligned__multi__array_3_01T_00_012_00_01void_01_4.html#a40a4099fda51bc6ddd6f186ff820a9a1',1,'sps::nix::unique_aligned_multi_array&lt; T, 2, void &gt;::get() const'],['../dc/d9e/classsps_1_1win32_1_1unique__aligned__array.html#a51d6a06d4fb74d1d01ccb35b3492f7a9',1,'sps::win32::unique_aligned_array::get() noexcept'],['../dc/d9e/classsps_1_1win32_1_1unique__aligned__array.html#a6bd1472e6d131375f0e2670b789cbd0f',1,'sps::win32::unique_aligned_array::get() const noexcept'],['../dc/d09/classsps_1_1win32_1_1unique__aligned__multi__array_3_01T_00_012_01_4.html#a570cca7c8257a21eb7d63b733c77ade7',1,'sps::win32::unique_aligned_multi_array&lt; T, 2 &gt;::get()'],['../dc/d09/classsps_1_1win32_1_1unique__aligned__multi__array_3_01T_00_012_01_4.html#a40a4099fda51bc6ddd6f186ff820a9a1',1,'sps::win32::unique_aligned_multi_array&lt; T, 2 &gt;::get() const']]],
+  ['get_5fdeleter_2',['get_deleter',['../dc/d9e/classsps_1_1win32_1_1unique__aligned__array.html#af7a8da4652fdf88c2cc5a0fccf944922',1,'sps::win32::unique_aligned_array::get_deleter() noexcept'],['../dc/d9e/classsps_1_1win32_1_1unique__aligned__array.html#a36b585c14bd6dc4144646f082e0ec69b',1,'sps::win32::unique_aligned_array::get_deleter() const noexcept']]],
+  ['gl_3',['GL',['../d8/d30/namespacegl.html#a2265dbcc5ffb6409a7e84c7add595487',1,'gl']]],
+  ['glquad_4',['GLQuad',['../d8/d30/namespacegl.html#a949ab84ebcfa190f811d4b54b28b75ef',1,'gl']]],
+  ['gls_5',['GLS',['../d8/d30/namespacegl.html#a3cef2bcd191b91e6ca87dd6d0eb5c7ea',1,'gl']]],
+  ['gridsectorscaleget_6',['GridSectorScaleGet',['../de/d63/classfnm_1_1CircularAperture.html#a4c45e11abfba9b9c27d06ad6fd66b6dc',1,'fnm::CircularAperture']]],
+  ['gridsectorscaleset_7',['GridSectorScaleSet',['../de/d63/classfnm_1_1CircularAperture.html#a9947edfd8a8a48f6b6841930db26b0e9',1,'fnm::CircularAperture']]]
 ];

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['bessel_5flut_2ehpp',['bessel_lut.hpp',['../bessel__lut_8hpp.html',1,'']]]
+  ['article_2edox_0',['article.dox',['../d4/d8c/article_8dox.html',1,'']]]
 ];

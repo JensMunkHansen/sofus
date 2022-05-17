@@ -1,0 +1,16 @@
+digraph "config.h"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="config.h",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip="Auto-generated configuration file."];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="fnm/circular.hpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$df/dc5/circular_8hpp.html",tooltip=" "];
+  Node2 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="fnm/circular_calc.hpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$df/d66/circular__calc_8hpp.html",tooltip=" "];
+  Node1 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node1 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="fnm/fnm.hpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$d0/d54/fnm_8hpp.html",tooltip="Contains Aperture class with methods using the fast nearfield method (FNM)"];
+  Node1 -> Node5 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="sofus/sofus_calc.hpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$d0/d2c/sofus__calc_8hpp.html",tooltip=" "];
+}

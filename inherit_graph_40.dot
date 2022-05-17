@@ -1,0 +1,8 @@
+digraph "Graphical Class Hierarchy"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node0 [label="unique_aligned_multi\l_array\< T, 2, void \>",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$db/dff/classsps_1_1nix_1_1unique__aligned__multi__array_3_01T_00_012_00_01void_01_4.html",tooltip="Aligned two-dimensional array."];
+}

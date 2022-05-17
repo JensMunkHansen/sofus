@@ -1,0 +1,11 @@
+digraph "sps/win32"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  compound=true
+  subgraph clusterdir_cfce9dac0691c6553fd4b07cff0c723e {
+    graph [ bgcolor="#edf0f7", pencolor="grey25", style="filled,dashed,", label="sps", fontname="Helvetica", fontsize="10", URL="dir_cfce9dac0691c6553fd4b07cff0c723e.html"]
+  dir_80e976374a40b7690b910c67923b6546 [shape=box, label="win32", style="filled,bold,", fillcolor="#edf0f7", color="grey25", URL="dir_80e976374a40b7690b910c67923b6546.html"];
+  }
+}

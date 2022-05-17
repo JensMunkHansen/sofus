@@ -1,9 +1,26 @@
 var searchData=
 [
-  ['gl',['gl',['../namespacegl.html',1,'gl'],['../namespacegl.html#aa2fa29b0a69c2eeb23b4e0b9613e7fc5',1,'gl::GL()'],['../group__GL.html',1,'(Global Namespace)']]],
-  ['gl_2ehpp',['gl.hpp',['../gl_8hpp.html',1,'']]],
-  ['gl_5flut_2ehpp',['gl_lut.hpp',['../gl__lut_8hpp.html',1,'']]],
-  ['glnode',['GLNode',['../structgl_1_1GLNode.html',1,'gl']]],
-  ['glquad',['GLQuad',['../namespacegl.html#a8dfc38fe28db34846c60086d6ecf508c',1,'gl']]],
-  ['gls',['GLS',['../namespacegl.html#a7f251958ee6d2c65e37b0f9e61a9fe30',1,'gl']]]
+  ['g_5fbexit_0',['g_bExit',['../da/dd8/fnm__profiling_8hpp.html#a32eee1d74f316d8d5af6cd38794d71c6',1,'fnm_profiling.hpp']]],
+  ['g_5ftstart_1',['g_tStart',['../da/dd8/fnm__profiling_8hpp.html#aa6a331a32b4099232a4ee7605df76119',1,'fnm_profiling.hpp']]],
+  ['gamma_2',['gamma',['../d7/d85/structsps_1_1euler__t.html#a4d391657f0739faee19fa5967b852fb9',1,'sps::euler_t']]],
+  ['gauss_2dlegendre_20library_3',['Gauss-Legendre library',['../dd/d6c/group__GL.html',1,'']]],
+  ['gausspulseset_4',['GaussPulseSet',['../d7/d93/classsofus_1_1AperturePulses.html#aaa9b88be5aa77fa8342ef8fb5099ea02',1,'sofus::AperturePulses']]],
+  ['get_5',['get',['../db/dff/classsps_1_1nix_1_1unique__aligned__multi__array_3_01T_00_012_00_01void_01_4.html#a570cca7c8257a21eb7d63b733c77ade7',1,'sps::nix::unique_aligned_multi_array&lt; T, 2, void &gt;::get()'],['../db/dff/classsps_1_1nix_1_1unique__aligned__multi__array_3_01T_00_012_00_01void_01_4.html#a40a4099fda51bc6ddd6f186ff820a9a1',1,'sps::nix::unique_aligned_multi_array&lt; T, 2, void &gt;::get() const'],['../dc/d9e/classsps_1_1win32_1_1unique__aligned__array.html#a51d6a06d4fb74d1d01ccb35b3492f7a9',1,'sps::win32::unique_aligned_array::get() noexcept'],['../dc/d9e/classsps_1_1win32_1_1unique__aligned__array.html#a6bd1472e6d131375f0e2670b789cbd0f',1,'sps::win32::unique_aligned_array::get() const noexcept'],['../dc/d09/classsps_1_1win32_1_1unique__aligned__multi__array_3_01T_00_012_01_4.html#a570cca7c8257a21eb7d63b733c77ade7',1,'sps::win32::unique_aligned_multi_array&lt; T, 2 &gt;::get()'],['../dc/d09/classsps_1_1win32_1_1unique__aligned__multi__array_3_01T_00_012_01_4.html#a40a4099fda51bc6ddd6f186ff820a9a1',1,'sps::win32::unique_aligned_multi_array&lt; T, 2 &gt;::get() const']]],
+  ['get_5fdeleter_6',['get_deleter',['../dc/d9e/classsps_1_1win32_1_1unique__aligned__array.html#af7a8da4652fdf88c2cc5a0fccf944922',1,'sps::win32::unique_aligned_array::get_deleter() noexcept'],['../dc/d9e/classsps_1_1win32_1_1unique__aligned__array.html#a36b585c14bd6dc4144646f082e0ec69b',1,'sps::win32::unique_aligned_array::get_deleter() const noexcept']]],
+  ['gl_7',['gl',['../d8/d30/namespacegl.html',1,'']]],
+  ['gl_8',['GL',['../d8/d30/namespacegl.html#a2265dbcc5ffb6409a7e84c7add595487',1,'gl']]],
+  ['gl_2ehpp_9',['gl.hpp',['../d7/d6a/gl_8hpp.html',1,'']]],
+  ['gl_5fdeprecated_10',['GL_DEPRECATED',['../db/deb/gl__export_8h.html#a729235a589fc9b9f58019502bb6dbe5d',1,'gl_export.h']]],
+  ['gl_5fdeprecated_5fexport_11',['GL_DEPRECATED_EXPORT',['../db/deb/gl__export_8h.html#acd1e1c31587529fe62b0c06742ea8ef5',1,'gl_export.h']]],
+  ['gl_5fdeprecated_5fno_5fexport_12',['GL_DEPRECATED_NO_EXPORT',['../db/deb/gl__export_8h.html#a8754ce1d8ad7a610ff174e0e9007ca0f',1,'gl_export.h']]],
+  ['gl_5fexport_2eh_13',['gl_export.h',['../db/deb/gl__export_8h.html',1,'']]],
+  ['gl_5flut_2ehpp_14',['gl_lut.hpp',['../df/d11/gl__lut_8hpp.html',1,'']]],
+  ['gl_5fno_5fexport_15',['GL_NO_EXPORT',['../db/deb/gl__export_8h.html#abc3862a696d6371b34b170ba660eba54',1,'gl_export.h']]],
+  ['glnode_16',['GLNode',['../d0/dc1/structgl_1_1GLNode.html',1,'gl']]],
+  ['glquad_17',['GLQuad',['../d8/d30/namespacegl.html#a949ab84ebcfa190f811d4b54b28b75ef',1,'gl']]],
+  ['glquad1d_18',['GLQuad1D',['../dd/dea/structfnm_1_1GLQuad1D.html',1,'fnm']]],
+  ['glquad2d_19',['GLQuad2D',['../df/dc7/structfnm_1_1GLQuad2D.html',1,'fnm']]],
+  ['gls_20',['GLS',['../d8/d30/namespacegl.html#a3cef2bcd191b91e6ca87dd6d0eb5c7ea',1,'gl']]],
+  ['gridsectorscaleget_21',['GridSectorScaleGet',['../de/d63/classfnm_1_1CircularAperture.html#a4c45e11abfba9b9c27d06ad6fd66b6dc',1,'fnm::CircularAperture']]],
+  ['gridsectorscaleset_22',['GridSectorScaleSet',['../de/d63/classfnm_1_1CircularAperture.html#a9947edfd8a8a48f6b6841930db26b0e9',1,'fnm::CircularAperture']]]
 ];

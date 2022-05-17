@@ -1,0 +1,14 @@
+digraph "norm"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="RL";
+  Node1 [label="norm",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="sofus::calcProjectionAnd\lBoundaries",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$d0/dd1/namespacesofus.html#aa12727e54bbbaa1d991171170683b768",tooltip=" "];
+  Node2 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="sofus::calcProjectionAnd\lLimits",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$d0/dd1/namespacesofus.html#aee093d4030f5d980085610ccb7e3897f",tooltip=" "];
+  Node1 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="dist_point_to_line",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$d7/d45/namespacesps.html#a80e33ee8c89a8f7e3996fc5bda0940f3",tooltip=" "];
+}

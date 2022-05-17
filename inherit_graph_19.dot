@@ -1,0 +1,8 @@
+digraph "Graphical Class Hierarchy"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node0 [label="mat3_t\< T \>",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$d0/dc1/structsps_1_1mat3__t.html",tooltip=" "];
+}
