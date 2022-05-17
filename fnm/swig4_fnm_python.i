@@ -233,11 +233,11 @@ pos = property(_swig_fnm.ApertureFloat_PositionsGet, _swig_fnm.ApertureFloat_Pos
 apodization = property(_swig_fnm.ApertureFloat_ApodizationGet, _swig_fnm.ApertureFloat_ApodizationSet)
 delays = property(_swig_fnm.ApertureFloat_DelaysGet, _swig_fnm.ApertureFloat_DelaysSet)
 
+sysparm = property(_swig_fnm.ApertureFloat_SysParmGet, _swig_fnm.ApertureFloat_SysParmSet)
 if 'FNM_PULSED_WAVE' in globals():
   focus2 = property(_swig_fnm.ApertureFloat_Focus2Get, _swig_fnm.ApertureFloat_Focus2Set)
   excitation = property(_swig_fnm.ApertureFloat_ExcitationGet, _swig_fnm.ApertureFloat_ExcitationSet)
   impulse = property(_swig_fnm.ApertureFloat_ImpulseGet, _swig_fnm.ApertureFloat_ImpulseSet)
-  sysparm = property(_swig_fnm.ApertureFloat_SysParmGet, _swig_fnm.ApertureFloat_SysParmSet)
 
 # Read-only properties
 phases = property(_swig_fnm.ApertureFloat_PhasesGet)
