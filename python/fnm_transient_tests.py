@@ -54,6 +54,7 @@ class FnmTransientTest(unittest.TestCase):
     nCycles = 3.0
 
     a.w = nCycles / a.f0
+    a.focus_type = fnm.FocusingType.Pythagorean
 
     limits = np.c_[[0.0,                   0.0,       0.0       ],
                    [np.pi/2.0,       np.pi/2.0,       2*np.pi   ],
@@ -105,6 +106,7 @@ class FnmTransientTest(unittest.TestCase):
     xdc.c = c
     xdc.nDivW = ndiv
     xdc.nDivH = ndiv
+    xdc.focus_type = fnm.FocusingType.Pythagorean
 
     if show:
       fh, axes = plt.subplots(2,3)

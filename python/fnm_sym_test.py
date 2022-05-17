@@ -21,7 +21,7 @@ class FnmSymTest(unittest.TestCase):
     width  = 1.0
     kerf   = 0.0
     height = 2.0
-    
+
     self.a = fnm.ApertureFloat(1, width, kerf, height)
     self.a.c          = 1.0
     self.a.f0         = 1.0
@@ -37,7 +37,7 @@ class FnmSymTest(unittest.TestCase):
     self.a.focus = self.pos.flatten()
 
     # Disable phase calculation
-    
+
     retval, self.ref = self.a.CalcCwFieldNaive(self.pos)
   def rotate_axes(self, limits):
     retval = True
@@ -48,11 +48,11 @@ class FnmSymTest(unittest.TestCase):
           rmat = euler2rot(alpha,beta,gamma,conv='yxy')
           pos2 = np.dot(rmat,self.pos.T).T
           pos2 = pos2.astype(np.float32)
-          
+
           elements = self.a.elements
           elements[0,5:8] = [alpha,beta,gamma]
           self.a.elements = elements
-    
+
           self.a.focus = pos2.flatten()
           _, hp2 = self.a.CalcCwFieldNaive(pos2)
           hp2 = hp2.flatten()
@@ -71,7 +71,7 @@ class FnmSymTest(unittest.TestCase):
     # Fails (when gamma is included)
     success = self.rotate_axes(limits)
     self.assertTrue(success)
-  
+
   def test_double(self):
     limits = np.c_[[0.0,       0.0,       0.0],
                    [np.pi/2.0, np.pi/2.0, 0.2],
@@ -86,7 +86,7 @@ class FnmSymTest(unittest.TestCase):
     # Fails (when gamma is included)
     success = self.rotate_axes(limits[[0,2,1]])
     self.assertTrue(success)
-    
+
   def test_single(self):
     limits = np.c_[[0.0,       0.0,   0.0],
                    [np.pi/2.0, 0.2,   0.2],
@@ -108,10 +108,10 @@ class FnmSymTest(unittest.TestCase):
 
     success = self.rotate_axes(limits)
     self.assertTrue(success)
-    
+
 if __name__ == '__main__':
   unittest.main()
-    
+
 # Local variables: #
 # indent-tab-mode: nil #
 # tab-width: 2 #
@@ -119,4 +119,3 @@ if __name__ == '__main__':
 # py-indent-offset: 2 #
 # indent-tabs-mode: nil #
 # End: #
-    

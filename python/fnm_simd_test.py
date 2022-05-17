@@ -38,27 +38,27 @@ class FnmReferenceTest(unittest.TestCase):
 
     opt.update(**kwargs)
     quiet = opt.quiet
-    
+
     areas = [2.0,3.0,4.0,5.0]
     widths  = np.array([areas[0],1.0,areas[2],1.0],dtype=np.float32)
     heights = np.array([1.0,areas[1],1.0,areas[3]],dtype=np.float32)
-    
+
     xsign = np.array([1.0,-1.0,-1.0,1.0],dtype=np.float32)
     ysign = np.array([1.0,1.0,-1.0,-1.0],dtype=np.float32)
-    
+
     # Ensure that we either slightly inside or outside
     scale = 40.0 * np.finfo(np.float32).eps
-    
+
     epss = dict({'inside'  : -scale,
                  'outside' :  scale})
-    
+
     ndiv = opt.ndiv
     iCorners = [0,1,2,3]
-    
+
     eps    = epss[opt.location]
     method0 = opt.method0
     method1 = opt.method1
-    
+
     scatters = np.c_[(widths+eps)/2.0 * xsign,
                      (heights+eps)/2.0 * ysign,
                      np.ones(4,dtype=np.float32)]
@@ -75,7 +75,7 @@ class FnmReferenceTest(unittest.TestCase):
       a.nDivW = ndiv
       a.f0 = 1
       a.c  = 1
-      
+
       exec('result0 = a.'+method0+'([scatters[iCorner]])[1].flatten()')
       exec('result1 = a.'+method1+'([scatters[iCorner]])[1].flatten()')
       diff = np.abs(result0)-np.abs(result1)
