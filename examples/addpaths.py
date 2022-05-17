@@ -24,5 +24,5 @@ for root, dirnames, filenames in os.walk(mydir):
 
 for path in matches:
   sys.path.append( path )
-  if version_info >= (3, 8, 0):
+  if version_info >= (3, 8, 0) and os.name == 'nt':
     os.add_dll_directory( path )
