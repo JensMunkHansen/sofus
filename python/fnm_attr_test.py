@@ -17,8 +17,12 @@ import addpaths
 
 import swig_fnm as fnm
 
+# TODO: If SWIG4.0 and Python 3.9 use dir(object) to get names
+global debugObject
+
 class FnmTest(unittest.TestCase):
   def setUp(self):
+    global debugObject
     """
     For some reason, the unittest framework returns an error
 
@@ -28,10 +32,24 @@ class FnmTest(unittest.TestCase):
 
     Workaround is to introduce the member nSetMethods
     """
-    setmethods = fnm.ApertureFloat.__swig_setmethods__.keys()
-    self.nSetMethods = len(tuple(filter(lambda i: not re.compile('^_').search(i), setmethods)))
-  def test_properties_get(self):
 
+    # Get a list properties
+    attr = fnm.attributes(fnm.ApertureFloat)
+    indices = [i for i, item in enumerate([str(f) for f in attr.values()]) if re.search('<property*', item)]
+    self.properties = [list(attr.keys())[i] for i in indices]
+
+    indices = [i for i,
+               item in enumerate([str(f) for f in attr.values()]) if re.search("<function[A-z. ]*Set ", item)]
+    self.setMethods = [list(attr.keys())[i] for i in indices]
+    debugObject = self
+    self.nSetMethods = len(self.setMethods)
+
+    indices = [i for i,
+               item in enumerate([str(f) for f in attr.values()]) if re.search("<function[A-z. ]*Get", item)]
+    self.getMethods =  [list(attr.keys())[i] for i in indices]
+    self.nGetMethods = len(self.getMethods)
+
+  def test_properties_get(self):
     if version_info < (3, 0, 0):
       # Filter out builtin_function_type
       getmethods = {k: v for k,v in fnm.ApertureFloat.__swig_getmethods__.iteritems() if type(v) != types.BuiltinFunctionType}
@@ -44,7 +62,7 @@ class FnmTest(unittest.TestCase):
       else:
         self.assertEqual(len(getmethods), 23)
     else:
-      getmethods = {k: v for k,v in fnm.ApertureFloat.__swig_getmethods__.items()}
+      getmethods = self.getMethods
 
     argss = [[0,0.1,0.1,0.1],[5,0.1,0.1,0.1],[100,0.1,0.1,0.1]]
     nGetSuccess = 0
@@ -63,13 +81,13 @@ class FnmTest(unittest.TestCase):
 
     self.assertEqual(nGetSuccess/3,len(getmethods))
   def test_properties_set(self):
-    setmethods = fnm.ApertureFloat.__swig_setmethods__.keys()
+    setmethods = self.setMethods
 
     nSetMethods = 0
     if 'FNM_PULSED_WAVE' in fnm.__dict__.keys():
-      nSetMethods=28
+      nSetMethods=30
     else:
-      nSetMethods=17
+      nSetMethods=25
 
     #if 'FNM_CLOSURE_FUNCTIONS' in fnm.__dict__.keys():
     #  nSetMethods = nSetMethods + 3
