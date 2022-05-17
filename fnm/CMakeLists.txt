@@ -97,7 +97,11 @@ if (UNIX)
 endif()
 
 # Used by ASA
-find_package(FFTW REQUIRED COMPONENTS FLOAT_LIB DOUBLE_LIB)
+find_package(FFTW REQUIRED
+  COMPONENTS
+  FLOAT_LIB
+  DOUBLE_LIB)
+
 include_directories(${FFTW_INCLUDES})
 
 
@@ -322,8 +326,10 @@ if (BUILD_SWIG_INTERFACE)
     dicts.py
     euler.py
     fnm.py
+    grid.py
     # SWIG'ed code
     addpaths.py
+    ${CMAKE_CURRENT_SOURCE_DIR}/../python/pyutils.py
     ${swig_extra_generated_files}
     fnm_arrays.py
     fnm_test.py
