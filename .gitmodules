@@ -1,0 +1,3 @@
+[submodule "sps"]
+	path = sps
+	url = git@github.com:JensMunkHansen/sps.git
