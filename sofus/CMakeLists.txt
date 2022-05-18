@@ -36,7 +36,7 @@ add_library(sofus ${SOFUS_LIB_TYPE} ${sofus_SOURCES} ${sofus_HEADERS} config.h.i
 generate_export_header(sofus)
 
 install(TARGETS sofus
-  EXPORT SofusTargets
+  EXPORT FnmTargets
   RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
   ARCHIVE DESTINATION "${INSTALL_LIB_DIR}" COMPONENT lib
   LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT shlib

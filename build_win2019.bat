@@ -13,6 +13,8 @@ set SWIG_DIR=C:\Program Files\SWIG
 
 set GTEST_ROOT="C:/Program Files/googletest-distribution"
 
+set FFTW_DIR="c:/Program Files/fftw-3.3.5"
+
 REM Visual Studio environment
 call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
 
@@ -25,7 +27,7 @@ IF EXIST "c:\cygwin64\home\jem\Environments\PyPI38\Scripts\activate.bat" (
 
 mkdir build
 
-set PATH="C:\Program Files\CMake\bin";%SWIG_DIR%;%SEDPATH%;%GRAPHVIZ_PATH%;%PATH%
+set PATH="C:\Program Files\CMake\bin";%SWIG_DIR%;%SEDPATH%;%GRAPHVIZ_PATH%;%PATH%;%FFTW_DIR%
 
 REM Create solution
 cmake -H%~dp0 -B%~dp0\build -G "Visual Studio 16 2019" -A "x64" -DBUILD_SPS_TEST=OFF -DBUILD_DOCUMENTATION=OFF -DBUILD_SWIG_DOCUMENTATION=OFF -DBUILD_FNM_TEST=OFF -DBUILD_GL_TEST=OFF -DDOXYGEN_EXECUTABLE=%DOXYGEN_DIR%/bin/doxygen.exe

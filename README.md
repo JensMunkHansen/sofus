@@ -32,8 +32,8 @@ is included and this requires FFTW.
 #### Windows
 
 For windows, binaries can be fetched from
-http://www.fftw.org/install/windows.html. You need to use the lib.exe
-tool for generating lib files as described on the webpage.
+http://www.fftw.org/install/windows.html . You need to use the lib.exe
+tool for generating lib files as described on the webpage. I have put the binaries in C:\Program Files\fftw-3.3.5.
 
 
 ## Documentation
