@@ -18,7 +18,7 @@ foreach(lib ${FFTW_LIBS_NAMES})
   find_library(
     ${lib}_LIB
     NAMES ${lib}
-    PATHS "C:/Program\ Files/fftw-3.3.4"
+    PATHS "C:/Program\ Files/fftw-3.3.5"
     PATH_SUFFIXES i386 x86_64
   )
   if (${lib}_LIB)
