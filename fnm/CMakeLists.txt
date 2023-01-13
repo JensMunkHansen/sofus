@@ -231,7 +231,7 @@ if (BUILD_SWIG_INTERFACE)
     # Generate SWIG documentation from Doxygen XML
     add_custom_target(swig_fnm_doxy
       COMMAND echo
-      COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../bin/doxy2swig.py -c -a ${PROJECT_BINARY_DIR}/${CMAKE_DOXYGEN_OUT}/xml/index.xml ${DOXYSWIG_OUTPUT}
+      COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../bin/doxy2swig.py -c -a ${PROJECT_BINARY_DIR}/${CMAKE_DOXYGEN_OUT}/xml/index.xml ${DOXYSWIG_OUTPUT}
       DEPENDS fnm doc
     )
   endif()
