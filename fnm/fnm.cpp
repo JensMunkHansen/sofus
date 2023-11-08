@@ -95,10 +95,9 @@ std::atomic<V<T>*> sps::globalstruct<T, V >::pVar{nullptr};
 
 
 #if defined(__GNUC__)
-# if !defined(__CYGWIN__)
+# if defined(SPS_STRACE)
 #  include <sps/strace.hpp>
 # endif
-
 void SofusInit()     __attribute__((constructor(101)));
 void SofusDestroy()  __attribute__((destructor(101)));
 

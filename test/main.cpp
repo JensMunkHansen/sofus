@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 
 #include <sps/memory>
-#include <sps/win32/memory>
+#ifdef _WIN32
+# include <sps/win32/memory>
+#endif
 #include <sps/unix/memory>
 #include <fnm/config.h>
 #include <fnm/fnm_data.hpp>
@@ -27,10 +29,10 @@ class A {
 class B {
  public:
   B() : m_data(2,2) {
-    m_data = sps::win32::unique_aligned_multi_array<sps::element_rect_t<float>, 2>(4,4);
+    m_data = sps::unique_aligned_multi_array<sps::element_rect_t<float>, 2>(4,4);
   }
  private:
-  sps::win32::unique_aligned_multi_array<sps::element_rect_t<float>, 2> m_data;
+  sps::unique_aligned_multi_array<sps::element_rect_t<float>, 2> m_data;
 };
 
 // No leaks
@@ -47,7 +49,7 @@ class dummy {
 };
 
 TEST(fnm_test, multi_arrays) {
-  auto arr1 = sps::win32::unique_aligned_multi_array<float, 2>(3,4);
+  auto arr1 = sps::unique_aligned_multi_array<float, 2>(3,4);
 
   for (size_t i = 0 ; i < 3 ; i++)
     for (size_t j = 0 ; j < 4 ; j++)
@@ -217,7 +219,7 @@ TEST(fnm_test, pressure_linear_array) {
   a.CSet(c);
   a.NDivWSet(nDiv);
   a.NDivHSet(nDiv);
-  a.NThreadsSet(4);
+  a.NThreadsSet(8);
   a.FocusSet(focus);
   a.FocusingTypeSet(fnm::FocusingType::Rayleigh);
 

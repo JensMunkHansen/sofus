@@ -55,7 +55,7 @@ if (FNM_ENABLE_Closures)
   set(FNM_CLOSURE_FUNCTIONS 1)
 endif()
 
-set(N_MAX_THREADS 8)
+set(N_MAX_THREADS 16)
 
 set (FNM_ENABLE_ATTENUATION 0)
 option (FNM_ENABLE_Attenuation "FNM Enable attenuation" ON)
@@ -151,8 +151,8 @@ set(fnm_SOURCES
 )
 
 if (UNIX AND NOT WIN32)
-  set(fnm_HEADERS "${fnm_HEADERS}" "../sps/strace.hpp")
-  set(fnm_SOURCES "${fnm_SOURCES}" "../sps/strace.cpp")
+#  set(fnm_HEADERS "${fnm_HEADERS}" "../sps/strace.hpp")
+#  set(fnm_SOURCES "${fnm_SOURCES}" "../sps/strace.cpp")
 endif()
 
 if (0)

@@ -62,7 +62,7 @@ int fnm_ctest_pressure_linear_array()
   ApertureNDivHSet(a,nDiv);
   ApertureNThreadsSet(a,1);
 
-  ApertureFocusingTypeSet(a,Rayleigh);
+  //ApertureFocusingTypeSet(a,Rayleigh);
 
   for (i = 0 ; i < nx ; i++) {
     for (j = 0 ; j < nz ; j++) {
