@@ -219,7 +219,7 @@ TEST(fnm_test, pressure_linear_array) {
   a.CSet(c);
   a.NDivWSet(nDiv);
   a.NDivHSet(nDiv);
-  a.NThreadsSet(8);
+  a.NThreadsSet(16);
   a.FocusSet(focus);
   a.FocusingTypeSet(fnm::FocusingType::Rayleigh);
 
@@ -235,13 +235,16 @@ TEST(fnm_test, pressure_linear_array) {
   size_t nresults = 0;
   std::complex<float>* results = NULL;
 
-  // Compute pressure
-  int err;
-  err = a.CalcCwFast(pos.get(), nx*nz, 3, &results, &nresults);
-  SPS_UNREFERENCED_PARAMETER(err);
+  const size_t nRuns = 1;
 
-  // Clean-up
-  free(results);
+  int err = 0;
+  for (size_t iRun = 0 ; iRun < nRuns ; iRun++) {
+    // Compute pressure
+    err += a.CalcCwFast(pos.get(), nx * nz, 3, &results, &nresults);
+    SPS_UNREFERENCED_PARAMETER(err);
+    // Clean-up
+    free(results);
+  }
   //! [LinearArray example]
 }
 

@@ -139,6 +139,13 @@ if (USE_ProgressBar)
   set(USE_PROGRESS_BAR 1)
 endif()
 
+if (1)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pg")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
+  set(LDFLAGS "${LDFLAGS} -pg")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
+endif()
+
 # Add sub-directories
 add_subdirectory(sps)
 

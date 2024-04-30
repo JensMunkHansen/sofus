@@ -14,13 +14,6 @@ if (Threads_FOUND)
   set(HAVE_THREAD 1)
 endif()
 
-# DEBUG ISSUES
-#ifndef _DEBUG
-#define _SECURE_SCL 0
-#endif
-#add_definitions( -D_SECURE_SCL=0 )
-#add_definitions(-DMS_NO_COREDLL)
-
 # On POSIX compliant systems, we would like to support asynchronous execution
 check_include_file(pthread.h HAVE_PTHREAD_H)
 check_include_file(signal.h HAVE_SIGNAL_H)
@@ -31,8 +24,6 @@ check_function_exists(round HAVE_ROUND)
 if (NOT USE_MQUEUE)
   set(HAVE_MQUEUE_H 0)
 endif()
-
-#add_definitions(-DSPS_DEBUG)
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   add_definitions(-DSPS_DEBUG)
@@ -74,25 +65,38 @@ endif()
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
 
 # This is only used for non-public version of this library
+set(CXX_STANDARD 11)
+
+add_library(build INTERFACE)
+add_library(sps::build ALIAS build)
+
 if (UNIX)
-  set(CMAKE_CXX_FLAGS "-std=c++11 -pedantic -Wall ${CMAKE_CXX_FLAGS}")  
-  if (ENABLE_SSE2)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2")
-  endif()
-  if (ENABLE_SSE3)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3")
-  endif()
-  if (ENABLE_SSE4)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4 -msse4.1")
-  endif()
-  if (ENABLE_AVX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx")
-  endif()
-  if (ENABLE_FMA)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfma")
-  endif()
-  if (ENABLE_AVX2)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
+  
+  target_compile_features(build INTERFACE cxx_std_11)
+  set(flags "-march=native")
+  target_compile_options(build
+    INTERFACE $<$<COMPILE_LANGUAGE:CXX>:${flags}>)
+
+  # TODO: Figure out how these are used
+  if(1)
+    if (ENABLE_SSE2)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2")
+    endif()
+    if (ENABLE_SSE3)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3")
+    endif()
+    if (ENABLE_SSE4)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4 -msse4.1")
+    endif()
+    if (ENABLE_AVX)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx")
+    endif()
+    if (ENABLE_FMA)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfma")
+    endif()
+    if (ENABLE_AVX2)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
+    endif()
   endif()
 endif()
 
