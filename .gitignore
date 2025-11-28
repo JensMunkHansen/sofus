@@ -40,3 +40,4 @@
 *~
 doc/html/
 build/
+.cache/

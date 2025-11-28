@@ -1,0 +1,184 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 21,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "default",
+            "binaryDir": "build/${presetName}",
+            "generator": "Ninja Multi-Config",
+	    "hidden": true
+        },
+        {
+            "name": "linux-clang",
+            "inherits": "default",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            },
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++"
+            }
+        },
+        {
+            "name": "linux-gcc",
+            "inherits": "default",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            },
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++"
+            }
+        },
+        {
+            "name": "windows-msvc",
+            "inherits": "default",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "cl",
+                "CMAKE_CXX_COMPILER": "cl"
+            }
+        },
+        {
+            "name": "windows-msvc-asan",
+            "inherits": "default",
+            "displayName": "Windows MSVC ASan",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "cl",
+                "CMAKE_CXX_COMPILER": "cl"
+            }
+        },
+	{
+            "name": "windows-clangcl",
+	    "displayName": "Visual Studio 2022 with Clang",
+            "binaryDir": "build/${presetName}",
+	    "generator": "Visual Studio 17 2022",
+	    "toolset": "ClangCL",
+            "condition": {
+		"type": "equals",
+		"lhs": "${hostSystemName}",
+		"rhs": "Windows"
+            },
+	    "cacheVariables": {
+		"C_COMPILER_ID": "Clang"
+	    }
+	}        
+	
+    ],
+    "buildPresets": [
+        {
+            "name": "Debug-linux",
+            "configurePreset": "linux-clang",
+            "configuration": "Debug"
+        },
+        {
+            "name": "Release-linux",
+            "configurePreset": "linux-clang",
+            "configuration": "Release"
+        },
+        {
+            "name": "Asan-linux",
+            "configurePreset": "linux-clang",
+            "configuration": "Asan"
+        },
+        {
+            "name": "Debug-gcc",
+            "configurePreset": "linux-gcc",
+            "configuration": "Debug"
+        },
+        {
+            "name": "Release-gcc",
+            "configurePreset": "linux-gcc",
+            "configuration": "Release"
+        },
+        {
+            "name": "Asan-gcc",
+            "configurePreset": "linux-gcc",
+            "configuration": "Asan"
+        },
+        {
+            "name": "Debug",
+            "configurePreset": "windows-msvc",
+            "configuration": "Debug"
+        },
+        {
+            "name": "Release",
+            "configurePreset": "windows-msvc",
+            "configuration": "Release"
+        },
+        {
+            "name": "Asan-windows",
+            "configurePreset": "windows-msvc",
+            "configuration": "Asan"
+        },
+        {
+            "name": "Asan-windows-msvc",
+            "configurePreset": "windows-msvc-asan",
+            "configuration": "Asan"
+        },
+        {
+            "name": "Debug-clang",
+            "configurePreset": "windows-clangcl",
+            "configuration": "Debug"
+        },
+        {
+            "name": "Release-clang",
+            "configurePreset": "windows-clangcl",
+            "configuration": "Release"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "core-test",
+            "description": "Enable output on failure",
+            "configurePreset": "linux-clang",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "core-test-windows",
+            "description": "Enable output on failure",
+            "configurePreset": "windows-msvc",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "core-test-windows-clang",
+            "description": "Enable output on failure",
+            "configurePreset": "windows-clangcl",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "core-test-windows-asan",
+            "description": "ASan tests with MSVC",
+            "configurePreset": "windows-msvc-asan",
+            "configuration": "Asan",
+            "output": {
+                "outputOnFailure": true
+            }
+        }
+    ]
+}
