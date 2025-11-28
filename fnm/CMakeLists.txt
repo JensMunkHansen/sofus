@@ -1,114 +1,70 @@
 include(CheckIncludeFile)
 include(CheckFunctionExists)
 include(GenerateExportHeader)
-include(GenerateProductVersion)
 
-set(CMAKE_MODULE_PATH
-  ${CMAKE_MODULE_PATH}
-  "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-
+# === Threading ===
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads REQUIRED)
 
-if (Threads_FOUND)
+if(Threads_FOUND)
   set(HAVE_THREAD 1)
 endif()
 
-# On POSIX compliant systems, we would like to support asynchronous execution
+# === Feature detection ===
 check_include_file(pthread.h HAVE_PTHREAD_H)
 check_include_file(signal.h HAVE_SIGNAL_H)
 check_include_file(mqueue.h HAVE_MQUEUE_H)
 check_function_exists(round HAVE_ROUND)
 
-# TODO: Fix why we exit before threads are finished
-if (NOT USE_MQUEUE)
+if(NOT USE_MQUEUE)
   set(HAVE_MQUEUE_H 0)
 endif()
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   add_definitions(-DSPS_DEBUG)
-endif(CMAKE_BUILD_TYPE MATCHES Debug)
+endif()
 
-if (MSVC OR CYGWIN)
+if(MSVC OR CYGWIN)
   add_definitions(-DHAVE_CONFIG_H)
 endif()
 
+# === Options ===
 option(BUILD_SWIG_INTERFACE "Build SWIG interface" ON)
 option(BUILD_SWIG_DOCUMENTATION "Build SWIG documentation" ON)
 
-if (NOT BUILD_DOCUMENTATION)
+if(NOT BUILD_DOCUMENTATION)
   set(BUILD_SWIG_DOCUMENTATION OFF)
 endif()
 
 set(FNM_CLOSURE_FUNCTIONS 0)
-option (FNM_ENABLE_Closures "FNM Enable closure functions" OFF)
-if (FNM_ENABLE_Closures)
+option(FNM_ENABLE_Closures "FNM Enable closure functions" OFF)
+if(FNM_ENABLE_Closures)
   set(FNM_CLOSURE_FUNCTIONS 1)
 endif()
 
 set(N_MAX_THREADS 16)
 
-set (FNM_ENABLE_ATTENUATION 0)
-option (FNM_ENABLE_Attenuation "FNM Enable attenuation" ON)
-if (FNM_ENABLE_Attenuation)
+set(FNM_ENABLE_ATTENUATION 0)
+option(FNM_ENABLE_Attenuation "FNM Enable attenuation" ON)
+if(FNM_ENABLE_Attenuation)
   set(FNM_ENABLE_ATTENUATION 1)
-else()
-  set(FNM_ENABLE_ATTENUATION 0)
 endif()
 
 set(FNM_DOUBLE_SUPPORT 0)
 option(FNM_Double_support "Support double precision" OFF)
-if (FNM_Double_support)
+if(FNM_Double_support)
   set(FNM_DOUBLE_SUPPORT 1)
 endif()
 
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/config.h"
+  @ONLY)
 
-# This is only used for non-public version of this library
-set(CXX_STANDARD 11)
+# === Dependencies ===
+find_package(FFTW REQUIRED COMPONENTS FLOAT_LIB DOUBLE_LIB)
 
-add_library(build INTERFACE)
-add_library(sps::build ALIAS build)
-
-if (UNIX)
-  
-  target_compile_features(build INTERFACE cxx_std_11)
-  set(flags "-march=native")
-  target_compile_options(build
-    INTERFACE $<$<COMPILE_LANGUAGE:CXX>:${flags}>)
-
-  # TODO: Figure out how these are used
-  if(1)
-    if (ENABLE_SSE2)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2")
-    endif()
-    if (ENABLE_SSE3)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3")
-    endif()
-    if (ENABLE_SSE4)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4 -msse4.1")
-    endif()
-    if (ENABLE_AVX)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx")
-    endif()
-    if (ENABLE_FMA)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfma")
-    endif()
-    if (ENABLE_AVX2)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
-    endif()
-  endif()
-endif()
-
-# Used by ASA
-find_package(FFTW REQUIRED
-  COMPONENTS
-  FLOAT_LIB
-  DOUBLE_LIB)
-
-include_directories(${FFTW_INCLUDES})
-
-
+# === Source files ===
 set(fnm_HEADERS
   ../sps/progress.hpp
   fnm_types.hpp
@@ -154,278 +110,235 @@ set(fnm_SOURCES
   circular_calc.cpp
 )
 
-if (UNIX AND NOT WIN32)
-#  set(fnm_HEADERS "${fnm_HEADERS}" "../sps/strace.hpp")
-#  set(fnm_SOURCES "${fnm_SOURCES}" "../sps/strace.cpp")
+# === Library type ===
+set(FNM_LIB_TYPE STATIC)
+if(BUILD_SHARED_LIBS)
+  set(FNM_LIB_TYPE SHARED)
 endif()
 
-if (0)
-generate_product_version(
-   VersionFilesOutputVariable
-   NAME "${PROJECT_NAME}"
-   ICON
-   VERSION_MAJOR ${FNM_MAJOR_VERSION}
-   VERSION_MINOR ${FNM_MINOR_VERSION}
-   VERSION_PATCH ${FNM_PATHC_VERSION} #${BUILD_COUNTER}
-   VERSION_REVISION ${FNM_TWEAK_VERSION} # Dev uses data format 20110222
-)
+# === Library target ===
+add_library(fnm ${FNM_LIB_TYPE} ${fnm_SOURCES} ${fnm_HEADERS} ${fnm_PUBLIC_HEADERS} config.h.in)
+
+target_include_directories(fnm PUBLIC
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
+  $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+  $<INSTALL_INTERFACE:include>)
+
+target_include_directories(fnm PRIVATE ${FFTW_INCLUDES})
+
+# Link to build interface for compiler flags
+if(TARGET build)
+  target_link_libraries(fnm PRIVATE $<BUILD_INTERFACE:build>)
 endif()
 
-add_library(fnm ${LIB_TYPE} ${fnm_SOURCES} ${fnm_HEADERS} ${fnm_PUBLIC_HEADERS} config.h.in ${VersionFilesOutputVariable})
+# Link dependencies
+target_link_libraries(fnm PUBLIC
+  sps
+  gl
+  sofus
+  ${FFTW_LIBRARIES}
+  Threads::Threads)
 
-# Old CMake way of linking. TODO: Make this more up-to-date
-if (WIN32)
-  if (BUILD_SHARED_LIBS)
-    target_link_libraries(fnm sps gl ${FFTW_LIBRARIES})
-    if (FNM_PULSED_WAVE)
-      target_link_libraries(fnm sofus)
-    endif()
-  else()
-    link_libraries(fnm sps gl ${FFTW_LIBRARIES})
-    if (FNM_PULSED_WAVE)
-      target_link_libraries(fnm sofus)
-    endif()
-  endif()
-else()
-  link_libraries(fnm sps gl rt dl ${FFTW_LIBRARIES} pthread)
-  if (FNM_PULSED_WAVE)
-    target_link_libraries(fnm sofus)
-  endif()
+if(UNIX)
+  target_link_libraries(fnm PUBLIC rt dl)
 endif()
-
-target_link_libraries(fnm sofus)
 
 generate_export_header(fnm)
 
 set_target_properties(fnm PROPERTIES
   PUBLIC_HEADER "${fnm_PUBLIC_HEADERS};${CMAKE_CURRENT_BINARY_DIR}/config.h;${CMAKE_CURRENT_BINARY_DIR}/fnm_export.h")
 
-if (BUILD_DOCUMENTATION)
+if(BUILD_DOCUMENTATION)
   add_dependencies(doc fnm)
 endif()
 
-# SWIG Target
-
-if (BUILD_SWIG_INTERFACE)
-  if (MSVC)
-    if(_DEBUG_USING_PYTHON_RELEASE_RUNTIME)
-      add_definitions(-DSWIG_PYTHON_INTERPRETER_NO_DEBUG)
-    endif()
+# === SWIG Python bindings ===
+if(BUILD_SWIG_INTERFACE)
+  if(MSVC AND _DEBUG_USING_PYTHON_RELEASE_RUNTIME)
+    add_definitions(-DSWIG_PYTHON_INTERPRETER_NO_DEBUG)
   endif()
 
   find_package(SWIG REQUIRED)
   include(${SWIG_USE_FILE})
 
-  if (WIN32)
-    # Versions tested include 3.7, 3.8, and 3.9
+  if(WIN32)
     find_package(Python3 COMPONENTS Interpreter Development NumPy)
   else()
-    # On linux, we require a specific version of Python
     find_package(Python3 3.9 COMPONENTS Interpreter Development)
   endif()
-  include_directories(${Python3_INCLUDE_DIRS})
-  include_directories(${Python3_NumPy_INCLUDE_DIRS})
 
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-  include_directories(${CMAKE_CURRENT_BINARY_DIR}) # config.h
+  if(Python3_FOUND)
+    if(BUILD_DOCUMENTATION)
+      set(DOXYSWIG_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/documentation.i")
 
-  if (BUILD_DOCUMENTATION)
-    set(DOXYSWIG_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/documentation.i")
+      add_custom_target(swig_fnm_doxy
+        COMMAND echo
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../bin/doxy2swig.py -c -a
+          ${PROJECT_BINARY_DIR}/${CMAKE_DOXYGEN_OUT}/xml/index.xml ${DOXYSWIG_OUTPUT}
+        DEPENDS fnm doc
+      )
+    endif()
 
-    # Generate SWIG documentation from Doxygen XML
-    add_custom_target(swig_fnm_doxy
-      COMMAND echo
-      COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../bin/doxy2swig.py -c -a ${PROJECT_BINARY_DIR}/${CMAKE_DOXYGEN_OUT}/xml/index.xml ${DOXYSWIG_OUTPUT}
-      DEPENDS fnm doc
-    )
-  endif()
-
-  if (MSVC)
-    if (BUILD_SWIG_DOCUMENTATION)
+    if(MSVC AND BUILD_SWIG_DOCUMENTATION)
       set_property(SOURCE swig_fnm.i PROPERTY SWIG_FLAGS "-D_SWIG_WIN32" "-DSWIG_INCLUDE_DOCUMENTATION")
     endif()
-  endif()
-  
-  set_source_files_properties(swig_fnm.i PROPERTIES CPLUSPLUS ON)
-  set_property(SOURCE swig_fnm.i PROPERTY SWIG_MODULE_NAME swig_fnm)
-  set_property(SOURCE swig_fnm.i PROPERTY INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/..")
 
-  set(swig_fnm_HEADERS
-    fnm.hpp
-  )
+    set_source_files_properties(swig_fnm.i PROPERTIES CPLUSPLUS ON)
+    set_property(SOURCE swig_fnm.i PROPERTY SWIG_MODULE_NAME swig_fnm)
+    set_property(SOURCE swig_fnm.i PROPERTY INCLUDE_DIRECTORIES
+      "${PROJECT_SOURCE_DIR};${PROJECT_BINARY_DIR};${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_BINARY_DIR}")
 
-  if (BUILD_SWIG_DOCUMENTATION)
-    set_source_files_properties(swig_fnm.i PROPERTIES OBJECT_DEPENDS "${DOXYSWIG_OUTPUT}")
-  endif()
-  execute_process(COMMAND swig -python -c++ -external-runtime ${CMAKE_CURRENT_BINARY_DIR}/swig_runtime.h
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    set(swig_fnm_HEADERS fnm.hpp)
 
-  if (BUILD_SWIG_DOCUMENTATION AND NOT WIN32)
-    set_property(SOURCE swig_fnm.i PROPERTY SWIG_FLAGS "-DSWIG_INCLUDE_DOCUMENTATION")
-  endif()
-
-  # By adding USE_SWIG_DEPENDENCIES TRUE in
-  # set_source_files_properties, the swig wrapper is rebuilt each time
-  # a C++ header is modified!
-  # Available from CMake 3.20
-  if(NOT ${CMAKE_VERSION} VERSION_LESS 3.20)
-    set_property(SOURCE swig_fnm.i PROPERTY USE_SWIG_DEPENDENCIES TRUE)
-  endif()
-
-  swig_add_library(swig_fnm LANGUAGE python SOURCES swig_fnm.i ${swig_fnm_HEADERS} ${swig_deps_actual})
-
-  # Removes generated file
-  add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/swig.stamp
-    COMMAND ${CMAKE_COMMAND} -E remove ${swig_generated_file_fullname}
-    COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/swig.stamp
-    DEPENDS ${swig_deps_actual}
-    COMMENT "Removing old SWIG generated file" VERBATIM)
-
-  # Custom target for establishing dependency
-  add_custom_target(
-    swigtrick
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/swig.stamp
-    )
-  if (BUILD_SWIG_DOCUMENTATION)
-    # Depedency
-    add_dependencies(swig_fnm swig_fnm_doxy)
-  endif()
-
-  if (MSVC)
-    # Potential uninitialized variable in SWIG_AsVal_
-    set_source_files_properties( ${swig_generated_file_fullname} PROPERTIES COMPILE_FLAGS "/wd4701 /wd4706 /wd4127 /wd4456")
-
-    # Allow to debug under windows, if debug versions of Python are missing
-    if(_DEBUG_USING_PYTHON_RELEASE_RUNTIME)
-      string(REPLACE "_d" "" PYTHON_LIBRARIES "${PYTHON_LIBRARIES}")
+    if(BUILD_SWIG_DOCUMENTATION)
+      set_source_files_properties(swig_fnm.i PROPERTIES OBJECT_DEPENDS "${DOXYSWIG_OUTPUT}")
     endif()
-  endif()
-  
-  swig_link_libraries(swig_fnm fnm ${Python3_LIBRARIES})
 
-  # Copy python files to target directory of swig_fnm
-  add_custom_command(TARGET swig_fnm POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_CURRENT_SOURCE_DIR}/dicts.py"
-    "$<TARGET_FILE_DIR:swig_fnm>")
+    execute_process(
+      COMMAND swig -python -c++ -external-runtime ${CMAKE_CURRENT_BINARY_DIR}/swig_runtime.h
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
-  add_custom_command(TARGET swig_fnm POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_CURRENT_SOURCE_DIR}/grid.py"
-    "$<TARGET_FILE_DIR:swig_fnm>")
+    if(BUILD_SWIG_DOCUMENTATION AND NOT WIN32)
+      set_property(SOURCE swig_fnm.i PROPERTY SWIG_FLAGS "-DSWIG_INCLUDE_DOCUMENTATION")
+    endif()
 
-  add_custom_command(TARGET swig_fnm POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_CURRENT_SOURCE_DIR}/../python/pyutils.py"
-    "$<TARGET_FILE_DIR:swig_fnm>")
+    if(NOT ${CMAKE_VERSION} VERSION_LESS 3.20)
+      set_property(SOURCE swig_fnm.i PROPERTY USE_SWIG_DEPENDENCIES TRUE)
+    endif()
 
-  add_custom_command(TARGET swig_fnm POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_CURRENT_SOURCE_DIR}/euler.py"
-    "$<TARGET_FILE_DIR:swig_fnm>")
+    swig_add_library(swig_fnm
+      LANGUAGE python
+      SOURCES swig_fnm.i ${swig_fnm_HEADERS})
 
-  # Add python files
-  set(swig_python_files
-    # Reference code
-    dicts.py
-    euler.py
-    fnm.py
-    grid.py
-    # SWIG'ed code
-    addpaths.py
-    ${CMAKE_CURRENT_SOURCE_DIR}/../python/pyutils.py
-    ${swig_extra_generated_files}
-    fnm_arrays.py
-    fnm_test.py
-    # Examples (TODO: consider using an examples folder)
-    test_cw_pressure.py
-    test_element.py
+    target_include_directories(swig_fnm PRIVATE
+      ${PROJECT_SOURCE_DIR}
+      ${PROJECT_BINARY_DIR}
+      ${Python3_INCLUDE_DIRS}
+      ${Python3_NumPy_INCLUDE_DIRS}
+      ${CMAKE_CURRENT_SOURCE_DIR}
+      ${CMAKE_CURRENT_BINARY_DIR})
+
+    if(BUILD_SWIG_DOCUMENTATION)
+      add_dependencies(swig_fnm swig_fnm_doxy)
+    endif()
+
+    if(MSVC)
+      set_source_files_properties(${swig_generated_file_fullname}
+        PROPERTIES COMPILE_FLAGS "/wd4701 /wd4706 /wd4127 /wd4456")
+      if(_DEBUG_USING_PYTHON_RELEASE_RUNTIME)
+        string(REPLACE "_d" "" PYTHON_LIBRARIES "${PYTHON_LIBRARIES}")
+      endif()
+    endif()
+
+    swig_link_libraries(swig_fnm fnm ${Python3_LIBRARIES})
+
+    # Copy Python files to target directory
+    set(fnm_python_support_files
+      dicts.py
+      grid.py
+      euler.py
+      ../python/pyutils.py)
+
+    foreach(pyfile ${fnm_python_support_files})
+      add_custom_command(TARGET swig_fnm POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_CURRENT_SOURCE_DIR}/${pyfile}"
+        "$<TARGET_FILE_DIR:swig_fnm>")
+    endforeach()
+
+    # Install Python files
+    set(swig_python_files
+      dicts.py
+      euler.py
+      fnm.py
+      grid.py
+      addpaths.py
+      ${CMAKE_CURRENT_SOURCE_DIR}/../python/pyutils.py
+      ${swig_extra_generated_files}
+      fnm_arrays.py
+      fnm_test.py
+      test_cw_pressure.py
+      test_element.py
     )
-  
-  install(FILES
-    ${swig_python_files}
-    DESTINATION python/fnm)
 
-  if (WIN32)
-    # pyconfig.h is not autogenerated on Windows. To avoid warnings, we
-    # add a compiler directive
-    get_directory_property(DirDefs COMPILE_DEFINITIONS )
-    set_target_properties(swig_fnm PROPERTIES
-      COMPILE_DEFINITIONS "${DirDefs};HAVE_ROUND")
+    install(FILES ${swig_python_files}
+      DESTINATION python/fnm)
+
+    if(WIN32)
+      get_directory_property(DirDefs COMPILE_DEFINITIONS)
+      set_target_properties(swig_fnm PROPERTIES
+        COMPILE_DEFINITIONS "${DirDefs};HAVE_ROUND")
+    endif()
   endif()
 endif()
 
-# Copy dependencies on WIN32
-if (WIN32)
-  #####################################################
-  # Copy dependent DLLs into the location of target fnm
-  #####################################################
-  if (BUILD_SHARED_LIBS)
+# === Copy dependencies on WIN32 ===
+if(WIN32)
+  if(BUILD_SHARED_LIBS)
     add_custom_command(TARGET fnm POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      "$<TARGET_FILE:gl>"
-      "$<TARGET_FILE_DIR:fnm>")
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:gl>" "$<TARGET_FILE_DIR:fnm>")
     add_custom_command(TARGET fnm POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      "$<TARGET_FILE:sps>"
-      "$<TARGET_FILE_DIR:fnm>")
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:sps>" "$<TARGET_FILE_DIR:fnm>")
   endif()
 
-  ##########################################################
-  # Copy generated python file into the active configuration
-  ##########################################################
-  if (BUILD_SWIG_INTERFACE)
-    set(SwigFnmOutputFiles
-      swig_fnm.py
-      )
+  if(BUILD_SWIG_INTERFACE AND Python3_FOUND)
+    set(SwigFnmOutputFiles swig_fnm.py)
     foreach(SwigFnmOutputFile ${SwigFnmOutputFiles})
       add_custom_command(TARGET swig_fnm POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${CMAKE_CURRENT_BINARY_DIR}/${SwigFnmOutputFile}"
         "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION:fnm>")
     endforeach()
+
+    # Copy FFTW DLLs
+    file(GLOB FFTW_DLLs "${FFTW_INCLUDES}/*.dll")
+    set(dll_copied_modules)
+
+    foreach(input_dll_file IN LISTS FFTW_DLLs)
+      string(REPLACE "\\" "/" input_dll_file "${input_dll_file}")
+      get_filename_component(dll_file "${input_dll_file}" NAME)
+      set(output_dll_file "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION:fnm>/${dll_file}")
+
+      add_custom_command(
+        OUTPUT "${output_dll_file}"
+        DEPENDS "${input_dll_file}"
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${input_dll_file}" "${output_dll_file}"
+        COMMENT "Copying ${dll_file} to the binary directory")
+
+      list(APPEND dll_copied_modules "${output_dll_file}")
+    endforeach()
+
+    add_custom_target(sofus_fftw_copy ALL DEPENDS ${dll_copied_modules})
   endif()
-
-  ######################################
-  # Copy FFTW dlls into target directory
-  ######################################
-  file(GLOB FFTW_DLLs "${FFTW_INCLUDES}/*.dll")
-
-  # List of DLLs
-  set(dll_copied_modules)
-
-  foreach (input_dll_file IN LISTS FFTW_DLLs)
-    # CMake mixes \ and /'s
-    string(REPLACE "\\" "/" input_dll_file "${input_dll_file}")
-
-    # Output file
-    get_filename_component(dll_file "${input_dll_file}" NAME)
-
-    set(output_dll_file
-      "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION:fnm>/${dll_file}")
-
-    add_custom_command(
-      OUTPUT  "${output_dll_file}"
-      DEPENDS "${input_dll_file}"
-      COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-      "${input_dll_file}"
-      "${output_dll_file}"
-      COMMENT "Copying ${dll_file} to the binary directory")
-
-    list(APPEND dll_copied_modules
-      "${output_dll_file}")
-  endforeach()
-
-  add_custom_target(sofus_fftw_copy ALL
-    DEPENDS
-    ${dll_copied_modules})
-
 endif()
 
-install(TARGETS fnm swig_fnm
+# === Installation ===
+# Install to both FnmTargets and SofusTargets export sets
+install(TARGETS fnm
   EXPORT FnmTargets
-  RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
-  ARCHIVE DESTINATION "${INSTALL_LIB_DIR}" COMPONENT lib
-  LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT shlib
-  PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}/fnm" COMPONENT dev)
+  RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT bin
+  ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib
+  LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT shlib
+  PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/fnm" COMPONENT dev)
+
+install(TARGETS fnm
+  EXPORT SofusTargets
+  RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT bin
+  ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib
+  LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT shlib
+  PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/fnm" COMPONENT dev)
+
+if(BUILD_SWIG_INTERFACE AND TARGET swig_fnm)
+  install(TARGETS swig_fnm
+    EXPORT FnmTargets
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT bin
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib
+    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT shlib)
+  install(TARGETS swig_fnm
+    EXPORT SofusTargets
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT bin
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib
+    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT shlib)
+endif()

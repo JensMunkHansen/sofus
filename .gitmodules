@@ -1,3 +1,6 @@
 [submodule "sps"]
 	path = sps
 	url = git@github.com:JensMunkHansen/sps.git
+[submodule "CMake"]
+	path = CMake
+	url = git@github.com:JensMunkHansen/CMake.git
